@@ -73,6 +73,27 @@ class UserRegistrationService(
         return user.toUserPrincipal()
     }
 
+    /** Creates a user pre-verified by an admin, with no initial service binding */
+    @Transactional
+    fun createUser(
+        username: String,
+        email: String,
+        displayName: String,
+        role: Role = Role.USER,
+    ): UserPrincipal {
+        val user =
+            userRepository.saveAndFlush(
+                User(
+                    username = username,
+                    email = email,
+                    displayName = displayName,
+                    role = role,
+                    emailVerified = true,
+                )
+            )
+        return user.toUserPrincipal()
+    }
+
     /** Links an additional protocol identity to an existing user */
     @Transactional
     fun linkProtocol(

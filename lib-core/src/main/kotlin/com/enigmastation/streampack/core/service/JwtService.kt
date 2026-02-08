@@ -38,7 +38,9 @@ class JwtService(properties: StreampackProperties) {
     /** Generates a JWT encoding the user's identity and role */
     fun generateToken(principal: UserPrincipal): String {
         val now = Date()
-        val expiration = Date(now.time + expirationHours * 3600 * 1000)
+        val expiration =
+            if (expirationHours > 0) Date(now.time + expirationHours * 3600 * 1000)
+            else Date(now.time - 1)
 
         return Jwts.builder()
             .subject(principal.id.toString())

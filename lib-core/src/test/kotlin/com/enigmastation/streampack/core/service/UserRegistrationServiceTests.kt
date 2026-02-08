@@ -163,6 +163,55 @@ class UserRegistrationServiceTests {
     }
 
     @Test
+    fun `createUser creates user with emailVerified true and no binding`() {
+        val principal =
+            userRegistrationService.createUser(
+                username = "provisioned",
+                email = "provisioned@example.com",
+                displayName = "Provisioned User",
+            )
+
+        assertEquals("provisioned", principal.username)
+        assertEquals(Role.USER, principal.role)
+
+        val user = userRepository.findByUsername("provisioned")
+        assertNotNull(user)
+        assertEquals(true, user!!.emailVerified)
+
+        val bindings = serviceBindingRepository.findAll().filter { it.user.id == user.id }
+        assertEquals(0, bindings.size)
+    }
+
+    @Test
+    fun `createUser defaults to USER role`() {
+        val principal =
+            userRegistrationService.createUser(
+                username = "defaultrole",
+                email = "default@example.com",
+                displayName = "Default Role",
+            )
+
+        assertEquals(Role.USER, principal.role)
+    }
+
+    @Test
+    fun `createUser with duplicate username throws`() {
+        userRegistrationService.createUser(
+            username = "taken",
+            email = "first@example.com",
+            displayName = "First",
+        )
+
+        assertThrows(Exception::class.java) {
+            userRegistrationService.createUser(
+                username = "taken",
+                email = "second@example.com",
+                displayName = "Second",
+            )
+        }
+    }
+
+    @Test
     fun `registerGuest with duplicate externalIdentifier as username throws`() {
         userRegistrationService.registerGuest(
             protocol = Protocol.IRC,

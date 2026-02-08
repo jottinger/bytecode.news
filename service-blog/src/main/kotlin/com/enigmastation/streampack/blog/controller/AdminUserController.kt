@@ -2,11 +2,11 @@
 package com.enigmastation.streampack.blog.controller
 
 import com.enigmastation.streampack.blog.config.BlogProperties
-import com.enigmastation.streampack.blog.model.ChangeRoleRequest
 import com.enigmastation.streampack.blog.model.PasswordResetRequest
 import com.enigmastation.streampack.blog.model.PasswordResetResponse
 import com.enigmastation.streampack.blog.model.RoleUpdateRequest
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.model.AlterUserRequest
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
@@ -73,7 +73,7 @@ class AdminUserController(
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
 
-        val payload = ChangeRoleRequest(username = username, newRole = request.newRole)
+        val payload = AlterUserRequest(username = username, role = request.newRole)
         return dispatch(payload, "admin/users/role", user) { result -> mapError(result) }
     }
 
