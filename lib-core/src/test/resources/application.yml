@@ -12,6 +12,9 @@ spring:
   mail:
     host: localhost
     port: 3025
+  threads:
+    virtual:
+      enabled: true
 
 streampack:
   base-url: http://localhost:8080
