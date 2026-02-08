@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.service
 
+import com.enigmastation.streampack.core.config.StreampackProperties
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import java.util.UUID
@@ -11,7 +12,17 @@ import org.junit.jupiter.api.Test
 
 class JwtServiceTests {
 
-    private val jwtService = JwtService("test-secret-that-is-at-least-256-bits-long!!", 24)
+    private fun propertiesWithSecret(secret: String, expirationHours: Long = 24) =
+        StreampackProperties(
+            jwt =
+                StreampackProperties.JwtProperties(
+                    secret = secret,
+                    expirationHours = expirationHours,
+                )
+        )
+
+    private val jwtService =
+        JwtService(propertiesWithSecret("test-secret-that-is-at-least-256-bits-long!!"))
 
     private val testPrincipal =
         UserPrincipal(
@@ -53,8 +64,8 @@ class JwtServiceTests {
 
     @Test
     fun `expired token is rejected`() {
-        // Create a service with 0-hour expiration (already expired at creation)
-        val expiredService = JwtService("test-secret-that-is-at-least-256-bits-long!!", 0)
+        val expiredService =
+            JwtService(propertiesWithSecret("test-secret-that-is-at-least-256-bits-long!!", 0))
         val token = expiredService.generateToken(testPrincipal)
 
         assertNull(expiredService.validateToken(token))
@@ -62,7 +73,8 @@ class JwtServiceTests {
 
     @Test
     fun `tokens from different keys are rejected`() {
-        val otherService = JwtService("different-secret-also-at-least-256-bits-long!!", 24)
+        val otherService =
+            JwtService(propertiesWithSecret("different-secret-also-at-least-256-bits-long!!"))
         val token = jwtService.generateToken(testPrincipal)
 
         assertNull(otherService.validateToken(token))

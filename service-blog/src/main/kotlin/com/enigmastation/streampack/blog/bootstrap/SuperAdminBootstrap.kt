@@ -1,13 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.bootstrap
 
+import com.enigmastation.streampack.blog.config.BlogProperties
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.UserRegistrationService
 import java.security.SecureRandom
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -19,8 +19,9 @@ class SuperAdminBootstrap(
     private val userRepository: UserRepository,
     private val userRegistrationService: UserRegistrationService,
     private val passwordEncoder: BCryptPasswordEncoder,
-    @Value("\${streampack.blog.service-id:blog-service}") private val serviceId: String,
+    blogProperties: BlogProperties,
 ) : ApplicationRunner {
+    private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(SuperAdminBootstrap::class.java)
 
     override fun run(args: ApplicationArguments) {

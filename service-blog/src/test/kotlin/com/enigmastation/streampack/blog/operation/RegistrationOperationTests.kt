@@ -11,10 +11,16 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
+import com.icegreen.greenmail.configuration.GreenMailConfiguration
+import com.icegreen.greenmail.junit5.GreenMailExtension
+import com.icegreen.greenmail.util.ServerSetupTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
@@ -24,18 +30,31 @@ import org.springframework.transaction.annotation.Transactional
 /**
  * Integration tests for user registration via the event system.
  *
- * Verifies that RegistrationOperation creates users with hashed passwords and that the newly
- * registered user can authenticate via LoginOperation.
+ * Verifies that RegistrationOperation creates users with hashed passwords, that the newly
+ * registered user can authenticate via LoginOperation, and that a verification email is sent.
  */
 @SpringBootTest
 @Transactional
 @Import(TestChannelConfiguration::class)
 class RegistrationOperationTests {
 
+    companion object {
+        @JvmField
+        @RegisterExtension
+        val greenMail: GreenMailExtension =
+            GreenMailExtension(ServerSetupTest.SMTP)
+                .withConfiguration(GreenMailConfiguration.aConfig().withDisabledAuthentication())
+    }
+
     @Autowired lateinit var eventGateway: EventGateway
 
     private val provenance =
         Provenance(protocol = Protocol.HTTP, serviceId = "blog-service", replyTo = "auth/register")
+
+    @BeforeEach
+    fun setUp() {
+        greenMail.reset()
+    }
 
     private fun registrationMessage(
         username: String,
@@ -72,6 +91,19 @@ class RegistrationOperationTests {
         assertEquals("New User", principal.displayName)
         assertEquals(Role.USER, principal.role)
         assertNotNull(principal.id)
+    }
+
+    @Test
+    fun `registration sends verification email`() {
+        eventGateway.process(
+            registrationMessage("emailuser", "email@example.com", "Email User", "password123")
+        )
+
+        val messages = greenMail.receivedMessages
+        assertEquals(1, messages.size)
+        assertEquals("Verify your email address", messages[0].subject)
+        val body = messages[0].content as String
+        assertTrue(body.contains("/auth/verify?token="))
     }
 
     @Test

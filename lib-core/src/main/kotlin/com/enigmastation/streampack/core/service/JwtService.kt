@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.service
 
+import com.enigmastation.streampack.core.config.StreampackProperties
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import io.jsonwebtoken.Jwts
@@ -8,19 +9,17 @@ import java.util.Date
 import java.util.UUID
 import javax.crypto.SecretKey
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 /** Creates and validates JWT tokens carrying user identity */
 @Service
-class JwtService(
-    @Value("\${streampack.jwt.secret:}") private val configuredSecret: String,
-    @Value("\${streampack.jwt.expiration-hours:24}") private val expirationHours: Long,
-) {
+class JwtService(properties: StreampackProperties) {
     private val logger = LoggerFactory.getLogger(JwtService::class.java)
+    private val expirationHours = properties.jwt.expirationHours
     private val key: SecretKey
 
     init {
+        val configuredSecret = properties.jwt.secret
         key =
             if (configuredSecret.isNotBlank()) {
                 Jwts.SIG.HS256.key().build().also {
