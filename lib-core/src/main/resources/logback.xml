@@ -8,6 +8,23 @@
         </encoder>
     </appender>
 
+    <appender name="ROLLING" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGFILE_NAME:-output.log}</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>${LOGFILE_NAME:-output.log}-%d{yyyy-MM-dd}.%i</fileNamePattern>
+            <!-- each file should be at most 10MB, keep 60 days worth of history, but at most 20GB -->
+            <maxFileSize>${LOGFILE_MAX_SIZE:-10MB}</maxFileSize>
+            <maxHistory>${LOGFILE_TOTAL_COUNT:-5}</maxHistory>
+            <totalSizeCap>${LOGFILE_TOTAL_SIZE:-20MB}</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%d{HH:mm:ss.SSS} [%-10thread] %-5level %-50.50logger - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- Streampack application logging -->
     <logger name="com.enigmastation.streampack" level="DEBUG" />
 
@@ -23,5 +40,6 @@
 
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ROLLING" />
     </root>
 </configuration>
