@@ -1,0 +1,80 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.core.service
+
+import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.model.UserPrincipal
+import java.util.UUID
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
+
+class JwtServiceTests {
+
+    private val jwtService = JwtService("test-secret-that-is-at-least-256-bits-long!!", 24)
+
+    private val testPrincipal =
+        UserPrincipal(
+            id = UUID.fromString("01234567-89ab-7def-8123-456789abcdef"),
+            username = "dreamreal",
+            displayName = "Joe Ottinger",
+            role = Role.USER,
+        )
+
+    @Test
+    fun `generate and validate round-trip preserves identity`() {
+        val token = jwtService.generateToken(testPrincipal)
+        val result = jwtService.validateToken(token)
+
+        assertNotNull(result)
+        assertEquals(testPrincipal.id, result!!.id)
+        assertEquals(testPrincipal.username, result.username)
+        assertEquals(testPrincipal.displayName, result.displayName)
+        assertEquals(testPrincipal.role, result.role)
+    }
+
+    @Test
+    fun `validate returns null for tampered token`() {
+        val token = jwtService.generateToken(testPrincipal)
+        val tampered = token.dropLast(5) + "XXXXX"
+
+        assertNull(jwtService.validateToken(tampered))
+    }
+
+    @Test
+    fun `validate returns null for garbage input`() {
+        assertNull(jwtService.validateToken("not.a.jwt"))
+    }
+
+    @Test
+    fun `validate returns null for empty string`() {
+        assertNull(jwtService.validateToken(""))
+    }
+
+    @Test
+    fun `expired token is rejected`() {
+        // Create a service with 0-hour expiration (already expired at creation)
+        val expiredService = JwtService("test-secret-that-is-at-least-256-bits-long!!", 0)
+        val token = expiredService.generateToken(testPrincipal)
+
+        assertNull(expiredService.validateToken(token))
+    }
+
+    @Test
+    fun `tokens from different keys are rejected`() {
+        val otherService = JwtService("different-secret-also-at-least-256-bits-long!!", 24)
+        val token = jwtService.generateToken(testPrincipal)
+
+        assertNull(otherService.validateToken(token))
+    }
+
+    @Test
+    fun `admin role round-trips correctly`() {
+        val admin = testPrincipal.copy(role = Role.SUPER_ADMIN)
+        val token = jwtService.generateToken(admin)
+        val result = jwtService.validateToken(token)
+
+        assertNotNull(result)
+        assertEquals(Role.SUPER_ADMIN, result!!.role)
+    }
+}

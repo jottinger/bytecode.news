@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:tc:postgresql:17://nevet
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    clean-disabled: true
+    enabled: true
+
+jakarta:
+  persistence:
+    jdbc:
+      url: jdbc:tc:postgresql:17://nevet
+hibernate:
+  dialect: org.hibernate.dialect.PostgreSQLDialect

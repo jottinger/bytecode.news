@@ -1,0 +1,27 @@
+<configuration>
+    <!-- Default logback configuration for Streampack modules.
+         Downstream modules can override by providing their own logback.xml. -->
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%-10thread] %-5level %-50.50logger - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Streampack application logging -->
+    <logger name="com.enigmastation.streampack" level="DEBUG" />
+
+    <!-- Quiet down noisy frameworks -->
+    <logger name="org.hibernate" level="WARN" />
+    <logger name="org.hibernate.orm.jdbc.error" level="ERROR" />
+    <logger name="org.flywaydb" level="INFO" />
+    <logger name="org.springframework" level="INFO" />
+    <logger name="org.springframework.integration" level="INFO" />
+    <logger name="org.testcontainers" level="INFO" />
+    <logger name="com.github.dockerjava" level="WARN" />
+    <logger name="tc" level="INFO" />
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

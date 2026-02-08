@@ -1,0 +1,181 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.core.service
+
+import com.enigmastation.streampack.core.model.Protocol
+import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.repository.ServiceBindingRepository
+import com.enigmastation.streampack.core.repository.UserRepository
+import java.util.UUID
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.transaction.annotation.Transactional
+
+@SpringBootTest
+@Transactional
+class UserRegistrationServiceTests {
+
+    @Autowired lateinit var userRegistrationService: UserRegistrationService
+    @Autowired lateinit var userRepository: UserRepository
+    @Autowired lateinit var serviceBindingRepository: ServiceBindingRepository
+
+    @Test
+    fun `register creates user with USER role and initial binding`() {
+        val principal =
+            userRegistrationService.register(
+                username = "dreamreal",
+                email = "dreamreal@gmail.com",
+                displayName = "Joe Ottinger",
+                protocol = Protocol.HTTP,
+                serviceId = "blog-service",
+                externalIdentifier = "dreamreal",
+                metadata = mapOf("passwordHash" to "bcrypt\$hash123"),
+            )
+
+        assertEquals("dreamreal", principal.username)
+        assertEquals("Joe Ottinger", principal.displayName)
+        assertEquals(Role.USER, principal.role)
+
+        val user = userRepository.findByUsername("dreamreal")
+        assertNotNull(user)
+        assertEquals("dreamreal@gmail.com", user!!.email)
+
+        val binding = serviceBindingRepository.resolve(Protocol.HTTP, "blog-service", "dreamreal")
+        assertNotNull(binding)
+        assertEquals(user.id, binding!!.user.id)
+        assertEquals("bcrypt\$hash123", binding.metadata["passwordHash"])
+    }
+
+    @Test
+    fun `registerGuest creates user with GUEST role`() {
+        val principal =
+            userRegistrationService.registerGuest(
+                protocol = Protocol.IRC,
+                serviceId = "ircservice",
+                externalIdentifier = "dreamreal",
+            )
+
+        assertEquals(Role.GUEST, principal.role)
+
+        val binding = serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "dreamreal")
+        assertNotNull(binding)
+    }
+
+    @Test
+    fun `registerGuest uses externalIdentifier as username and displayName`() {
+        val principal =
+            userRegistrationService.registerGuest(
+                protocol = Protocol.IRC,
+                serviceId = "ircservice",
+                externalIdentifier = "somenick",
+            )
+
+        assertEquals("somenick", principal.username)
+        assertEquals("somenick", principal.displayName)
+    }
+
+    @Test
+    fun `linkProtocol adds binding to existing user`() {
+        val principal =
+            userRegistrationService.register(
+                username = "dreamreal",
+                email = "dreamreal@gmail.com",
+                displayName = "Joe Ottinger",
+                protocol = Protocol.HTTP,
+                serviceId = "blog-service",
+                externalIdentifier = "dreamreal",
+            )
+
+        userRegistrationService.linkProtocol(
+            userId = principal.id,
+            protocol = Protocol.IRC,
+            serviceId = "ircservice",
+            externalIdentifier = "dreamreal",
+        )
+
+        val binding = serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "dreamreal")
+        assertNotNull(binding)
+        assertEquals(principal.id, binding!!.user.id)
+    }
+
+    @Test
+    fun `linkProtocol supports metadata`() {
+        val principal =
+            userRegistrationService.register(
+                username = "dreamreal",
+                email = "dreamreal@gmail.com",
+                displayName = "Joe Ottinger",
+                protocol = Protocol.HTTP,
+                serviceId = "blog-service",
+                externalIdentifier = "dreamreal",
+            )
+
+        userRegistrationService.linkProtocol(
+            userId = principal.id,
+            protocol = Protocol.DISCORD,
+            serviceId = "jvm-community",
+            externalIdentifier = "dreamreal#1234",
+            metadata = mapOf("oauthToken" to "tok_abc"),
+        )
+
+        val binding =
+            serviceBindingRepository.resolve(Protocol.DISCORD, "jvm-community", "dreamreal#1234")
+        assertNotNull(binding)
+        assertEquals("tok_abc", binding!!.metadata["oauthToken"])
+    }
+
+    @Test
+    fun `linkProtocol throws for nonexistent user`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            userRegistrationService.linkProtocol(
+                userId = UUID.randomUUID(),
+                protocol = Protocol.IRC,
+                serviceId = "ircservice",
+                externalIdentifier = "nobody",
+            )
+        }
+    }
+
+    @Test
+    fun `register with duplicate username throws`() {
+        userRegistrationService.register(
+            username = "dreamreal",
+            email = "dreamreal@gmail.com",
+            displayName = "Joe Ottinger",
+            protocol = Protocol.HTTP,
+            serviceId = "blog-service",
+            externalIdentifier = "dreamreal",
+        )
+
+        assertThrows(Exception::class.java) {
+            userRegistrationService.register(
+                username = "dreamreal",
+                email = "other@gmail.com",
+                displayName = "Other Person",
+                protocol = Protocol.DISCORD,
+                serviceId = "jvm-community",
+                externalIdentifier = "other#1234",
+            )
+        }
+    }
+
+    @Test
+    fun `registerGuest with duplicate externalIdentifier as username throws`() {
+        userRegistrationService.registerGuest(
+            protocol = Protocol.IRC,
+            serviceId = "ircservice",
+            externalIdentifier = "dreamreal",
+        )
+
+        assertThrows(Exception::class.java) {
+            userRegistrationService.registerGuest(
+                protocol = Protocol.DISCORD,
+                serviceId = "jvm-community",
+                externalIdentifier = "dreamreal",
+            )
+        }
+    }
+}
