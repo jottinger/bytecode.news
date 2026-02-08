@@ -2,12 +2,14 @@
 package com.enigmastation.streampack.blog.operation
 
 import com.enigmastation.streampack.blog.TestChannelConfiguration
+import com.enigmastation.streampack.blog.entity.Comment
 import com.enigmastation.streampack.blog.entity.Post
 import com.enigmastation.streampack.blog.entity.Slug
 import com.enigmastation.streampack.blog.model.ContentDetail
 import com.enigmastation.streampack.blog.model.ContentListResponse
 import com.enigmastation.streampack.blog.model.FindContentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CommentRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.core.entity.User
@@ -40,6 +42,7 @@ class FindContentOperationTests {
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var slugRepository: SlugRepository
+    @Autowired lateinit var commentRepository: CommentRepository
 
     private lateinit var author: User
     private lateinit var admin: User
@@ -299,5 +302,57 @@ class FindContentOperationTests {
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Post not found", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `commentCount reflects active comments at any nesting depth`() {
+        // Add top-level and nested comments, plus one soft-deleted
+        val topComment =
+            commentRepository.save(
+                Comment(
+                    post = publishedPost,
+                    author = otherUser,
+                    markdownSource = "Top comment",
+                    renderedHtml = "<p>Top comment</p>",
+                )
+            )
+        commentRepository.save(
+            Comment(
+                post = publishedPost,
+                author = author,
+                markdownSource = "Nested reply",
+                renderedHtml = "<p>Nested reply</p>",
+                parentComment = topComment,
+            )
+        )
+        commentRepository.save(
+            Comment(
+                post = publishedPost,
+                author = otherUser,
+                markdownSource = "Deleted comment",
+                renderedHtml = "<p>Deleted comment</p>",
+                deleted = true,
+            )
+        )
+
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"))
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        // 2 active comments (top-level + nested), soft-deleted excluded
+        assertEquals(2, detail.commentCount)
+    }
+
+    @Test
+    fun `commentCount is zero when no comments exist`() {
+        val result =
+            eventGateway.process(findMessage(FindContentRequest.FindById(publishedPost.id)))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals(0, detail.commentCount)
     }
 }

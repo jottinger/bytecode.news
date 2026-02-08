@@ -7,6 +7,7 @@ import com.enigmastation.streampack.blog.model.ContentListResponse
 import com.enigmastation.streampack.blog.model.ContentSummary
 import com.enigmastation.streampack.blog.model.FindContentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CommentRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.core.model.OperationOutcome
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component
 class FindContentOperation(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
+    private val commentRepository: CommentRepository,
 ) : TypedOperation<FindContentRequest>(FindContentRequest::class) {
 
     override val priority = 50
@@ -126,6 +128,7 @@ class FindContentOperation(
             publishedAt = post.publishedAt,
             createdAt = post.createdAt,
             updatedAt = post.updatedAt,
+            commentCount = commentRepository.countActiveByPost(post.id).toInt(),
         )
     }
 }

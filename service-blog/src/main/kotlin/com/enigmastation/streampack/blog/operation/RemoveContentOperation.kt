@@ -1,0 +1,52 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.blog.operation
+
+import com.enigmastation.streampack.blog.model.ContentOperationConfirmation
+import com.enigmastation.streampack.blog.model.RemoveContentRequest
+import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.core.model.OperationOutcome
+import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.service.TypedOperation
+import jakarta.persistence.EntityManager
+import org.slf4j.LoggerFactory
+import org.springframework.messaging.Message
+import org.springframework.stereotype.Component
+
+/** Admin permanently deletes a post; DB cascades to slugs, comments, and taxonomy joins */
+@Component
+class RemoveContentOperation(
+    private val postRepository: PostRepository,
+    private val entityManager: EntityManager,
+) : TypedOperation<RemoveContentRequest>(RemoveContentRequest::class) {
+
+    private val logger = LoggerFactory.getLogger(RemoveContentOperation::class.java)
+
+    override val priority = 50
+
+    override fun handle(payload: RemoveContentRequest, message: Message<*>): OperationOutcome {
+        val provenance =
+            message.headers[Provenance.HEADER] as? Provenance
+                ?: return OperationResult.Error("No provenance context")
+
+        val principal = provenance.user ?: return OperationResult.Error("Authentication required")
+
+        if (principal.role != Role.ADMIN && principal.role != Role.SUPER_ADMIN) {
+            return OperationResult.Error("Admin access required")
+        }
+
+        if (!postRepository.existsById(payload.id)) {
+            return OperationResult.Error("Post not found")
+        }
+
+        postRepository.hardDeleteById(payload.id)
+        entityManager.clear()
+
+        logger.info("Post permanently removed: {}", payload.id)
+
+        return OperationResult.Success(
+            ContentOperationConfirmation(id = payload.id, message = "Post permanently removed")
+        )
+    }
+}

@@ -15,4 +15,7 @@ interface CommentRepository : JpaRepository<Comment, UUID> {
         "SELECT c FROM Comment c WHERE c.author.id = :authorId AND c.deleted = false ORDER BY c.createdAt DESC"
     )
     fun findByAuthor(authorId: UUID): List<Comment>
+
+    @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.id = :postId AND c.deleted = false")
+    fun countActiveByPost(postId: UUID): Long
 }
