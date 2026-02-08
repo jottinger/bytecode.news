@@ -8,6 +8,7 @@ spring:
   flyway:
     clean-disabled: true
     enabled: true
+    out-of-order: true
   mail:
     host: localhost
     port: 3025
