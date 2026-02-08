@@ -4,6 +4,7 @@ package com.enigmastation.streampack.blog.controller
 import com.enigmastation.streampack.blog.config.BlogProperties
 import com.enigmastation.streampack.blog.model.ChangeRoleRequest
 import com.enigmastation.streampack.blog.model.PasswordResetRequest
+import com.enigmastation.streampack.blog.model.PasswordResetResponse
 import com.enigmastation.streampack.blog.model.RoleUpdateRequest
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
@@ -11,6 +12,12 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.service.JwtService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -27,6 +34,8 @@ import org.springframework.web.bind.annotation.RestController
 /** HTTP adapter for admin user management endpoints */
 @RestController
 @RequestMapping("/admin/users")
+@Tag(name = "Admin - User Management")
+@SecurityRequirement(name = "bearerAuth")
 class AdminUserController(
     private val eventGateway: EventGateway,
     private val jwtService: JwtService,
@@ -35,6 +44,27 @@ class AdminUserController(
     private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(AdminUserController::class.java)
 
+    @Operation(summary = "Change a user's role")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Role updated",
+        content = [Content(schema = Schema(implementation = UserPrincipal::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Insufficient privileges",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid request",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PutMapping("/{username}/role")
     fun changeRole(
         @PathVariable username: String,
@@ -47,6 +77,27 @@ class AdminUserController(
         return dispatch(payload, "admin/users/role", user) { result -> mapError(result) }
     }
 
+    @Operation(summary = "Reset a user's password and generate a temporary one")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Password reset with temporary password",
+        content = [Content(schema = Schema(implementation = PasswordResetResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Insufficient privileges",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid request",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PostMapping("/{username}/reset-password")
     fun resetPassword(
         @PathVariable username: String,

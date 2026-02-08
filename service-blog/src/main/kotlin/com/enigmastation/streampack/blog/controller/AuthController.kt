@@ -6,6 +6,7 @@ import com.enigmastation.streampack.blog.model.ChangePasswordRequest
 import com.enigmastation.streampack.blog.model.DeleteAccountRequest
 import com.enigmastation.streampack.blog.model.ForgotPasswordRequest
 import com.enigmastation.streampack.blog.model.LoginRequest
+import com.enigmastation.streampack.blog.model.LoginResponse
 import com.enigmastation.streampack.blog.model.RegistrationRequest
 import com.enigmastation.streampack.blog.model.ResetPasswordRequest
 import com.enigmastation.streampack.blog.model.TokenRefreshRequest
@@ -16,6 +17,12 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.service.JwtService
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -32,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController
 /** HTTP adapter for authentication and account management endpoints */
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Authentication")
 class AuthController(
     private val eventGateway: EventGateway,
     private val jwtService: JwtService,
@@ -40,6 +48,17 @@ class AuthController(
     private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(AuthController::class.java)
 
+    @Operation(summary = "Authenticate with username and password")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Login successful",
+        content = [Content(schema = Schema(implementation = LoginResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Invalid credentials",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PostMapping("/login")
     fun login(@RequestBody request: LoginRequest): ResponseEntity<*> {
         return dispatch(request, "auth/login") { result ->
@@ -47,6 +66,22 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Register a new user account")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Registration successful",
+        content = [Content(schema = Schema(implementation = UserPrincipal::class))],
+    )
+    @ApiResponse(
+        responseCode = "409",
+        description = "Username already taken",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid registration data",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PostMapping("/register")
     fun register(@RequestBody request: RegistrationRequest): ResponseEntity<*> {
         return dispatch(request, "auth/register") { result ->
@@ -59,6 +94,17 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Verify email address with token")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Email verified",
+        content = [Content(schema = Schema(implementation = String::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid or expired verification token",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PostMapping("/verify")
     fun verify(@RequestBody request: VerifyEmailRequest): ResponseEntity<*> {
         return dispatch(request, "auth/verify") { result ->
@@ -66,11 +112,24 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Log out the current session")
+    @ApiResponse(responseCode = "204", description = "Logged out")
     @PostMapping("/logout")
     fun logout(): ResponseEntity<Void> {
         return ResponseEntity.noContent().build()
     }
 
+    @Operation(summary = "Request a password reset email")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Reset email sent if account exists",
+        content = [Content(schema = Schema(implementation = String::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid request",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PostMapping("/forgot-password")
     fun forgotPassword(@RequestBody request: ForgotPasswordRequest): ResponseEntity<*> {
         return dispatch(request, "auth/forgot-password") { result ->
@@ -78,6 +137,17 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Reset password using a reset token")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Password reset successful",
+        content = [Content(schema = Schema(implementation = String::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid or expired reset token",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PostMapping("/reset-password")
     fun resetPassword(@RequestBody request: ResetPasswordRequest): ResponseEntity<*> {
         return dispatch(request, "auth/reset-password") { result ->
@@ -85,6 +155,17 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Refresh an expired JWT token")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Token refreshed",
+        content = [Content(schema = Schema(implementation = LoginResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Invalid or expired refresh token",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PostMapping("/refresh")
     fun refresh(@RequestBody request: TokenRefreshRequest): ResponseEntity<*> {
         return dispatch(request, "auth/refresh") { result ->
@@ -92,6 +173,23 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Change password for the authenticated user")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Password changed",
+        content = [Content(schema = Schema(implementation = String::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid password data",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @PutMapping("/password")
     fun changePassword(
         @RequestBody request: ChangePasswordRequest,
@@ -109,6 +207,28 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Soft-delete the authenticated user's account")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Account deleted",
+        content = [Content(schema = Schema(implementation = String::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Insufficient privileges",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid request",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
     @DeleteMapping("/account")
     fun deleteAccount(
         @RequestBody request: DeleteAccountRequest,
