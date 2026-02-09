@@ -37,6 +37,7 @@
         <module>lib-blog</module>
         <module>lib-test</module>
         <module>operation-calc</module>
+        <module>service-console</module>
         <module>service-blog</module>
         <module>app</module>
     </modules>

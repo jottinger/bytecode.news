@@ -31,6 +31,8 @@ streampack:
   base-url: ${BASE_URL:http://localhost:8080}
   jwt:
     secret: ${JWT_SECRET:change-me-in-production}
+  console:
+    enabled: ${CONSOLE_ENABLED:false}
 
 springdoc:
   api-docs:

@@ -21,4 +21,9 @@ interface UserRepository : JpaRepository<User, UUID> {
 
     @Query("SELECT u FROM User u WHERE u.id = :id AND u.deleted = false")
     fun findActiveById(id: UUID): User?
+
+    @Query(
+        "SELECT u FROM User u WHERE u.role = :role AND u.deleted = false ORDER BY u.createdAt ASC"
+    )
+    fun findActiveByRole(role: Role): List<User>
 }

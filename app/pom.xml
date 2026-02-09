@@ -23,6 +23,11 @@
             <version>1.0</version>
         </dependency>
         <dependency>
+            <groupId>com.enigmastation</groupId>
+            <artifactId>service-console</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
