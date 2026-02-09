@@ -16,7 +16,14 @@ import org.springframework.messaging.Message
  */
 abstract class TypedOperation<T : Any>(val payloadType: KClass<T>) : Operation {
 
-    override fun canHandle(message: Message<*>): Boolean = payloadType.isInstance(message.payload)
+    final override fun canHandle(message: Message<*>): Boolean {
+        if (!payloadType.isInstance(message.payload)) return false
+        @Suppress("UNCHECKED_CAST")
+        return canHandle(message.payload as T, message)
+    }
+
+    /** Typed pre-flight check, called only after the payload type has been verified. */
+    open fun canHandle(payload: T, message: Message<*>): Boolean = true
 
     override fun execute(message: Message<*>): OperationOutcome? {
         @Suppress("UNCHECKED_CAST")

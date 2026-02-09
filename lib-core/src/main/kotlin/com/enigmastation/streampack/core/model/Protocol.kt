@@ -2,11 +2,12 @@
 package com.enigmastation.streampack.core.model
 
 enum class Protocol {
+    CONSOLE,
     DISCORD,
     SLACK,
     IRC,
     HTTP,
     MAILTO,
     MATTERMOST,
-    RSS, // whatever
+    RSS,
 }

@@ -19,6 +19,12 @@
         </dependency>
         <dependency>
             <groupId>com.enigmastation</groupId>
+            <artifactId>lib-test</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
             <artifactId>lib-blog</artifactId>
             <version>${project.version}</version>
         </dependency>

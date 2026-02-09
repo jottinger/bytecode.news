@@ -1,7 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
-import com.enigmastation.streampack.blog.TestChannelConfiguration
 import com.enigmastation.streampack.blog.entity.Post
 import com.enigmastation.streampack.blog.entity.Slug
 import com.enigmastation.streampack.blog.model.ApproveContentRequest
@@ -17,6 +16,7 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.repository.UserRepository
+import com.enigmastation.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID

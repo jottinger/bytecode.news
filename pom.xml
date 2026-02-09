@@ -35,6 +35,8 @@
     <modules>
         <module>lib-core</module>
         <module>lib-blog</module>
+        <module>lib-test</module>
+        <module>operation-calc</module>
         <module>service-blog</module>
         <module>app</module>
     </modules>

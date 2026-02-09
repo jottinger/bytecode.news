@@ -1,7 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
-import com.enigmastation.streampack.blog.TestChannelConfiguration
 import com.enigmastation.streampack.blog.model.ChangePasswordRequest
 import com.enigmastation.streampack.blog.model.LoginRequest
 import com.enigmastation.streampack.core.integration.EventGateway
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Import
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.transaction.annotation.Transactional
@@ -31,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional
  */
 @SpringBootTest
 @Transactional
-@Import(TestChannelConfiguration::class)
 class ChangePasswordOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway

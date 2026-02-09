@@ -1,7 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.controller
 
-import com.enigmastation.streampack.blog.TestChannelConfiguration
 import com.enigmastation.streampack.blog.entity.Comment
 import com.enigmastation.streampack.blog.entity.Post
 import com.enigmastation.streampack.blog.model.PostStatus
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
@@ -30,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@Import(TestChannelConfiguration::class)
 class AdminCommentControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc

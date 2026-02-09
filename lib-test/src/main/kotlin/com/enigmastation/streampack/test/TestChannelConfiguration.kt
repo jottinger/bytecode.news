@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
-package com.enigmastation.streampack.blog
+package com.enigmastation.streampack.test
 
-import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.integration.channel.DirectChannel
 
@@ -11,7 +11,7 @@ import org.springframework.integration.channel.DirectChannel
  * allows @Transactional test rollback to work correctly -- the production ExecutorChannel
  * dispatches to virtual threads which cannot see uncommitted test data.
  */
-@TestConfiguration
+@Configuration
 class TestChannelConfiguration {
 
     @Bean

@@ -31,6 +31,7 @@ import org.springframework.messaging.Message
 interface Operation {
     /** Execution order within the chain. Lower values run first. */
     val priority: Int
+        get() = 50
 
     /** Quick pre-flight check: is this operation relevant for this message? */
     fun canHandle(message: Message<*>): Boolean = true

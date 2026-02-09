@@ -1,7 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.controller
 
-import com.enigmastation.streampack.blog.TestChannelConfiguration
 import com.enigmastation.streampack.core.entity.TokenType
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.model.Protocol
@@ -9,6 +8,7 @@ import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.JwtService
 import com.enigmastation.streampack.core.service.UserRegistrationService
 import com.enigmastation.streampack.core.service.VerificationTokenService
+import com.enigmastation.streampack.test.TestChannelConfiguration
 import com.icegreen.greenmail.configuration.GreenMailConfiguration
 import com.icegreen.greenmail.junit5.GreenMailExtension
 import com.icegreen.greenmail.util.ServerSetupTest
