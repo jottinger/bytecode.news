@@ -382,6 +382,182 @@ The admin should communicate the temporary password to the user through a secure
 
 ---
 
+## Implemented Endpoints: Comments
+
+---
+
+### GET /posts/{year}/{month}/{slug}/comments
+
+Get the threaded comment tree for a post.
+The slug path matches the post's URL structure (e.g. `2026/01/my-post-title`).
+
+**Auth**: None (anonymous users see all non-deleted comments; authenticated users see editability flags)
+
+**Path parameters**: `year`, `month`, `slug` - the post's slug path segments
+
+**Success (200)**:
+```json
+{
+  "postId": "01234567-89ab-7def-8123-456789abcdef",
+  "comments": [
+    {
+      "id": "11111111-1111-7111-8111-111111111111",
+      "authorId": "22222222-2222-7222-8222-222222222222",
+      "authorDisplayName": "Joe Ottinger",
+      "renderedHtml": "<p>Great article!</p>",
+      "createdAt": "2026-01-15T10:30:00Z",
+      "updatedAt": "2026-01-15T10:30:00Z",
+      "deleted": false,
+      "editable": true,
+      "children": []
+    }
+  ],
+  "totalActiveCount": 1
+}
+```
+
+Deleted comments appear as `{"authorId": null, "authorDisplayName": "Anonymous", "renderedHtml": "[deleted]", "deleted": true}` to preserve thread structure.
+The `editable` flag reflects whether the current user can edit the comment (author within 5 minutes, or admin).
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 404 | Slug does not resolve to a post | "Post not found" |
+
+---
+
+### POST /posts/{year}/{month}/{slug}/comments
+
+Add a comment to a post.
+Requires email verification.
+
+**Auth**: Required (Bearer token, email verified)
+
+**Path parameters**: `year`, `month`, `slug` - the post's slug path segments
+
+**Request**:
+```json
+{
+  "parentCommentId": null,
+  "markdownSource": "This is my comment."
+}
+```
+
+`parentCommentId` is optional.
+Omit or set to `null` for a top-level comment.
+Provide a comment UUID to create a nested reply.
+
+**Success (201)**:
+```json
+{
+  "id": "11111111-1111-7111-8111-111111111111",
+  "postId": "01234567-89ab-7def-8123-456789abcdef",
+  "authorDisplayName": "Joe Ottinger",
+  "renderedHtml": "<p>This is my comment.</p>",
+  "createdAt": "2026-01-15T10:30:00Z"
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 400 | Email not verified | "Email verification required" |
+| 400 | Blank comment content | "Comment content is required" |
+| 404 | Slug does not resolve to a post | "Post not found" |
+| 404 | Parent comment UUID not found | "Parent comment not found" |
+
+---
+
+### PUT /comments/{id}
+
+Edit a comment's markdown content.
+Authors can edit within 5 minutes of creation.
+Admins can edit anytime.
+
+**Auth**: Required (Bearer token)
+
+**Path parameters**: `id` - the comment's UUID
+
+**Request**:
+```json
+{
+  "markdownSource": "Updated comment text."
+}
+```
+
+**Success (200)**:
+```json
+{
+  "id": "11111111-1111-7111-8111-111111111111",
+  "postId": "01234567-89ab-7def-8123-456789abcdef",
+  "authorDisplayName": "Joe Ottinger",
+  "renderedHtml": "<p>Updated comment text.</p>",
+  "createdAt": "2026-01-15T10:30:00Z"
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 403 | Not the comment author | "Not authorized to edit this comment" |
+| 403 | More than 5 minutes since creation | "Edit window has expired" |
+| 404 | Comment not found or deleted | "Comment not found" |
+| 400 | Blank comment content | "Comment content is required" |
+
+---
+
+## Implemented Endpoints: Admin Comment Management
+
+All admin comment endpoints require authentication with Admin or Super-admin role.
+
+---
+
+### DELETE /admin/comments/{id}
+
+Delete a comment.
+Soft-deletes by default (comment shows as "[deleted]" in thread).
+Add `?hard=true` for permanent removal.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `id` - the comment's UUID
+
+**Query parameters**: `hard` (optional, default `false`) - set to `true` for permanent deletion
+
+**Request**: No body required.
+
+**Success (200)** (soft delete):
+```json
+{
+  "id": "11111111-1111-7111-8111-111111111111",
+  "message": "Comment deleted"
+}
+```
+
+**Success (200)** (hard delete):
+```json
+{
+  "id": "11111111-1111-7111-8111-111111111111",
+  "message": "Comment permanently removed"
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 403 | Caller lacks admin role | "Admin access required" |
+| 404 | Comment not found | "Comment not found" |
+| 400 | Comment already soft-deleted (soft delete only) | "Comment is already deleted" |
+
+---
+
 ## User Flows
 
 **Registration and email verification**:
@@ -410,6 +586,16 @@ The admin should communicate the temporary password to the user through a secure
 1. `POST /admin/users/{username}/reset-password` - returns temporary password
 2. Admin communicates temporary password to user out-of-band
 
+**Commenting on a post**:
+1. User must be logged in with a verified email
+2. `GET /posts/{year}/{month}/{slug}/comments` - view existing comments
+3. `POST /posts/{year}/{month}/{slug}/comments` - add a top-level comment or reply (include `parentCommentId` for replies)
+4. `PUT /comments/{id}` - edit own comment within 5 minutes of creation
+
+**Admin comment moderation**:
+1. `DELETE /admin/comments/{id}` - soft-delete a comment (shows as "[deleted]" in thread)
+2. `DELETE /admin/comments/{id}?hard=true` - permanently remove a comment and its children
+
 ## Endpoint Summary
 
 | Method | Path | Auth | Description |
@@ -425,6 +611,10 @@ The admin should communicate the temporary password to the user through a secure
 | DELETE | `/auth/account` | Yes | Delete account |
 | PUT | `/admin/users/{username}/role` | Super-admin | Change user role |
 | POST | `/admin/users/{username}/reset-password` | Admin+ | Reset user password |
+| GET | `/posts/{year}/{month}/{slug}/comments` | No | Get comment thread |
+| POST | `/posts/{year}/{month}/{slug}/comments` | Yes (verified) | Add comment |
+| PUT | `/comments/{id}` | Yes | Edit comment (5 min window) |
+| DELETE | `/admin/comments/{id}` | Admin+ | Soft/hard delete comment |
 
 ## Planned Endpoints (Not Yet Implemented)
 
@@ -439,9 +629,6 @@ These are part of the design but have no HTTP adapter yet.
 | GET | `/posts/search?q=` | Search posts |
 | POST | `/posts` | Submit new post (draft) |
 | PUT | `/posts/{slug}` | Edit own draft |
-| GET | `/posts/{slug}/comments` | Get comments |
-| POST | `/posts/{slug}/comments` | Add comment |
-| PUT | `/comments/{id}` | Edit comment (5 min window) |
 
 **Admin Blog**:
 
@@ -453,8 +640,6 @@ These are part of the design but have no HTTP adapter yet.
 | PUT | `/admin/posts/{id}` | Edit any post |
 | DELETE | `/admin/posts/{id}` | Soft delete |
 | DELETE | `/admin/posts/{id}?hard=true` | Hard delete (permanent) |
-| DELETE | `/admin/comments/{id}` | Soft delete |
-| DELETE | `/admin/comments/{id}?hard=true` | Hard delete (permanent) |
 | POST | `/admin/categories` | Create category |
 | POST | `/admin/tags` | Create tag |
 
