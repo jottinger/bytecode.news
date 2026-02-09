@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/nevet}
+    username: ${DB_USERNAME:nevet}
+    password: ${DB_PASSWORD:nevet}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    clean-disabled: true
+    enabled: true
+    out-of-order: true
+  threads:
+    virtual:
+      enabled: true
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:25}
+
+streampack:
+  base-url: ${BASE_URL:http://localhost:8080}
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production}
+
+springdoc:
+  api-docs:
+    enabled: true

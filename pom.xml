@@ -36,6 +36,7 @@
         <module>lib-core</module>
         <module>lib-blog</module>
         <module>service-blog</module>
+        <module>app</module>
     </modules>
 
     <dependencyManagement>
