@@ -6,7 +6,7 @@ The initial deployment target is [jvm.news](https://jvm.news), a community-drive
 ## Prerequisites
 
 - **JDK 25** or later
-- **Maven 3.8.0** or later (no wrapper included)
+- **Maven 3.8.0** or later (wrapper included via `mvnw`; also compatible with `mvnd`)
 - **PostgreSQL 17** (via Docker or system service)
 - **Docker** (required for running tests, optional for production database)
 
@@ -80,19 +80,19 @@ If you're using the defaults (database named `nevet`, user `nevet`, password `ne
 
 ```bash
 # Build everything and run tests (requires Docker for Testcontainers)
-mvn clean install
+./mvnw clean install
 
 # Build without tests
-mvn clean install -DskipTests
+./mvnw clean install -DskipTests
 
 # Run tests only
-mvn test
+./mvnw test
 
 # Run a single test class
-mvn test -pl service-blog -Dtest=LoginOperationTests
+./mvnw test -pl service-blog -Dtest=LoginOperationTests
 
 # Format code (runs automatically during compile, but can be invoked directly)
-mvn spotless:apply
+./mvnw spotless:apply
 ```
 
 ## Running
@@ -100,7 +100,7 @@ mvn spotless:apply
 Build the bootable JAR and start it:
 
 ```bash
-mvn clean package -DskipTests
+./mvnw clean package -DskipTests
 java -jar app/target/app-1.0.jar
 ```
 
