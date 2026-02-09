@@ -23,6 +23,9 @@ spring:
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:25}
+  application:
+    name: nevet
+    version: 3.0
 
 streampack:
   base-url: ${BASE_URL:http://localhost:8080}
