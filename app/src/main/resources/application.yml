@@ -1,4 +1,10 @@
 spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:.env.properties
+      - optional:file:../.env[.properties]
+      - optional:file:../.env.properties
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/nevet}
     username: ${DB_USERNAME:nevet}
