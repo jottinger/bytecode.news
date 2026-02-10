@@ -26,6 +26,7 @@
         <jjwtVersion>0.12.6</jjwtVersion>
         <greenmailVersion>2.1.3</greenmailVersion>
         <flexmarkVersion>0.64.8</flexmarkVersion>
+        <kittehVersion>9.0.0</kittehVersion>
     </properties>
 
     <groupId>com.enigmastation</groupId>
@@ -35,11 +36,13 @@
     <modules>
         <module>lib-core</module>
         <module>lib-blog</module>
+        <module>lib-irc</module>
         <module>lib-test</module>
         <module>operation-calc</module>
         <module>operation-cal</module>
         <module>service-console</module>
         <module>service-blog</module>
+        <module>service-irc</module>
         <module>app</module>
     </modules>
 
@@ -121,6 +124,11 @@
                 <groupId>com.vladsch.flexmark</groupId>
                 <artifactId>flexmark</artifactId>
                 <version>${flexmarkVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.kitteh.irc</groupId>
+                <artifactId>client-lib</artifactId>
+                <version>${kittehVersion}</version>
             </dependency>
             <dependency>
                 <groupId>com.vladsch.flexmark</groupId>
