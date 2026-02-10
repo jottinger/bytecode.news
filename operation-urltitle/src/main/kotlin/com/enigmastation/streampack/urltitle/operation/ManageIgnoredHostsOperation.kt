@@ -1,0 +1,66 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.urltitle.operation
+
+import com.enigmastation.streampack.core.extensions.compress
+import com.enigmastation.streampack.core.extensions.joinToStringWithAnd
+import com.enigmastation.streampack.core.model.OperationOutcome
+import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.service.TypedOperation
+import com.enigmastation.streampack.urltitle.service.UrlTitleService
+import org.slf4j.LoggerFactory
+import org.springframework.messaging.Message
+import org.springframework.stereotype.Component
+
+/** Admin commands for managing the URL title ignored-hosts list */
+@Component
+class ManageIgnoredHostsOperation(private val urlTitleService: UrlTitleService) :
+    TypedOperation<String>(String::class) {
+
+    private val logger = LoggerFactory.getLogger(ManageIgnoredHostsOperation::class.java)
+
+    override val priority: Int = 50
+
+    override val addressed: Boolean = true
+
+    override fun canHandle(payload: String, message: Message<*>): Boolean {
+        return payload.compress().lowercase().startsWith("url ignore ")
+    }
+
+    override fun handle(payload: String, message: Message<*>): OperationOutcome? {
+        val commands = payload.compress().lowercase().removePrefix("url ignore ").split(' ')
+        return try {
+            when (commands[0]) {
+                "list" -> {
+                    val hosts =
+                        urlTitleService
+                            .findAllIgnoredHosts()
+                            .shuffled()
+                            .take(7)
+                            .joinToStringWithAnd()
+                    OperationResult.Success("Ignored hosts include: $hosts")
+                }
+                "add" -> {
+                    if (commands.size < 2) {
+                        return OperationResult.Error("Usage: url ignore add <hostname>")
+                    }
+                    urlTitleService.addIgnoredHost(commands[1])
+                    OperationResult.Success("Added ${commands[1]} to ignored hosts.")
+                }
+                "delete" -> {
+                    if (commands.size < 2) {
+                        return OperationResult.Error("Usage: url ignore delete <hostname>")
+                    }
+                    urlTitleService.deleteIgnoredHost(commands[1])
+                    OperationResult.Success("Removed ${commands[1]} from ignored hosts.")
+                }
+                else ->
+                    OperationResult.Error(
+                        "Unknown subcommand: ${commands[0]}. Use list, add, or delete."
+                    )
+            }
+        } catch (e: Exception) {
+            logger.warn("Error handling ignored hosts command: {}", e.message)
+            OperationResult.Error("Failed to process command: ${e.message}")
+        }
+    }
+}

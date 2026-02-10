@@ -27,6 +27,7 @@
         <greenmailVersion>2.1.3</greenmailVersion>
         <flexmarkVersion>0.64.8</flexmarkVersion>
         <kittehVersion>9.0.0</kittehVersion>
+        <jsoupVersion>1.18.3</jsoupVersion>
     </properties>
 
     <groupId>com.enigmastation</groupId>
@@ -45,6 +46,7 @@
         <module>service-irc</module>
         <module>operation-karma</module>
         <module>operation-factoid</module>
+        <module>operation-urltitle</module>
         <module>service-factoid</module>
         <module>app</module>
     </modules>
@@ -142,6 +144,11 @@
                 <groupId>com.vladsch.flexmark</groupId>
                 <artifactId>flexmark-ext-autolink</artifactId>
                 <version>${flexmarkVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jsoup</groupId>
+                <artifactId>jsoup</artifactId>
+                <version>${jsoupVersion}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
