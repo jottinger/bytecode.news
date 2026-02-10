@@ -1,0 +1,31 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.factoid.repository
+
+import com.enigmastation.streampack.factoid.entity.FactoidAttribute
+import com.enigmastation.streampack.factoid.model.FactoidAttributeType
+import java.util.UUID
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+
+interface FactoidAttributeRepository : JpaRepository<FactoidAttribute, UUID> {
+    fun findByFactoidSelectorIgnoreCase(selector: String): List<FactoidAttribute>
+
+    fun findByFactoidSelectorIgnoreCaseAndAttributeType(
+        selector: String,
+        attributeType: FactoidAttributeType,
+    ): FactoidAttribute?
+
+    /** Search across attribute values, selectors, and updatedBy for a LIKE term */
+    @Query(
+        """
+        SELECT DISTINCT f.selector FROM Factoid f
+        LEFT JOIN FactoidAttribute fa ON fa.factoid = f
+        WHERE LOWER(f.selector) LIKE :term
+           OR LOWER(fa.attributeValue) LIKE :term
+           OR LOWER(fa.updatedBy) LIKE :term
+        ORDER BY f.selector
+        """
+    )
+    fun searchForTerm(@Param("term") term: String): List<String>
+}

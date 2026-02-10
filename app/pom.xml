@@ -34,6 +34,16 @@
         </dependency>
         <dependency>
             <groupId>com.enigmastation</groupId>
+            <artifactId>operation-factoid</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
+            <artifactId>service-factoid</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
             <artifactId>service-console</artifactId>
             <version>${project.version}</version>
         </dependency>

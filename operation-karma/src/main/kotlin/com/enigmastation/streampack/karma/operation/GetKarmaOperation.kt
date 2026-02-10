@@ -4,36 +4,36 @@ package com.enigmastation.streampack.karma.operation
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.service.TypedOperation
+import com.enigmastation.streampack.core.service.TranslatingOperation
+import com.enigmastation.streampack.karma.model.KarmaQueryRequest
 import com.enigmastation.streampack.karma.service.KarmaService
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Handles addressed karma queries: "karma foo" */
+/** Handles addressed karma queries: "karma foo" or a typed KarmaQueryRequest */
 @Component
 class GetKarmaOperation(private val karmaService: KarmaService) :
-    TypedOperation<String>(String::class) {
+    TranslatingOperation<KarmaQueryRequest>(KarmaQueryRequest::class) {
 
     override val priority: Int = 50
 
     override val addressed: Boolean = true
 
-    override fun canHandle(payload: String, message: Message<*>): Boolean {
-        return payload.trim().startsWith("karma ")
+    override fun translate(payload: String, message: Message<*>): KarmaQueryRequest? {
+        val trimmed = payload.trim()
+        if (!trimmed.startsWith("karma ")) return null
+        val subject = trimmed.removePrefix("karma ").trim()
+        if (subject.isBlank()) return null
+        return KarmaQueryRequest(subject)
     }
 
-    override fun handle(payload: String, message: Message<*>): OperationOutcome {
-        val subject = payload.trim().removePrefix("karma ").trim()
-        if (subject.isBlank()) {
-            return OperationResult.Error("Usage: karma <subject>")
-        }
-
+    override fun handle(payload: KarmaQueryRequest, message: Message<*>): OperationOutcome {
         val provenance = message.headers[Provenance.HEADER] as? Provenance
         val senderNick = message.headers["nick"] as? String ?: provenance?.user?.username
-        val selfQuery = senderNick != null && senderNick.equals(subject, ignoreCase = true)
+        val selfQuery = senderNick != null && senderNick.equals(payload.subject, ignoreCase = true)
 
-        return if (karmaService.hasKarma(subject)) {
-            val karma = karmaService.getKarma(subject)
+        return if (karmaService.hasKarma(payload.subject)) {
+            val karma = karmaService.getKarma(payload.subject)
             val karmaExpression =
                 if (karma == 0) {
                     "neutral karma"
@@ -41,15 +41,15 @@ class GetKarmaOperation(private val karmaService: KarmaService) :
                     "karma of $karma"
                 }
             if (selfQuery) {
-                OperationResult.Success("$subject, you have $karmaExpression.")
+                OperationResult.Success("${payload.subject}, you have $karmaExpression.")
             } else {
-                OperationResult.Success("$subject has $karmaExpression.")
+                OperationResult.Success("${payload.subject} has $karmaExpression.")
             }
         } else {
             if (selfQuery) {
-                OperationResult.Success("$subject, you have no karma data.")
+                OperationResult.Success("${payload.subject}, you have no karma data.")
             } else {
-                OperationResult.Success("$subject has no karma data.")
+                OperationResult.Success("${payload.subject} has no karma data.")
             }
         }
     }

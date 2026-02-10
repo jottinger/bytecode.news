@@ -44,6 +44,8 @@
         <module>service-blog</module>
         <module>service-irc</module>
         <module>operation-karma</module>
+        <module>operation-factoid</module>
+        <module>service-factoid</module>
         <module>app</module>
     </modules>
 
