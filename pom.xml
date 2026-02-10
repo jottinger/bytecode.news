@@ -43,6 +43,7 @@
         <module>service-console</module>
         <module>service-blog</module>
         <module>service-irc</module>
+        <module>operation-karma</module>
         <module>app</module>
     </modules>
 

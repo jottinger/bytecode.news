@@ -35,6 +35,9 @@ streampack:
     enabled: ${CONSOLE_ENABLED:false}
   irc:
     enabled: ${IRC_ENABLED:false}
+  karma:
+    immune-subjects:
+      - nevet
 
 springdoc:
   api-docs:

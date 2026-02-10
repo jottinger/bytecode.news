@@ -1,0 +1,15 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.karma.repository
+
+import com.enigmastation.streampack.karma.entity.KarmaRecord
+import java.time.LocalDate
+import java.util.UUID
+import org.springframework.data.jpa.repository.JpaRepository
+
+interface KarmaRecordRepository : JpaRepository<KarmaRecord, UUID> {
+    fun findBySubjectAndRecordDate(subject: String, recordDate: LocalDate): KarmaRecord?
+
+    fun findBySubject(subject: String): List<KarmaRecord>
+
+    fun deleteByRecordDateBefore(cutoff: LocalDate)
+}

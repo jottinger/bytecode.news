@@ -117,16 +117,20 @@ class IrcAdapter(
                         replyTo = channelName,
                     )
 
+                val nick = event.actor.nick
+                val host = event.actor.host
+                val ident = event.actor.userString
+
                 val strippedText = extractAddressedText(event.message)
                 if (strippedText != null) {
-                    dispatchAndReply(strippedText, channelName, provenance)
+                    dispatchAndReply(strippedText, channelName, provenance, nick, host, ident)
                 } else {
                     val preMessage =
                         MessageBuilder.withPayload(event.message)
                             .setHeader(Provenance.HEADER, provenance)
                             .build()
                     if (operationService.hasUnaddressedInterest(preMessage)) {
-                        dispatchAndReply(event.message, channelName, provenance)
+                        dispatchAndReply(event.message, channelName, provenance, nick, host, ident)
                     }
                 }
             } catch (e: Exception) {
@@ -136,9 +140,19 @@ class IrcAdapter(
     }
 
     /** Sends payload through the EventGateway and replies to the channel if not muted */
-    private fun dispatchAndReply(payload: String, channelName: String, provenance: Provenance) {
-        val message =
-            MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
+    private fun dispatchAndReply(
+        payload: String,
+        channelName: String,
+        provenance: Provenance,
+        nick: String? = null,
+        host: String? = null,
+        ident: String? = null,
+    ) {
+        val builder = MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance)
+        if (nick != null) builder.setHeader("nick", nick)
+        if (host != null) builder.setHeader("host", host)
+        if (ident != null) builder.setHeader("ident", ident)
+        val message = builder.build()
         val result = eventGateway.process(message)
 
         if (!isMuted(channelName)) {
@@ -185,10 +199,13 @@ class IrcAdapter(
                         serviceId = networkName,
                         replyTo = event.actor.nick,
                     )
-                val message =
+                val builder =
                     MessageBuilder.withPayload(event.message)
                         .setHeader(Provenance.HEADER, provenance)
-                        .build()
+                        .setHeader("nick", event.actor.nick)
+                        .setHeader("host", event.actor.host)
+                        .setHeader("ident", event.actor.userString)
+                val message = builder.build()
                 val result = eventGateway.process(message)
 
                 when (result) {
