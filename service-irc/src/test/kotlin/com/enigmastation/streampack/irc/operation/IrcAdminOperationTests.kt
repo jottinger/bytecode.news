@@ -153,6 +153,23 @@ class IrcAdminOperationTests {
     }
 
     @Test
+    fun `irc signal sets per-network signal character`() {
+        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
+        val result = eventGateway.process(ircMessage("irc signal libera ~"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertTrue((result as OperationResult.Success).payload.toString().contains("~"))
+    }
+
+    @Test
+    fun `irc signal without character resets to default`() {
+        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
+        eventGateway.process(ircMessage("irc signal libera ~"))
+        val result = eventGateway.process(ircMessage("irc signal libera"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertTrue((result as OperationResult.Success).payload.toString().contains("reset"))
+    }
+
+    @Test
     fun `irc connect with SASL credentials returns success`() {
         val result =
             eventGateway.process(

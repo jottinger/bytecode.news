@@ -1,16 +1,18 @@
 # IRC Service Configuration Guide
 
 The IRC service connects Nevet to IRC networks as a channel bot.
-All network and channel configuration lives in the database - the only application property is the on/off switch.
+All network and channel configuration lives in the database.
+The only application properties are the on/off switch and the default signal character.
 
 ## Activation
 
-The IRC runtime (connecting to servers, joining channels, relaying messages) is controlled by a single property:
+The IRC runtime (connecting to servers, joining channels, relaying messages) is controlled by two properties:
 
 ```yaml
 streampack:
   irc:
-    enabled: true   # false by default
+    enabled: true             # false by default
+    signal-character: "!"     # default trigger prefix
 ```
 
 When `enabled` is `false` (the default), the `IrcConnectionManager` bean is not created.
@@ -28,16 +30,18 @@ In the production `application.yml`, the property is:
 streampack:
   irc:
     enabled: ${IRC_ENABLED:false}
+    signal-character: ${IRC_SIGNAL:!}
 ```
 
 Set the `IRC_ENABLED` environment variable to `true` to activate IRC at deploy time.
+The `IRC_SIGNAL` variable overrides the global signal character (see Message Addressing below).
 
 ## Database as Startup Manifest
 
 There are no YAML blocks for IRC server addresses, channels, or credentials.
 Everything is stored in three database tables:
 
-- **irc_networks** - one row per IRC server (host, port, TLS, nick, SASL credentials, autoconnect flag)
+- **irc_networks** - one row per IRC server (host, port, TLS, nick, SASL credentials, autoconnect flag, optional signal character override)
 - **irc_channels** - one row per channel per network (autojoin, automute, visible, logged flags)
 - **irc_messages** - immutable log of channel activity (when logging is enabled for a channel)
 
@@ -56,6 +60,7 @@ These commands work through any protocol adapter (console, HTTP, IRC itself, eve
 | `irc connect <name> <host> <nick> [saslAccount] [saslPassword]` | Register network in DB and connect (if IRC runtime is active) |
 | `irc disconnect <name>` | Disconnect from network (runtime only, entity remains) |
 | `irc autoconnect <name> <true\|false>` | Set whether this network connects on startup |
+| `irc signal <name> [character]` | Set per-network signal character (omit character to reset to global default) |
 | `irc status [name]` | Show connection state for one or all networks |
 
 The `name` is a short identifier used in all subsequent commands (e.g., "libera", "oftc").
@@ -117,6 +122,51 @@ Channel '#java' on 'libera' logged set to true
 
 After this, the bot will automatically connect to Libera and join #java on every startup (as long as `streampack.irc.enabled=true`).
 
+## Message Addressing
+
+Not every message in a channel is intended for the bot.
+The IRC adapter uses a gate to decide which messages to process.
+
+### Addressed messages
+
+A message is "addressed" if it starts with either:
+
+- The **signal character** (default `!`): `!calc 2+3`
+- The **bot's nick** followed by `: ` or `, `: `nevet: calc 2+3` or `nevet, calc 2+3`
+
+When a message is addressed, the prefix is stripped and the remaining text is dispatched through the EventGateway.
+So `!calc 2+3` and `nevet: calc 2+3` both arrive at operations as `calc 2+3`.
+
+### Unaddressed messages
+
+Messages without a signal character or bot nick prefix are "unaddressed."
+Most operations (like `calc`) require addressing - they set `addressed = true` (the default on the `Operation` interface).
+
+Some operations don't require addressing.
+For example, a future karma operation would match `eclipse++` without any prefix.
+These operations set `addressed = false`.
+
+When an unaddressed message arrives, the adapter performs a **pre-scan**: it asks `OperationService.hasUnaddressedInterest(message)` whether any non-addressed operation claims interest via `canHandle`.
+If at least one does, the raw message (no stripping) is dispatched through the EventGateway.
+If none are interested, the message is dropped silently.
+
+This means the full operation chain only runs when there's a reason to run it.
+
+### Signal character configuration
+
+The signal character has two levels:
+
+1. **Global default** in `application.yml`: `streampack.irc.signal-character` (default `!`)
+2. **Per-network override** in the database: set via `irc signal <name> <character>`
+
+The effective signal character for a network is the per-network override if set, otherwise the global default.
+To reset a network back to the global default: `irc signal <name>` (omit the character).
+
+### Private messages
+
+Private messages (DMs to the bot) bypass the gate entirely.
+They are always dispatched through the EventGateway without any prefix stripping.
+
 ## Architecture Layers
 
 The IRC service has four layers, from outermost to innermost:
@@ -154,16 +204,34 @@ Maintains in-memory sets for muted and logged channels, initialized from entity 
 When someone types in an IRC channel:
 
 ```
-IRC user types "calc 2+3" in #java
+IRC user types "!calc 2+3" in #java
   -> Kitteh fires ChannelMessageEvent on its event thread
   -> IrcAdapter.onChannelMessage() starts a virtual thread
   -> Virtual thread:
        1. Log message to DB (if channel is logged)
        2. Build Provenance(protocol=IRC, serviceId="libera", replyTo="#java")
-       3. eventGateway.process(message)
+       3. Addressing gate:
+          a. "!calc 2+3" starts with "!" -> addressed, strip to "calc 2+3"
+          b. Dispatch "calc 2+3" through eventGateway.process()
        4. CalculatorOperation handles it, returns Success("The result of 2+3 is: 5.0")
        5. If channel is not muted: client.sendMessage("#java", "The result of 2+3 is: 5.0")
 ```
+
+For an unaddressed message like `eclipse++` (assuming a karma operation with `addressed = false`):
+
+```
+IRC user types "eclipse++" in #java
+  -> Kitteh fires ChannelMessageEvent
+  -> Virtual thread:
+       1. Log message to DB (if channel is logged)
+       2. "eclipse++" has no signal prefix and no bot nick -> unaddressed
+       3. Pre-scan: operationService.hasUnaddressedInterest(message) -> true (karma matches)
+       4. Dispatch raw "eclipse++" through eventGateway.process()
+       5. KarmaOperation handles it, returns Success("eclipse has 42 karma.")
+       6. If channel is not muted: reply to channel
+```
+
+A message like `hello everyone` with no matching unaddressed operations is logged but not dispatched.
 
 ## Testing Without IRC
 

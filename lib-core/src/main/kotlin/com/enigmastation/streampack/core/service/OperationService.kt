@@ -23,6 +23,15 @@ class OperationService(operations: List<Operation>) {
     private val logger = LoggerFactory.getLogger(OperationService::class.java)
     private val sortedOperations = operations.sortedBy { it.priority }
 
+    /**
+     * Checks whether any non-addressed operation is interested in this message.
+     *
+     * Protocol adapters with trigger detection (e.g. IRC) call this before submitting unaddressed
+     * messages. If no non-addressed operation claims interest, the message is dropped silently.
+     */
+    fun hasUnaddressedInterest(message: Message<*>): Boolean =
+        sortedOperations.any { !it.addressed && it.canHandle(message) }
+
     /** Receives from the ingress channel and returns the result to the gateway's reply channel */
     @ServiceActivator(inputChannel = "ingressChannel")
     fun process(message: Message<*>): OperationResult {

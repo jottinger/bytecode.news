@@ -164,6 +164,21 @@ class IrcService(
         return "Channel '$channelName' on '$networkName' logged set to $logged"
     }
 
+    /** Updates the per-network signal character override */
+    fun setSignal(name: String, signalCharacter: String?): String {
+        val network =
+            networkRepository.findByNameAndDeletedFalse(name)
+                ?: return "Error: Network '$name' not found"
+        networkRepository.save(
+            network.copy(signalCharacter = signalCharacter, updatedAt = Instant.now())
+        )
+        return if (signalCharacter != null) {
+            "Network '$name' signal character set to '$signalCharacter'"
+        } else {
+            "Network '$name' signal character reset to global default"
+        }
+    }
+
     /** Returns status summary for networks */
     fun status(networkName: String?): String {
         val cm = connectionManager.ifAvailable

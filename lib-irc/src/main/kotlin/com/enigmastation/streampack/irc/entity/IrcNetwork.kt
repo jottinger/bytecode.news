@@ -21,6 +21,7 @@ data class IrcNetwork(
     @Column(nullable = false, length = 50) val nick: String = "",
     @Column(length = 100) val saslAccount: String? = null,
     val saslPassword: String? = null,
+    @Column(length = 10) val signalCharacter: String? = null,
     @Column(nullable = false) val autoconnect: Boolean = false,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) val updatedAt: Instant = Instant.now(),

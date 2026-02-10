@@ -2,6 +2,8 @@
 package com.enigmastation.streampack.irc.service
 
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.service.OperationService
+import com.enigmastation.streampack.irc.config.IrcProperties
 import com.enigmastation.streampack.irc.entity.IrcNetwork
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
 import com.enigmastation.streampack.irc.repository.IrcMessageRepository
@@ -23,6 +25,8 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty("streampack.irc.enabled", havingValue = "true")
 class IrcConnectionManager(
     private val eventGateway: EventGateway,
+    private val operationService: OperationService,
+    private val ircProperties: IrcProperties,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
     private val messageRepository: IrcMessageRepository,
@@ -73,14 +77,17 @@ class IrcConnectionManager(
             client.authManager.addProtocol(SaslPlain(client, account, password))
         }
 
+        val effectiveSignal = network.signalCharacter ?: ircProperties.signalCharacter
         val adapter =
             IrcAdapter(
                 networkName = network.name,
                 eventGateway = eventGateway,
+                operationService = operationService,
                 networkRepository = networkRepository,
                 channelRepository = channelRepository,
                 messageRepository = messageRepository,
                 client = client,
+                signalCharacter = effectiveSignal,
             )
         adapters[network.name] = adapter
         adapter.connect()

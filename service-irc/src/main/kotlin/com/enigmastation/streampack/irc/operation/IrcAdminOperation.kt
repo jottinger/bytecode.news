@@ -46,6 +46,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
             "automute" -> handleAutomute(tokens.drop(1))
             "visible" -> handleVisible(tokens.drop(1))
             "logged" -> handleLogged(tokens.drop(1))
+            "signal" -> handleSignal(tokens.drop(1))
             "status" -> handleStatus(tokens.drop(1))
             else ->
                 OperationResult.Error(
@@ -176,6 +177,19 @@ class IrcAdminOperation(private val ircService: IrcService) :
         else OperationResult.Success(result)
     }
 
+    private fun handleSignal(args: List<String>): OperationResult {
+        if (args.isEmpty()) {
+            return OperationResult.Error(
+                "Usage: irc signal <name> [character]  (omit character to reset)"
+            )
+        }
+        val signalChar = args.getOrNull(1)
+        val result = ircService.setSignal(args[0], signalChar)
+        return if (result.startsWith("Error:"))
+            OperationResult.Error(result.removePrefix("Error: "))
+        else OperationResult.Success(result)
+    }
+
     private fun handleStatus(args: List<String>): OperationResult {
         val networkName = args.firstOrNull()
         return OperationResult.Success(ircService.status(networkName))
@@ -195,6 +209,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
         |  irc automute <network> <#channel> <true|false>
         |  irc visible <network> <#channel> <true|false>
         |  irc logged <network> <#channel> <true|false>
+        |  irc signal <name> [character]
         |  irc status [network]
         """
             .trimMargin()

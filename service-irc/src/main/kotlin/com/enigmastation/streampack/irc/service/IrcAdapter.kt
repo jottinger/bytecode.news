@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.service.OperationService
 import com.enigmastation.streampack.irc.entity.IrcMessage
 import com.enigmastation.streampack.irc.model.IrcMessageType
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
@@ -30,10 +31,12 @@ import org.springframework.messaging.support.MessageBuilder
 class IrcAdapter(
     val networkName: String,
     private val eventGateway: EventGateway,
+    private val operationService: OperationService,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
     private val messageRepository: IrcMessageRepository,
     private val client: Client,
+    private val signalCharacter: String,
 ) {
     private val logger = LoggerFactory.getLogger(IrcAdapter::class.java)
     private val mutedChannels: MutableSet<String> = ConcurrentHashMap.newKeySet()
@@ -113,25 +116,63 @@ class IrcAdapter(
                         serviceId = networkName,
                         replyTo = channelName,
                     )
-                val message =
-                    MessageBuilder.withPayload(event.message)
-                        .setHeader(Provenance.HEADER, provenance)
-                        .build()
-                val result = eventGateway.process(message)
 
-                if (!isMuted(channelName)) {
-                    when (result) {
-                        is OperationResult.Success ->
-                            client.sendMessage(channelName, result.payload.toString())
-                        is OperationResult.Error ->
-                            client.sendMessage(channelName, "Error: ${result.message}")
-                        is OperationResult.NotHandled -> {}
+                val strippedText = extractAddressedText(event.message)
+                if (strippedText != null) {
+                    dispatchAndReply(strippedText, channelName, provenance)
+                } else {
+                    val preMessage =
+                        MessageBuilder.withPayload(event.message)
+                            .setHeader(Provenance.HEADER, provenance)
+                            .build()
+                    if (operationService.hasUnaddressedInterest(preMessage)) {
+                        dispatchAndReply(event.message, channelName, provenance)
                     }
                 }
             } catch (e: Exception) {
                 logger.error("Error processing channel message on {}: {}", networkName, e.message)
             }
         }
+    }
+
+    /** Sends payload through the EventGateway and replies to the channel if not muted */
+    private fun dispatchAndReply(payload: String, channelName: String, provenance: Provenance) {
+        val message =
+            MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
+        val result = eventGateway.process(message)
+
+        if (!isMuted(channelName)) {
+            when (result) {
+                is OperationResult.Success ->
+                    client.sendMessage(channelName, result.payload.toString())
+                is OperationResult.Error ->
+                    client.sendMessage(channelName, "Error: ${result.message}")
+                is OperationResult.NotHandled -> {}
+            }
+        }
+    }
+
+    /**
+     * Detects whether a message is explicitly addressed to the bot. Returns the stripped payload
+     * (no signal char or nick prefix) if addressed, or null if the message is not addressed.
+     */
+    private fun extractAddressedText(raw: String): String? {
+        if (signalCharacter.isNotEmpty() && raw.startsWith(signalCharacter)) {
+            val stripped = raw.removePrefix(signalCharacter).trimStart()
+            return stripped.ifEmpty { null }
+        }
+
+        val nick = client.nick.lowercase()
+        val lowerRaw = raw.lowercase()
+        for (separator in listOf(": ", ", ")) {
+            val prefix = "$nick$separator"
+            if (lowerRaw.startsWith(prefix)) {
+                val stripped = raw.substring(prefix.length).trimStart()
+                return stripped.ifEmpty { null }
+            }
+        }
+
+        return null
     }
 
     @Handler

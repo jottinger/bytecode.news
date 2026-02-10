@@ -33,6 +33,17 @@ interface Operation {
     val priority: Int
         get() = 50
 
+    /**
+     * Whether this operation requires the message to be explicitly addressed to the bot.
+     *
+     * When true (the default), protocol adapters that use trigger detection (like IRC) will only
+     * dispatch a message to the chain if it starts with a signal character or the bot's nick. When
+     * false, the adapter's pre-scan will check [canHandle] on unaddressed messages and submit them
+     * if at least one non-addressed operation is interested.
+     */
+    val addressed: Boolean
+        get() = true
+
     /** Quick pre-flight check: is this operation relevant for this message? */
     fun canHandle(message: Message<*>): Boolean = true
 

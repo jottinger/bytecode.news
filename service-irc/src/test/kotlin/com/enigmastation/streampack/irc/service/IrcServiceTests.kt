@@ -5,6 +5,7 @@ import com.enigmastation.streampack.irc.repository.IrcChannelRepository
 import com.enigmastation.streampack.irc.repository.IrcNetworkRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -110,6 +111,33 @@ class IrcServiceTests {
         val network = networkRepository.findByNameAndDeletedFalse("libera")!!
         val channel = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")!!
         assertEquals(false, channel.logged)
+    }
+
+    @Test
+    fun `setSignal updates network signal character`() {
+        ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        val result = ircService.setSignal("libera", "~")
+        assertTrue(result.contains("~"))
+
+        val network = networkRepository.findByNameAndDeletedFalse("libera")!!
+        assertEquals("~", network.signalCharacter)
+    }
+
+    @Test
+    fun `setSignal with null resets to global default`() {
+        ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        ircService.setSignal("libera", "~")
+        val result = ircService.setSignal("libera", null)
+        assertTrue(result.contains("reset"))
+
+        val network = networkRepository.findByNameAndDeletedFalse("libera")!!
+        assertNull(network.signalCharacter)
+    }
+
+    @Test
+    fun `setSignal with unknown network returns error`() {
+        val result = ircService.setSignal("nonexistent", "~")
+        assertTrue(result.startsWith("Error:"))
     }
 
     @Test
