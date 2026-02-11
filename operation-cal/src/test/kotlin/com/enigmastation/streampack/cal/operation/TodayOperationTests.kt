@@ -30,7 +30,7 @@ class TodayOperationTests {
         val result = eventGateway.process(message("today"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("Gregorian"), "Expected Gregorian in: $payload")
+        assertTrue(payload.contains("Today is "), "Expected Today is in: $payload")
     }
 
     @Test

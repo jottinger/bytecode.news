@@ -69,7 +69,7 @@ class UrlTitleService(
     fun calculateJaccardSimilarity(url: String, title: String): Double {
         val cleanedUrl = cleanUrl(url)
         val urlWords = tokenize(cleanedUrl)
-        val titleWords = tokenize("$title ${cleanUrl(extractHost(url))}")
+        val titleWords = tokenize(title)
 
         val intersection = urlWords.intersect(titleWords).size
         val union = urlWords.union(titleWords).size

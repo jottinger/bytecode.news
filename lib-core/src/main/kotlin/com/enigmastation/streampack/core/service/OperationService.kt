@@ -58,6 +58,9 @@ class OperationService(operations: List<Operation>) {
                         op::class.simpleName,
                         result::class.simpleName,
                     )
+                    if (result is OperationResult.Success) {
+                        logger.debug("Message {} generated {}", message.headers.id, result.payload)
+                    }
                     return result
                 }
                 logger.debug("Operation {} returned null, continuing chain", op::class.simpleName)

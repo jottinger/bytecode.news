@@ -47,7 +47,8 @@ class UrlTitleOperation(
         if (titles.isEmpty()) return null
 
         val formatted = titles.map { (url, title) -> "$url (\"$title\")" }
-        val response = "${"Title".pluralize(formatted)}: ${formatted.joinToStringWithAnd()}"
+        val response =
+            "${message.headers["nick"]} mentioned ${"url".pluralize(formatted)}: ${formatted.joinToStringWithAnd()}"
         return OperationResult.Success(response)
     }
 }

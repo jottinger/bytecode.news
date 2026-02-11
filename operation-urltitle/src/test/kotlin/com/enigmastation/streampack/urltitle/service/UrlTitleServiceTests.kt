@@ -130,7 +130,7 @@ class UrlTitleServiceTests {
                 Arguments.of(
                     "https://www.cnn.com/2024/08/19/business/harley-davidson-dei-john-deere-tractor-supply/index.html",
                     "Harley-Davidson is dropping diversity initiatives after right-wing anti-DEI campaign | CNN Business",
-                    0.31,
+                    0.26,
                 ),
             )
     }

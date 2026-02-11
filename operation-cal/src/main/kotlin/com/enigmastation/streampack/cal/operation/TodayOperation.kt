@@ -24,7 +24,7 @@ class TodayOperation(private val calendarService: CalendarService) :
 
         if (argument.isEmpty()) {
             val calendar = calendarService.defaultCalendar()
-            return OperationResult.Success("Today is ${calendar.today()} (${calendar.displayName})")
+            return OperationResult.Success("Today is ${calendar.today()}")
         }
 
         if (argument.equals("list", ignoreCase = true)) {

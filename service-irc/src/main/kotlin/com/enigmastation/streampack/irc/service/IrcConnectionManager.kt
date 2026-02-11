@@ -65,6 +65,7 @@ class IrcConnectionManager(
         val client =
             Client.builder()
                 .nick(network.nick)
+                .user(network.nick)
                 .server()
                 .host(network.host)
                 .port(network.port, securityType)
