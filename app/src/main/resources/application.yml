@@ -40,6 +40,12 @@ streampack:
       - nevet
   weather:
     api-key: ${OPENWEATHERMAP_API_KEY:change-me}
+  discord:
+    enabled: ${DISCORD_ENABLED:false}
+    application-id: ${DISCORD_APPLICATION_ID:no-id}
+    public-key: ${DISCORD_PUBLIC_KEY:no-key}
+    permissions: 3072
+    token: ${DISCORD_BOT_TOKEN:no-token}
 
 springdoc:
   api-docs:

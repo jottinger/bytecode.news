@@ -29,6 +29,7 @@
         <kittehVersion>9.0.0</kittehVersion>
         <jsoupVersion>1.18.3</jsoupVersion>
         <romeVersion>2.1.0</romeVersion>
+        <jdaVersion>6.3.0</jdaVersion>
     </properties>
 
     <groupId>com.enigmastation</groupId>
@@ -43,6 +44,7 @@
         <module>operation-calc</module>
         <module>operation-cal</module>
         <module>service-console</module>
+        <module>service-discord</module>
         <module>service-blog</module>
         <module>service-irc</module>
         <module>operation-karma</module>
@@ -158,6 +160,11 @@
                 <groupId>com.rometools</groupId>
                 <artifactId>rome</artifactId>
                 <version>${romeVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.dv8tion</groupId>
+                <artifactId>JDA</artifactId>
+                <version>${jdaVersion}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -276,6 +283,7 @@
                 <configuration>
                     <args>
                         <arg>-Xjsr305=strict</arg>
+                        <arg>-Xannotation-default-target=param-property</arg>
                     </args>
                     <compilerPlugins>
                         <plugin>no-arg</plugin>
