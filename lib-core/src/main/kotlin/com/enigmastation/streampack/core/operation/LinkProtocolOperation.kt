@@ -1,13 +1,17 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.operation
 
+import com.enigmastation.streampack.core.extensions.compress
 import com.enigmastation.streampack.core.model.LinkProtocolRequest
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.repository.UserRepository
-import com.enigmastation.streampack.core.service.TypedOperation
+import com.enigmastation.streampack.core.service.IdentityProvider
+import com.enigmastation.streampack.core.service.IdentityResolution
+import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.core.service.UserRegistrationService
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
@@ -18,11 +22,37 @@ import org.springframework.stereotype.Component
 class LinkProtocolOperation(
     private val userRepository: UserRepository,
     private val userRegistrationService: UserRegistrationService,
-) : TypedOperation<LinkProtocolRequest>(LinkProtocolRequest::class) {
+    private val identityProviders: List<IdentityProvider>,
+) : TranslatingOperation<LinkProtocolRequest>(LinkProtocolRequest::class) {
 
     private val logger = LoggerFactory.getLogger(LinkProtocolOperation::class.java)
 
     override val priority = 50
+
+    override fun translate(payload: String, message: Message<*>): LinkProtocolRequest? {
+        val text = payload.compress().lowercase()
+        if (!text.startsWith("link user ")) return null
+        val parts =
+            payload.compress().removePrefix("link user ").removePrefix("Link user ").split(" ")
+        if (parts.size < 4) return null
+
+        val username = parts[0]
+        val protocol =
+            try {
+                Protocol.valueOf(parts[1].uppercase())
+            } catch (_: IllegalArgumentException) {
+                return null
+            }
+        val serviceId = parts[2]
+        val externalIdentifier = parts[3]
+
+        return LinkProtocolRequest(
+            username = username,
+            protocol = protocol,
+            serviceId = serviceId,
+            externalIdentifier = externalIdentifier,
+        )
+    }
 
     override fun handle(payload: LinkProtocolRequest, message: Message<*>): OperationOutcome {
         val provenance =
@@ -37,6 +67,15 @@ class LinkProtocolOperation(
         val targetUser =
             userRepository.findByUsername(payload.username)
                 ?: return OperationResult.Error("User not found")
+
+        // Validate via identity provider if one exists for this protocol
+        val provider = identityProviders.find { it.protocol == payload.protocol }
+        if (provider != null) {
+            val resolution = provider.resolveIdentity(payload.serviceId, payload.externalIdentifier)
+            if (resolution is IdentityResolution.Invalid) {
+                return OperationResult.Error(resolution.reason)
+            }
+        }
 
         return try {
             userRegistrationService.linkProtocol(

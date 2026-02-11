@@ -82,6 +82,19 @@ class LinkProtocolOperationTests {
             )
             .build()
 
+    private fun textMessage(text: String, asUser: UserPrincipal?) =
+        MessageBuilder.withPayload(text)
+            .setHeader(
+                Provenance.HEADER,
+                Provenance(
+                    protocol = Protocol.CONSOLE,
+                    serviceId = "console",
+                    replyTo = "console",
+                    user = asUser,
+                ),
+            )
+            .build()
+
     @Test
     fun `super admin can link protocol identity`() {
         val request =
@@ -197,5 +210,75 @@ class LinkProtocolOperationTests {
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Duplicate binding", (result as OperationResult.Error).message)
+    }
+
+    // --- Text-based translate path tests ---
+
+    @Test
+    fun `text command links protocol identity`() {
+        val result =
+            eventGateway.process(
+                textMessage("link user regularuser irc ircservice regularuser_irc", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+
+        val binding =
+            serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "regularuser_irc")
+        assertNotNull(binding)
+    }
+
+    @Test
+    fun `text command is case-insensitive for protocol`() {
+        val result =
+            eventGateway.process(
+                textMessage("link user regularuser DISCORD jvm-community regular#1234", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+
+        val binding =
+            serviceBindingRepository.resolve(Protocol.DISCORD, "jvm-community", "regular#1234")
+        assertNotNull(binding)
+    }
+
+    @Test
+    fun `text command with invalid protocol is not handled`() {
+        val result =
+            eventGateway.process(
+                textMessage("link user regularuser BOGUS ircservice nick", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `text command with too few parts is not handled`() {
+        val result =
+            eventGateway.process(textMessage("link user regularuser irc ircservice", superAdmin))
+
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `text command requires super admin`() {
+        val result =
+            eventGateway.process(
+                textMessage("link user regularuser irc ircservice nick", regularUser)
+            )
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Insufficient privileges", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `text command with nonexistent user returns error`() {
+        val result =
+            eventGateway.process(
+                textMessage("link user nobody irc ircservice nobody_irc", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("User not found", (result as OperationResult.Error).message)
     }
 }

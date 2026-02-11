@@ -85,6 +85,19 @@ class CreateUserOperationTests {
             )
             .build()
 
+    private fun textMessage(text: String, asUser: UserPrincipal?) =
+        MessageBuilder.withPayload(text)
+            .setHeader(
+                Provenance.HEADER,
+                Provenance(
+                    protocol = Protocol.CONSOLE,
+                    serviceId = "console",
+                    replyTo = "console",
+                    user = asUser,
+                ),
+            )
+            .build()
+
     @Test
     fun `super admin can create a user`() {
         val request =
@@ -190,5 +203,79 @@ class CreateUserOperationTests {
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Username already exists", (result as OperationResult.Error).message)
+    }
+
+    // --- Text-based translate path tests ---
+
+    @Test
+    fun `text command creates user`() {
+        val result =
+            eventGateway.process(
+                textMessage("create user newuser newuser@example.com NewUser", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals("newuser", principal.username)
+        assertEquals("NewUser", principal.displayName)
+        assertEquals(Role.USER, principal.role)
+    }
+
+    @Test
+    fun `text command creates user with role`() {
+        val result =
+            eventGateway.process(
+                textMessage("create user newadmin newadmin@example.com NewAdmin admin", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals(Role.ADMIN, principal.role)
+    }
+
+    @Test
+    fun `text command with hyphenated role normalizes correctly`() {
+        val result =
+            eventGateway.process(
+                textMessage("create user newsa newsa@example.com NewSA super-admin", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals(Role.SUPER_ADMIN, principal.role)
+    }
+
+    @Test
+    fun `text command with invalid role defaults to USER`() {
+        val result =
+            eventGateway.process(
+                textMessage(
+                    "create user newuser2 newuser2@example.com NewUser bogusrole",
+                    superAdmin,
+                )
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals(Role.USER, principal.role)
+    }
+
+    @Test
+    fun `text command with too few parts is not handled`() {
+        val result =
+            eventGateway.process(textMessage("create user newuser newuser@example.com", superAdmin))
+
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `text command requires super admin`() {
+        val result =
+            eventGateway.process(
+                textMessage("create user newuser newuser@example.com NewUser", regularUser)
+            )
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Insufficient privileges", (result as OperationResult.Error).message)
     }
 }
