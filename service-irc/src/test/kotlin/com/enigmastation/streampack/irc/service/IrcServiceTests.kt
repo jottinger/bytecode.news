@@ -1,9 +1,11 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.irc.service
 
+import com.enigmastation.streampack.core.repository.ChannelControlOptionsRepository
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
 import com.enigmastation.streampack.irc.repository.IrcNetworkRepository
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -19,6 +21,7 @@ class IrcServiceTests {
     @Autowired lateinit var ircService: IrcService
     @Autowired lateinit var networkRepository: IrcNetworkRepository
     @Autowired lateinit var channelRepository: IrcChannelRepository
+    @Autowired lateinit var channelControlOptionsRepository: ChannelControlOptionsRepository
 
     @Test
     fun `connect persists network entity`() {
@@ -39,7 +42,7 @@ class IrcServiceTests {
     }
 
     @Test
-    fun `join persists channel entity for existing network`() {
+    fun `join persists channel entity and creates ChannelControlOptions`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
         val result = ircService.join("libera", "#java")
         assertTrue(result.contains("registered"))
@@ -47,6 +50,13 @@ class IrcServiceTests {
         val network = networkRepository.findByNameAndDeletedFalse("libera")!!
         val channel = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")
         assertNotNull(channel)
+
+        val options =
+            channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
+                channel!!.provenanceUri()
+            )
+        assertNotNull(options)
+        assertFalse(options!!.autojoin)
     }
 
     @Test
@@ -56,7 +66,7 @@ class IrcServiceTests {
     }
 
     @Test
-    fun `setAutojoin updates entity flag`() {
+    fun `setAutojoin updates ChannelControlOptions`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
         ircService.join("libera", "#java")
         val result = ircService.setAutojoin("libera", "#java", true)
@@ -64,7 +74,11 @@ class IrcServiceTests {
 
         val network = networkRepository.findByNameAndDeletedFalse("libera")!!
         val channel = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")!!
-        assertTrue(channel.autojoin)
+        val options =
+            channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
+                channel.provenanceUri()
+            )
+        assertTrue(options!!.autojoin)
     }
 
     @Test
@@ -78,7 +92,7 @@ class IrcServiceTests {
     }
 
     @Test
-    fun `setAutomute updates entity flag`() {
+    fun `setAutomute updates ChannelControlOptions`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
         ircService.join("libera", "#java")
         val result = ircService.setAutomute("libera", "#java", true)
@@ -86,11 +100,15 @@ class IrcServiceTests {
 
         val network = networkRepository.findByNameAndDeletedFalse("libera")!!
         val channel = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")!!
-        assertTrue(channel.automute)
+        val options =
+            channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
+                channel.provenanceUri()
+            )
+        assertTrue(options!!.automute)
     }
 
     @Test
-    fun `setVisible updates entity flag`() {
+    fun `setVisible updates ChannelControlOptions`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
         ircService.join("libera", "#java")
         val result = ircService.setVisible("libera", "#java", false)
@@ -98,11 +116,15 @@ class IrcServiceTests {
 
         val network = networkRepository.findByNameAndDeletedFalse("libera")!!
         val channel = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")!!
-        assertEquals(false, channel.visible)
+        val options =
+            channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
+                channel.provenanceUri()
+            )
+        assertFalse(options!!.visible)
     }
 
     @Test
-    fun `setLogged updates entity flag`() {
+    fun `setLogged updates ChannelControlOptions`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
         ircService.join("libera", "#java")
         val result = ircService.setLogged("libera", "#java", false)
@@ -110,7 +132,11 @@ class IrcServiceTests {
 
         val network = networkRepository.findByNameAndDeletedFalse("libera")!!
         val channel = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")!!
-        assertEquals(false, channel.logged)
+        val options =
+            channelControlOptionsRepository.findByProvenanceUriAndDeletedFalse(
+                channel.provenanceUri()
+            )
+        assertFalse(options!!.logged)
     }
 
     @Test

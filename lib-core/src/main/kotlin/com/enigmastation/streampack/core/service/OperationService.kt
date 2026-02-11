@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.config.StreampackProperties
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.Declined
 import com.enigmastation.streampack.core.model.FanOut
+import com.enigmastation.streampack.core.model.LoggingRequest
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import org.slf4j.LoggerFactory
@@ -55,6 +56,10 @@ class OperationService(
 
     /** Runs the message through the operation chain and returns the result */
     private fun processChain(message: Message<*>): OperationResult {
+        if (message.payload is LoggingRequest) {
+            return OperationResult.NotHandled
+        }
+
         val hopCount = message.headers[FanOut.HOP_COUNT_HEADER] as? Int ?: 0
         if (hopCount > properties.maxHops) {
             logger.warn(

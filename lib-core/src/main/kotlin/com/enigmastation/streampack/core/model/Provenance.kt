@@ -24,6 +24,7 @@ data class Provenance(
 
     companion object {
         const val HEADER = "provenance"
+        const val BOT_NICK = "botNick"
 
         /** Decodes a URI-format address string into a Provenance */
         fun decode(uri: String): Provenance {

@@ -1,6 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.irc.entity
 
+import com.enigmastation.streampack.core.model.Protocol
+import com.enigmastation.streampack.core.model.Provenance
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -21,11 +23,10 @@ data class IrcChannel(
     @JoinColumn(name = "network_id", nullable = false)
     val network: IrcNetwork = IrcNetwork(),
     @Column(nullable = false, length = 200) val name: String = "",
-    @Column(nullable = false) val autojoin: Boolean = false,
-    @Column(nullable = false) val automute: Boolean = false,
-    @Column(nullable = false) val visible: Boolean = true,
-    @Column(nullable = false) val logged: Boolean = true,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) val updatedAt: Instant = Instant.now(),
     @Column(nullable = false) val deleted: Boolean = false,
-)
+) {
+    /** Builds the provenance URI for this channel */
+    fun provenanceUri(): String = Provenance(Protocol.IRC, network.name, replyTo = name).encode()
+}

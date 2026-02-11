@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.irc.service
 
+import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.irc.entity.IrcChannel
 import com.enigmastation.streampack.irc.entity.IrcNetwork
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component
 class IrcService(
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
+    private val channelControlService: ChannelControlService,
     private val connectionManager: ObjectProvider<IrcConnectionManager>,
 ) {
     private val logger = LoggerFactory.getLogger(IrcService::class.java)
@@ -66,7 +68,7 @@ class IrcService(
         return "Network '$name' autoconnect set to $enabled"
     }
 
-    /** Registers a channel and optionally joins it */
+    /** Registers a channel and optionally joins it, creating default ChannelControlOptions */
     fun join(networkName: String, channelName: String): String {
         val network =
             networkRepository.findByNameAndDeletedFalse(networkName)
@@ -74,7 +76,8 @@ class IrcService(
         if (channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName) != null) {
             return "Error: Channel '$channelName' already registered on '$networkName'"
         }
-        channelRepository.save(IrcChannel(network = network, name = channelName))
+        val channel = channelRepository.save(IrcChannel(network = network, name = channelName))
+        channelControlService.getOrCreateOptions(channel.provenanceUri())
         connectionManager.ifAvailable { it.join(networkName, channelName) }
         logger.info("Registered channel '{}' on '{}'", channelName, networkName)
         return "Channel '$channelName' registered on '$networkName'. Joining..."
@@ -92,75 +95,57 @@ class IrcService(
         return "Left '$channelName' on '$networkName'"
     }
 
-    /** Updates the autojoin flag on a channel */
+    /** Updates the autojoin flag via ChannelControlOptions */
     fun setAutojoin(networkName: String, channelName: String, enabled: Boolean): String {
-        val network =
-            networkRepository.findByNameAndDeletedFalse(networkName)
-                ?: return "Error: Network '$networkName' not found"
-        val channel =
-            channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName)
-                ?: return "Error: Channel '$channelName' not found on '$networkName'"
-        channelRepository.save(channel.copy(autojoin = enabled, updatedAt = Instant.now()))
+        val uri =
+            resolveChannelUri(networkName, channelName)
+                ?: return channelNotFoundError(networkName, channelName)
+        channelControlService.setFlag(uri, "autojoin", enabled)
         return "Channel '$channelName' on '$networkName' autojoin set to $enabled"
     }
 
-    /** Mutes a channel at runtime */
+    /** Mutes a channel at runtime via ChannelControlOptions */
     fun mute(networkName: String, channelName: String): String {
-        val network =
-            networkRepository.findByNameAndDeletedFalse(networkName)
-                ?: return "Error: Network '$networkName' not found"
-        if (channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName) == null) {
-            return "Error: Channel '$channelName' not found on '$networkName'"
-        }
-        connectionManager.ifAvailable { it.mute(networkName, channelName) }
+        val uri =
+            resolveChannelUri(networkName, channelName)
+                ?: return channelNotFoundError(networkName, channelName)
+        channelControlService.setFlag(uri, "automute", true)
         return "Muted '$channelName' on '$networkName'"
     }
 
-    /** Unmutes a channel at runtime */
+    /** Unmutes a channel at runtime via ChannelControlOptions */
     fun unmute(networkName: String, channelName: String): String {
-        val network =
-            networkRepository.findByNameAndDeletedFalse(networkName)
-                ?: return "Error: Network '$networkName' not found"
-        if (channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName) == null) {
-            return "Error: Channel '$channelName' not found on '$networkName'"
-        }
-        connectionManager.ifAvailable { it.unmute(networkName, channelName) }
+        val uri =
+            resolveChannelUri(networkName, channelName)
+                ?: return channelNotFoundError(networkName, channelName)
+        channelControlService.setFlag(uri, "automute", false)
         return "Unmuted '$channelName' on '$networkName'"
     }
 
-    /** Updates the automute flag on a channel */
+    /** Updates the automute flag via ChannelControlOptions */
     fun setAutomute(networkName: String, channelName: String, enabled: Boolean): String {
-        val network =
-            networkRepository.findByNameAndDeletedFalse(networkName)
-                ?: return "Error: Network '$networkName' not found"
-        val channel =
-            channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName)
-                ?: return "Error: Channel '$channelName' not found on '$networkName'"
-        channelRepository.save(channel.copy(automute = enabled, updatedAt = Instant.now()))
+        val uri =
+            resolveChannelUri(networkName, channelName)
+                ?: return channelNotFoundError(networkName, channelName)
+        channelControlService.setFlag(uri, "automute", enabled)
         return "Channel '$channelName' on '$networkName' automute set to $enabled"
     }
 
-    /** Updates the visible flag on a channel */
+    /** Updates the visible flag via ChannelControlOptions */
     fun setVisible(networkName: String, channelName: String, visible: Boolean): String {
-        val network =
-            networkRepository.findByNameAndDeletedFalse(networkName)
-                ?: return "Error: Network '$networkName' not found"
-        val channel =
-            channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName)
-                ?: return "Error: Channel '$channelName' not found on '$networkName'"
-        channelRepository.save(channel.copy(visible = visible, updatedAt = Instant.now()))
+        val uri =
+            resolveChannelUri(networkName, channelName)
+                ?: return channelNotFoundError(networkName, channelName)
+        channelControlService.setFlag(uri, "visible", visible)
         return "Channel '$channelName' on '$networkName' visible set to $visible"
     }
 
-    /** Updates the logged flag on a channel */
+    /** Updates the logged flag via ChannelControlOptions */
     fun setLogged(networkName: String, channelName: String, logged: Boolean): String {
-        val network =
-            networkRepository.findByNameAndDeletedFalse(networkName)
-                ?: return "Error: Network '$networkName' not found"
-        val channel =
-            channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName)
-                ?: return "Error: Channel '$channelName' not found on '$networkName'"
-        channelRepository.save(channel.copy(logged = logged, updatedAt = Instant.now()))
+        val uri =
+            resolveChannelUri(networkName, channelName)
+                ?: return channelNotFoundError(networkName, channelName)
+        channelControlService.setFlag(uri, "logged", logged)
         return "Channel '$channelName' on '$networkName' logged set to $logged"
     }
 
@@ -186,7 +171,6 @@ class IrcService(
             return cm.getStatus(networkName)
         }
 
-        // No connection manager -- show entity state only
         if (networkName != null) {
             val network =
                 networkRepository.findByNameAndDeletedFalse(networkName)
@@ -199,4 +183,16 @@ class IrcService(
         if (networks.isEmpty()) return "No IRC networks configured"
         return networks.joinToString("\n") { "  ${it.toSummary()}" }
     }
+
+    /** Resolves a channel to its provenance URI, or null if not found */
+    private fun resolveChannelUri(networkName: String, channelName: String): String? {
+        val network = networkRepository.findByNameAndDeletedFalse(networkName) ?: return null
+        val channel =
+            channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName)
+                ?: return null
+        return channel.provenanceUri()
+    }
+
+    private fun channelNotFoundError(networkName: String, channelName: String): String =
+        "Error: Channel '$channelName' not found on '$networkName'"
 }

@@ -2,25 +2,25 @@
 package com.enigmastation.streampack.irc.service
 
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.model.LoggingRequest
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
-import com.enigmastation.streampack.core.service.OperationService
+import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.core.service.UserResolutionService
-import com.enigmastation.streampack.irc.entity.IrcMessage
-import com.enigmastation.streampack.irc.model.IrcMessageType
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
-import com.enigmastation.streampack.irc.repository.IrcMessageRepository
 import com.enigmastation.streampack.irc.repository.IrcNetworkRepository
-import java.util.concurrent.ConcurrentHashMap
 import net.engio.mbassy.listener.Handler
 import org.kitteh.irc.client.library.Client
 import org.kitteh.irc.client.library.event.channel.ChannelCtcpEvent
+import org.kitteh.irc.client.library.event.channel.ChannelJoinEvent
 import org.kitteh.irc.client.library.event.channel.ChannelMessageEvent
 import org.kitteh.irc.client.library.event.channel.ChannelPartEvent
 import org.kitteh.irc.client.library.event.channel.ChannelTopicEvent
 import org.kitteh.irc.client.library.event.channel.RequestedChannelJoinCompleteEvent
 import org.kitteh.irc.client.library.event.client.ClientNegotiationCompleteEvent
 import org.kitteh.irc.client.library.event.user.PrivateMessageEvent
+import org.kitteh.irc.client.library.event.user.UserNickChangeEvent
+import org.kitteh.irc.client.library.event.user.UserQuitEvent
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.support.MessageBuilder
 
@@ -31,17 +31,14 @@ import org.springframework.messaging.support.MessageBuilder
 class IrcAdapter(
     val networkName: String,
     private val eventGateway: EventGateway,
-    private val operationService: OperationService,
     private val userResolutionService: UserResolutionService,
+    private val channelControlService: ChannelControlService,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
-    private val messageRepository: IrcMessageRepository,
     private val client: Client,
     private val signalCharacter: String,
 ) {
     private val logger = LoggerFactory.getLogger(IrcAdapter::class.java)
-    private val mutedChannels: MutableSet<String> = ConcurrentHashMap.newKeySet()
-    private val loggedChannels: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     init {
         client.eventManager.registerEventListener(this)
@@ -63,26 +60,6 @@ class IrcAdapter(
         client.removeChannel(channelName)
     }
 
-    fun muteChannel(channelName: String) {
-        mutedChannels.add(channelName.lowercase())
-    }
-
-    fun unmuteChannel(channelName: String) {
-        mutedChannels.remove(channelName.lowercase())
-    }
-
-    fun isMuted(channelName: String): Boolean = channelName.lowercase() in mutedChannels
-
-    fun isLogged(channelName: String): Boolean = channelName.lowercase() in loggedChannels
-
-    fun setLogged(channelName: String, logged: Boolean) {
-        if (logged) {
-            loggedChannels.add(channelName.lowercase())
-        } else {
-            loggedChannels.remove(channelName.lowercase())
-        }
-    }
-
     /** Sends a message to the given target (channel or nick) via the IRC client */
     fun sendMessage(target: String, text: String) {
         client.sendMessage(target, text)
@@ -95,30 +72,21 @@ class IrcAdapter(
     fun onConnected(event: ClientNegotiationCompleteEvent) {
         logger.info("Connected to network '{}'", networkName)
         val network = networkRepository.findByNameAndDeletedFalse(networkName) ?: return
-        val autojoinChannels =
-            channelRepository.findByNetworkAndAutojoinTrueAndDeletedFalse(network)
-        for (channel in autojoinChannels) {
-            logger.info("Auto-joining {} on {}", channel.name, networkName)
-            client.addChannel(channel.name)
-            if (channel.automute) {
-                mutedChannels.add(channel.name.lowercase())
-            }
-            if (channel.logged) {
-                loggedChannels.add(channel.name.lowercase())
+        val channels = channelRepository.findByNetworkAndDeletedFalse(network)
+        for (channel in channels) {
+            val options = channelControlService.getOptions(channel.provenanceUri())
+            if (options?.autojoin == true) {
+                logger.info("Auto-joining {} on {}", channel.name, networkName)
+                client.addChannel(channel.name)
             }
         }
     }
 
     @Handler
     fun onChannelMessage(event: ChannelMessageEvent) {
-        // we start a virtual thread here because resolution and logging are blocking by nature.
-        // This removes
-        // a *potential* constraint.
         Thread.startVirtualThread {
             try {
                 val channelName = event.channel.name
-                logMessage(channelName, event.actor.nick, event.message, IrcMessageType.MESSAGE)
-
                 val nick = event.actor.nick
                 val user = userResolutionService.resolve(Protocol.IRC, networkName, nick)
                 val provenance =
@@ -127,6 +95,7 @@ class IrcAdapter(
                         serviceId = networkName,
                         replyTo = channelName,
                         user = user,
+                        metadata = mapOf(Provenance.BOT_NICK to client.nick),
                     )
                 val host = event.actor.host
                 val ident = event.actor.userString
@@ -135,13 +104,7 @@ class IrcAdapter(
                 if (strippedText != null) {
                     dispatch(strippedText, provenance, nick, host, ident)
                 } else {
-                    val preMessage =
-                        MessageBuilder.withPayload(event.message)
-                            .setHeader(Provenance.HEADER, provenance)
-                            .build()
-                    if (operationService.hasUnaddressedInterest(preMessage)) {
-                        dispatch(event.message, provenance, nick, host, ident)
-                    }
+                    dispatch(event.message, provenance, nick, host, ident)
                 }
             } catch (e: Exception) {
                 logger.error("Error processing channel message on {}: {}", networkName, e.message)
@@ -189,8 +152,6 @@ class IrcAdapter(
 
     @Handler
     fun onPrivateMessage(event: PrivateMessageEvent) {
-        // we start a virtual thread here because resolution is blocking by nature. This removes
-        // a *potential* constraint.
         Thread.startVirtualThread {
             try {
                 val nick = event.actor.nick
@@ -201,6 +162,7 @@ class IrcAdapter(
                         serviceId = networkName,
                         replyTo = nick,
                         user = user,
+                        metadata = mapOf(Provenance.BOT_NICK to client.nick),
                     )
                 dispatch(event.message, provenance, nick, event.actor.host, event.actor.userString)
             } catch (e: Exception) {
@@ -211,7 +173,9 @@ class IrcAdapter(
 
     @Handler
     fun onChannelAction(event: ChannelCtcpEvent) {
-        logMessage(event.channel.name, event.actor.nick, event.message, IrcMessageType.ACTION)
+        if (!event.message.startsWith("ACTION ")) return
+        val action = event.message.removePrefix("ACTION ").removeSuffix("\u0001")
+        dispatchLoggingEvent(event.channel.name, "* ${event.actor.nick} $action")
     }
 
     @Handler
@@ -220,44 +184,59 @@ class IrcAdapter(
     }
 
     @Handler
+    fun onUserJoin(event: ChannelJoinEvent) {
+        dispatchLoggingEvent(
+            event.channel.name,
+            "* ${event.actor.nick} joined ${event.channel.name}",
+        )
+    }
+
+    @Handler
     fun onChannelTopic(event: ChannelTopicEvent) {
+        val setter = event.newTopic.setter.map { it.name }.orElse("someone")
         val newTopic = event.newTopic.value.orElse("")
-        logMessage(event.channel.name, "system", newTopic, IrcMessageType.TOPIC)
+        dispatchLoggingEvent(event.channel.name, "* $setter changed the topic to: $newTopic")
     }
 
     @Handler
     fun onUserPart(event: ChannelPartEvent) {
-        logMessage(event.channel.name, event.actor.nick, "left the channel", IrcMessageType.PART)
+        val reason = event.message.let { if (it.isNotEmpty()) " ($it)" else "" }
+        dispatchLoggingEvent(
+            event.channel.name,
+            "* ${event.actor.nick} left ${event.channel.name}$reason",
+        )
     }
 
-    /** Persists a message to the log if logging is enabled for the channel */
-    private fun logMessage(
-        channelName: String,
-        nick: String,
-        content: String,
-        messageType: IrcMessageType,
-    ) {
-        if (!isLogged(channelName)) return
-        try {
-            val network = networkRepository.findByNameAndDeletedFalse(networkName) ?: return
-            val channel =
-                channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName)
-                    ?: return
-            messageRepository.save(
-                IrcMessage(
-                    channel = channel,
-                    nick = nick,
-                    content = content,
-                    messageType = messageType,
-                )
-            )
-        } catch (e: Exception) {
-            logger.error(
-                "Failed to log message for {} on {}: {}",
-                channelName,
-                networkName,
-                e.message,
-            )
+    @Handler
+    fun onNickChange(event: UserNickChangeEvent) {
+        dispatchLoggingEvent("*", "* ${event.actor.nick} is now known as ${event.newUser.nick}")
+    }
+
+    @Handler
+    fun onUserQuit(event: UserQuitEvent) {
+        val reason = event.message.let { if (it.isNotEmpty()) " ($it)" else "" }
+        dispatchLoggingEvent("*", "* ${event.actor.nick} quit$reason")
+    }
+
+    /** Dispatches a metadata event as a LoggingRequest through ingress for logging only */
+    private fun dispatchLoggingEvent(channelName: String, content: String) {
+        Thread.startVirtualThread {
+            try {
+                val provenance =
+                    Provenance(
+                        protocol = Protocol.IRC,
+                        serviceId = networkName,
+                        replyTo = channelName,
+                        metadata = mapOf(Provenance.BOT_NICK to client.nick),
+                    )
+                val message =
+                    MessageBuilder.withPayload(LoggingRequest(content) as Any)
+                        .setHeader(Provenance.HEADER, provenance)
+                        .build()
+                eventGateway.send(message)
+            } catch (e: Exception) {
+                logger.error("Error dispatching logging event on {}: {}", networkName, e.message)
+            }
         }
     }
 }

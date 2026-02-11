@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.integration.EgressSubscriber
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.service.ChannelControlService
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -16,8 +17,10 @@ import org.springframework.stereotype.Component
  */
 @Component
 @ConditionalOnProperty("streampack.irc.enabled", havingValue = "true")
-class IrcEgressSubscriber(private val connectionManager: IrcConnectionManager) :
-    EgressSubscriber() {
+class IrcEgressSubscriber(
+    private val connectionManager: IrcConnectionManager,
+    private val channelControlService: ChannelControlService,
+) : EgressSubscriber() {
     private val logger = LoggerFactory.getLogger(IrcEgressSubscriber::class.java)
 
     override fun matches(provenance: Provenance): Boolean = provenance.protocol == Protocol.IRC
@@ -34,7 +37,8 @@ class IrcEgressSubscriber(private val connectionManager: IrcConnectionManager) :
             return
         }
 
-        if (adapter.isMuted(provenance.replyTo)) {
+        val isMuted = channelControlService.getOptions(provenance.encode())?.automute ?: false
+        if (isMuted) {
             logger.debug(
                 "Channel '{}' is muted on '{}', suppressing reply",
                 provenance.replyTo,

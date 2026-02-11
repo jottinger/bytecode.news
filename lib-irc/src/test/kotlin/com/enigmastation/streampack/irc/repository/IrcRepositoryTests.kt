@@ -2,9 +2,7 @@
 package com.enigmastation.streampack.irc.repository
 
 import com.enigmastation.streampack.irc.entity.IrcChannel
-import com.enigmastation.streampack.irc.entity.IrcMessage
 import com.enigmastation.streampack.irc.entity.IrcNetwork
-import com.enigmastation.streampack.irc.model.IrcMessageType
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -13,7 +11,6 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.data.domain.PageRequest
 import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
@@ -22,7 +19,6 @@ class IrcRepositoryTests {
 
     @Autowired lateinit var networkRepository: IrcNetworkRepository
     @Autowired lateinit var channelRepository: IrcChannelRepository
-    @Autowired lateinit var messageRepository: IrcMessageRepository
 
     @Test
     fun `save and retrieve network`() {
@@ -47,47 +43,12 @@ class IrcRepositoryTests {
             networkRepository.save(
                 IrcNetwork(name = "libera-ch", host = "irc.libera.chat", nick = "nevet")
             )
-        val channel =
-            channelRepository.save(IrcChannel(network = network, name = "#java", autojoin = true))
+        val channel = channelRepository.save(IrcChannel(network = network, name = "#java"))
 
         assertNotEquals(UUID(0, 0), channel.id)
         val found = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")
         assertNotNull(found)
         assertEquals("#java", found!!.name)
-        assertEquals(true, found.autojoin)
-    }
-
-    @Test
-    fun `save message and verify ordering`() {
-        val network =
-            networkRepository.save(
-                IrcNetwork(name = "libera-msg", host = "irc.libera.chat", nick = "nevet")
-            )
-        val channel = channelRepository.save(IrcChannel(network = network, name = "#test-order"))
-
-        messageRepository.save(
-            IrcMessage(
-                channel = channel,
-                nick = "alice",
-                content = "first message",
-                messageType = IrcMessageType.MESSAGE,
-            )
-        )
-        messageRepository.save(
-            IrcMessage(
-                channel = channel,
-                nick = "bob",
-                content = "second message",
-                messageType = IrcMessageType.MESSAGE,
-            )
-        )
-
-        val page =
-            messageRepository.findByChannelOrderByTimestampDesc(channel, PageRequest.of(0, 10))
-        assertEquals(2, page.totalElements)
-        // Most recent first
-        assertEquals("bob", page.content[0].nick)
-        assertEquals("alice", page.content[1].nick)
     }
 
     @Test
@@ -107,23 +68,6 @@ class IrcRepositoryTests {
         val autoNetworks = networkRepository.findByAutoconnectTrueAndDeletedFalse()
         assertEquals(1, autoNetworks.size)
         assertEquals("auto-net", autoNetworks[0].name)
-    }
-
-    @Test
-    fun `findByAutojoinTrue returns only autojoin channels for a network`() {
-        val network =
-            networkRepository.save(
-                IrcNetwork(name = "libera-aj", host = "irc.libera.chat", nick = "nevet")
-            )
-        channelRepository.save(
-            IrcChannel(network = network, name = "#autojoin-ch", autojoin = true)
-        )
-        channelRepository.save(IrcChannel(network = network, name = "#manual-ch", autojoin = false))
-
-        val autojoinChannels =
-            channelRepository.findByNetworkAndAutojoinTrueAndDeletedFalse(network)
-        assertEquals(1, autojoinChannels.size)
-        assertEquals("#autojoin-ch", autojoinChannels[0].name)
     }
 
     @Test
@@ -178,5 +122,16 @@ class IrcRepositoryTests {
             "libera (irc.libera.chat:6697 TLS, nick=nevet, autoconnect)",
             network.toSummary(),
         )
+    }
+
+    @Test
+    fun `channel provenanceUri encodes correctly`() {
+        val network =
+            networkRepository.save(
+                IrcNetwork(name = "libera-uri", host = "irc.libera.chat", nick = "nevet")
+            )
+        val channel = channelRepository.save(IrcChannel(network = network, name = "#java"))
+        val uri = channel.provenanceUri()
+        assertEquals("irc://libera-uri/%23java", uri)
     }
 }

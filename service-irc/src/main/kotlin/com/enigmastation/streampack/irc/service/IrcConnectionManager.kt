@@ -2,12 +2,11 @@
 package com.enigmastation.streampack.irc.service
 
 import com.enigmastation.streampack.core.integration.EventGateway
-import com.enigmastation.streampack.core.service.OperationService
+import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.irc.config.IrcProperties
 import com.enigmastation.streampack.irc.entity.IrcNetwork
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
-import com.enigmastation.streampack.irc.repository.IrcMessageRepository
 import com.enigmastation.streampack.irc.repository.IrcNetworkRepository
 import java.util.concurrent.ConcurrentHashMap
 import org.kitteh.irc.client.library.Client
@@ -26,12 +25,11 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty("streampack.irc.enabled", havingValue = "true")
 class IrcConnectionManager(
     private val eventGateway: EventGateway,
-    private val operationService: OperationService,
     private val userResolutionService: UserResolutionService,
+    private val channelControlService: ChannelControlService,
     private val ircProperties: IrcProperties,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
-    private val messageRepository: IrcMessageRepository,
 ) : InitializingBean, DisposableBean {
     private val logger = LoggerFactory.getLogger(IrcConnectionManager::class.java)
     private val adapters = ConcurrentHashMap<String, IrcAdapter>()
@@ -85,11 +83,10 @@ class IrcConnectionManager(
             IrcAdapter(
                 networkName = network.name,
                 eventGateway = eventGateway,
-                operationService = operationService,
                 userResolutionService = userResolutionService,
+                channelControlService = channelControlService,
                 networkRepository = networkRepository,
                 channelRepository = channelRepository,
-                messageRepository = messageRepository,
                 client = client,
                 signalCharacter = effectiveSignal,
             )
@@ -113,23 +110,13 @@ class IrcConnectionManager(
         adapters[networkName]?.leaveChannel(channelName)
     }
 
-    fun mute(networkName: String, channelName: String) {
-        adapters[networkName]?.muteChannel(channelName)
-    }
-
-    fun unmute(networkName: String, channelName: String) {
-        adapters[networkName]?.unmuteChannel(channelName)
-    }
-
     /** Returns status summary for a specific network or all networks */
     fun getStatus(networkName: String?): String {
         if (networkName != null) {
             val adapter = adapters[networkName]
             return if (adapter != null) {
                 val channels = adapter.getJoinedChannels()
-                val mutedList =
-                    channels.filter { adapter.isMuted(it) }.joinToString(", ").ifEmpty { "none" }
-                "Network '$networkName': connected, channels=${channels.joinToString(", ")}, muted=$mutedList"
+                "Network '$networkName': connected, channels=${channels.joinToString(", ")}"
             } else {
                 "Network '$networkName': not connected"
             }

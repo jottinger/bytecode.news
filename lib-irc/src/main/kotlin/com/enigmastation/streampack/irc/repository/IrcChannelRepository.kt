@@ -10,6 +10,4 @@ interface IrcChannelRepository : JpaRepository<IrcChannel, UUID> {
     fun findByNetworkAndNameAndDeletedFalse(network: IrcNetwork, name: String): IrcChannel?
 
     fun findByNetworkAndDeletedFalse(network: IrcNetwork): List<IrcChannel>
-
-    fun findByNetworkAndAutojoinTrueAndDeletedFalse(network: IrcNetwork): List<IrcChannel>
 }
