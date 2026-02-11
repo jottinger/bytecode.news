@@ -10,6 +10,7 @@ data class StreampackProperties(
     val jwt: JwtProperties = JwtProperties(),
     val token: TokenProperties = TokenProperties(),
     val mail: MailProperties = MailProperties(),
+    val maxHops: Int = 3,
 ) {
     data class JwtProperties(val secret: String = "", val expirationHours: Long = 24)
 

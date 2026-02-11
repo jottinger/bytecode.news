@@ -33,6 +33,12 @@ interface PostRepository : JpaRepository<Post, UUID> {
     @Query("SELECT p FROM Post p WHERE p.id = :id AND p.deleted = false")
     fun findActiveById(id: UUID): Post?
 
+    /** Published posts with eagerly loaded authors for RSS feed generation */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY p.publishedAt DESC"
+    )
+    fun findRecentPublishedWithAuthor(now: Instant, pageable: Pageable): List<Post>
+
     /** Paginated published posts for listing pages */
     @Query(
         "SELECT p FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY p.publishedAt DESC"

@@ -11,7 +11,10 @@ package com.enigmastation.streampack.core.model
  *   chain and reach the caller via the EventGateway.
  * - [Declined] -- a non-terminal signal consumed by the OperationService. It continues the chain
  *   but carries diagnostic information for logging.
+ * - [FanOut] -- a non-terminal signal consumed by the OperationService. It dispatches each child
+ *   message through the operation chain and returns Success to the original caller.
  *
- * Adapters and gateway callers only see [OperationResult]; [Declined] is internal to the chain.
+ * Adapters and gateway callers only see [OperationResult]; [Declined] and [FanOut] are internal to
+ * the chain.
  */
 sealed interface OperationOutcome

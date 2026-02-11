@@ -10,7 +10,12 @@ package com.enigmastation.streampack.core.model
  * Both Success and Error short-circuit the chain -- they are definitive answers. NotHandled is
  * returned only when the entire chain has been exhausted without a result.
  *
- * See [OperationOutcome] for the full family including non-terminal signals like [Declined].
+ * [FanOut] is intentionally an [OperationOutcome], not an OperationResult. It is consumed
+ * internally by the OperationService and never escapes to callers, so exhaustive `when` blocks on
+ * OperationResult remain unchanged.
+ *
+ * See [OperationOutcome] for the full family including non-terminal signals like [Declined] and
+ * [FanOut].
  */
 sealed class OperationResult : OperationOutcome {
     data class Success(val payload: Any) : OperationResult()
