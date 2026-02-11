@@ -6,10 +6,13 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.Declined
 import com.enigmastation.streampack.core.model.FanOut
 import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Provenance
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
 import org.springframework.integration.annotation.ServiceActivator
 import org.springframework.messaging.Message
+import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Service
 
@@ -28,6 +31,7 @@ class OperationService(
     operations: List<Operation>,
     private val properties: StreampackProperties,
     @Lazy private val eventGateway: EventGateway,
+    @Qualifier("egressChannel") private val egressChannel: MessageChannel,
 ) {
     private val logger = LoggerFactory.getLogger(OperationService::class.java)
     private val sortedOperations = operations.sortedBy { it.priority }
@@ -52,7 +56,9 @@ class OperationService(
                 hopCount,
                 properties.maxHops,
             )
-            return OperationResult.Error("Maximum hop count exceeded")
+            val result = OperationResult.Error("Maximum hop count exceeded")
+            publishToEgress(result, message)
+            return result
         }
 
         for (op in sortedOperations) {
@@ -89,6 +95,7 @@ class OperationService(
                     if (result is OperationResult.Success) {
                         logger.debug("Message {} generated {}", message.headers.id, result.payload)
                     }
+                    publishToEgress(result, message)
                     return result
                 }
                 logger.debug("Operation {} returned null, continuing chain", op::class.simpleName)
@@ -96,6 +103,20 @@ class OperationService(
         }
         logger.debug("No operation handled message {}", message.headers.id)
         return OperationResult.NotHandled
+    }
+
+    /** Publishes a terminal result to the egress channel for subscriber delivery */
+    private fun publishToEgress(result: OperationResult, inputMessage: Message<*>) {
+        val provenance = inputMessage.headers[Provenance.HEADER] as? Provenance ?: return
+        val egressMessage =
+            MessageBuilder.withPayload(result as Any)
+                .setHeader(Provenance.HEADER, provenance)
+                .build()
+        try {
+            egressChannel.send(egressMessage)
+        } catch (e: Exception) {
+            logger.warn("Failed to publish to egress channel: {}", e.message)
+        }
     }
 
     /** Dispatches each child message with an incremented hop count */
