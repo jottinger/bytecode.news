@@ -145,5 +145,8 @@ class IrcConnectionManager(
         }
     }
 
+    /** Returns the adapter for the given network, or null if not connected */
+    fun getAdapter(networkName: String): IrcAdapter? = adapters[networkName]
+
     fun isConnected(networkName: String): Boolean = adapters.containsKey(networkName)
 }

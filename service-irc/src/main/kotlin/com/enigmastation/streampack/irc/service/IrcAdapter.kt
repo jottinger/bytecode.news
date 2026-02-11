@@ -2,7 +2,6 @@
 package com.enigmastation.streampack.irc.service
 
 import com.enigmastation.streampack.core.integration.EventGateway
-import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.OperationService
@@ -84,6 +83,11 @@ class IrcAdapter(
         }
     }
 
+    /** Sends a message to the given target (channel or nick) via the IRC client */
+    fun sendMessage(target: String, text: String) {
+        client.sendMessage(target, text)
+    }
+
     /** Returns channels the client has joined */
     fun getJoinedChannels(): Set<String> = client.channels.map { it.name }.toSet()
 
@@ -107,6 +111,9 @@ class IrcAdapter(
 
     @Handler
     fun onChannelMessage(event: ChannelMessageEvent) {
+        // we start a virtual thread here because resolution and logging are blocking by nature.
+        // This removes
+        // a *potential* constraint.
         Thread.startVirtualThread {
             try {
                 val channelName = event.channel.name
@@ -126,14 +133,14 @@ class IrcAdapter(
 
                 val strippedText = extractAddressedText(event.message)
                 if (strippedText != null) {
-                    dispatchAndReply(strippedText, channelName, provenance, nick, host, ident)
+                    dispatch(strippedText, provenance, nick, host, ident)
                 } else {
                     val preMessage =
                         MessageBuilder.withPayload(event.message)
                             .setHeader(Provenance.HEADER, provenance)
                             .build()
                     if (operationService.hasUnaddressedInterest(preMessage)) {
-                        dispatchAndReply(event.message, channelName, provenance, nick, host, ident)
+                        dispatch(event.message, provenance, nick, host, ident)
                     }
                 }
             } catch (e: Exception) {
@@ -142,10 +149,9 @@ class IrcAdapter(
         }
     }
 
-    /** Sends payload through the EventGateway and replies to the channel if not muted */
-    private fun dispatchAndReply(
+    /** Sends payload through the EventGateway as fire-and-forget; results arrive via egress */
+    private fun dispatch(
         payload: String,
-        channelName: String,
         provenance: Provenance,
         nick: String? = null,
         host: String? = null,
@@ -155,18 +161,7 @@ class IrcAdapter(
         if (nick != null) builder.setHeader("nick", nick)
         if (host != null) builder.setHeader("host", host)
         if (ident != null) builder.setHeader("ident", ident)
-        val message = builder.build()
-        val result = eventGateway.process(message)
-
-        if (!isMuted(channelName)) {
-            when (result) {
-                is OperationResult.Success ->
-                    client.sendMessage(channelName, result.payload.toString())
-                is OperationResult.Error ->
-                    client.sendMessage(channelName, "Error: ${result.message}")
-                is OperationResult.NotHandled -> {}
-            }
-        }
+        eventGateway.send(builder.build())
     }
 
     /**
@@ -194,6 +189,8 @@ class IrcAdapter(
 
     @Handler
     fun onPrivateMessage(event: PrivateMessageEvent) {
+        // we start a virtual thread here because resolution is blocking by nature. This removes
+        // a *potential* constraint.
         Thread.startVirtualThread {
             try {
                 val nick = event.actor.nick
@@ -205,22 +202,7 @@ class IrcAdapter(
                         replyTo = nick,
                         user = user,
                     )
-                val builder =
-                    MessageBuilder.withPayload(event.message)
-                        .setHeader(Provenance.HEADER, provenance)
-                        .setHeader("nick", nick)
-                        .setHeader("host", event.actor.host)
-                        .setHeader("ident", event.actor.userString)
-                val message = builder.build()
-                val result = eventGateway.process(message)
-
-                when (result) {
-                    is OperationResult.Success ->
-                        client.sendMessage(event.actor.nick, result.payload.toString())
-                    is OperationResult.Error ->
-                        client.sendMessage(event.actor.nick, "Error: ${result.message}")
-                    is OperationResult.NotHandled -> {}
-                }
+                dispatch(event.message, provenance, nick, event.actor.host, event.actor.userString)
             } catch (e: Exception) {
                 logger.error("Error processing private message on {}: {}", networkName, e.message)
             }
