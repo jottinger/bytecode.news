@@ -48,6 +48,13 @@ class OperationService(
     /** Receives from the ingress channel and returns the result to the gateway's reply channel */
     @ServiceActivator(inputChannel = "ingressChannel")
     fun process(message: Message<*>): OperationResult {
+        val result = processChain(message)
+        publishToEgress(result, message)
+        return result
+    }
+
+    /** Runs the message through the operation chain and returns the result */
+    private fun processChain(message: Message<*>): OperationResult {
         val hopCount = message.headers[FanOut.HOP_COUNT_HEADER] as? Int ?: 0
         if (hopCount > properties.maxHops) {
             logger.warn(
@@ -56,9 +63,7 @@ class OperationService(
                 hopCount,
                 properties.maxHops,
             )
-            val result = OperationResult.Error("Maximum hop count exceeded")
-            publishToEgress(result, message)
-            return result
+            return OperationResult.Error("Maximum hop count exceeded")
         }
 
         for (op in sortedOperations) {
@@ -95,7 +100,6 @@ class OperationService(
                     if (result is OperationResult.Success) {
                         logger.debug("Message {} generated {}", message.headers.id, result.payload)
                     }
-                    publishToEgress(result, message)
                     return result
                 }
                 logger.debug("Operation {} returned null, continuing chain", op::class.simpleName)

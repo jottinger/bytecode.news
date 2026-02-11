@@ -2,7 +2,6 @@
 package com.enigmastation.streampack.console
 
 import com.enigmastation.streampack.core.integration.EventGateway
-import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
@@ -17,7 +16,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
-/** Interactive console adapter that runs as the first superadmin user */
+/**
+ * Interactive console adapter that reads stdin and fires messages into the event system.
+ *
+ * Input is fire-and-forget: the adapter publishes to ingress and does not wait for a result. Output
+ * arrives via [ConsoleEgressSubscriber] watching the egress channel.
+ */
 @Component
 @ConditionalOnProperty("streampack.console.enabled", havingValue = "true")
 class ConsoleAdapter(
@@ -53,11 +57,7 @@ class ConsoleAdapter(
             val message =
                 MessageBuilder.withPayload(line).setHeader(Provenance.HEADER, provenance).build()
 
-            when (val result = eventGateway.process(message)) {
-                is OperationResult.Success -> println(result.payload)
-                is OperationResult.Error -> println("ERROR: ${result.message}")
-                is OperationResult.NotHandled -> println("Unknown command: $line")
-            }
+            eventGateway.send(message)
         }
     }
 

@@ -131,10 +131,12 @@ class EgressChannelTests {
     }
 
     @Test
-    fun `NotHandled results are not published to egress`() {
+    fun `NotHandled results are published to egress`() {
         eventGateway.process(consoleMessage("unknown command"))
 
-        assertEquals(0, consoleSubscriber.received.size)
+        assertEquals(1, consoleSubscriber.received.size)
+        val (result, _) = consoleSubscriber.received[0]
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
     }
 
     @Test
