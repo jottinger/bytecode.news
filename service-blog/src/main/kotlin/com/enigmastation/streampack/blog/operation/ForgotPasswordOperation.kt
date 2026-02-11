@@ -8,7 +8,6 @@ import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.EmailService
 import com.enigmastation.streampack.core.service.Operation
 import com.enigmastation.streampack.core.service.VerificationTokenService
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -21,10 +20,6 @@ class ForgotPasswordOperation(
     private val verificationTokenService: VerificationTokenService,
     private val emailService: EmailService,
 ) : Operation {
-    private val logger = LoggerFactory.getLogger(ForgotPasswordOperation::class.java)
-
-    override val priority = 50
-
     override fun canHandle(message: Message<*>): Boolean = message.payload is ForgotPasswordRequest
 
     override fun execute(message: Message<*>): OperationResult {

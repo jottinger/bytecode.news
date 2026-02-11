@@ -44,6 +44,16 @@
         </dependency>
         <dependency>
             <groupId>com.enigmastation</groupId>
+            <artifactId>operation-specs</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
+            <artifactId>operation-weather</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
             <artifactId>service-factoid</artifactId>
             <version>${project.version}</version>
         </dependency>

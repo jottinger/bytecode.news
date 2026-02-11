@@ -9,7 +9,6 @@ import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.factoid.model.FactoidAttributeType
 import com.enigmastation.streampack.factoid.model.FactoidSetRequest
 import com.enigmastation.streampack.factoid.service.FactoidService
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -17,8 +16,6 @@ import org.springframework.stereotype.Component
 @Component
 class SetFactoidOperation(private val factoidService: FactoidService) :
     TranslatingOperation<FactoidSetRequest>(FactoidSetRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(SetFactoidOperation::class.java)
 
     override val priority: Int = 75
     override val addressed: Boolean = true

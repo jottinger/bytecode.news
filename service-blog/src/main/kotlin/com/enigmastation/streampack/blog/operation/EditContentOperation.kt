@@ -14,7 +14,6 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import java.time.Instant
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -26,10 +25,6 @@ class EditContentOperation(
     private val commentRepository: CommentRepository,
     private val markdownRenderingService: MarkdownRenderingService,
 ) : TypedOperation<EditContentRequest>(EditContentRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(EditContentOperation::class.java)
-
-    override val priority = 50
 
     override fun handle(payload: EditContentRequest, message: Message<*>): OperationOutcome {
         val provenance =

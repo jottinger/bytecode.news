@@ -18,7 +18,6 @@ import org.springframework.messaging.Message
  * cannot handle the string.
  */
 abstract class TranslatingOperation<T : Any>(private val payloadType: KClass<T>) : Operation {
-
     /** Parse a string payload into the typed request, or null if this string is not handleable */
     abstract fun translate(payload: String, message: Message<*>): T?
 

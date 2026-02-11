@@ -9,7 +9,6 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.core.service.UserRegistrationService
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -17,8 +16,6 @@ import org.springframework.stereotype.Component
 @Component
 class CreateUserOperation(private val userRegistrationService: UserRegistrationService) :
     TranslatingOperation<CreateUserRequest>(CreateUserRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(CreateUserOperation::class.java)
 
     override val priority = 50
 

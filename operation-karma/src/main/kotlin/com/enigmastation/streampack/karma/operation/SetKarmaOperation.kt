@@ -8,7 +8,6 @@ import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.karma.config.KarmaProperties
 import com.enigmastation.streampack.karma.service.KarmaService
 import java.util.regex.Pattern
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -18,8 +17,6 @@ class SetKarmaOperation(
     private val karmaService: KarmaService,
     private val karmaProperties: KarmaProperties,
 ) : TypedOperation<String>(String::class) {
-
-    private val logger = LoggerFactory.getLogger(SetKarmaOperation::class.java)
 
     override val priority: Int = 40
 

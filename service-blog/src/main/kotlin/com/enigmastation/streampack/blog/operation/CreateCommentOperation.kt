@@ -13,7 +13,6 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.TypedOperation
 import java.time.Instant
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -25,8 +24,6 @@ class CreateCommentOperation(
     private val userRepository: UserRepository,
     private val markdownRenderingService: MarkdownRenderingService,
 ) : TypedOperation<CreateCommentRequest>(CreateCommentRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(CreateCommentOperation::class.java)
 
     override val priority = 50
 

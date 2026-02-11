@@ -8,7 +8,6 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.TypedOperation
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -23,8 +22,6 @@ import org.springframework.stereotype.Component
 @Component
 class AlterUserOperation(private val userRepository: UserRepository) :
     TypedOperation<AlterUserRequest>(AlterUserRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(AlterUserOperation::class.java)
 
     override val priority = 50
 

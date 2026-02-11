@@ -10,7 +10,6 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import java.time.Instant
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -18,8 +17,6 @@ import org.springframework.stereotype.Component
 @Component
 class SoftDeleteCommentOperation(private val commentRepository: CommentRepository) :
     TypedOperation<SoftDeleteCommentRequest>(SoftDeleteCommentRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(SoftDeleteCommentOperation::class.java)
 
     override val priority = 50
 

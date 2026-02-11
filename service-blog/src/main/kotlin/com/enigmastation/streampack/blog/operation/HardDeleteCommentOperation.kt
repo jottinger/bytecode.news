@@ -10,7 +10,6 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import jakarta.persistence.EntityManager
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -20,8 +19,6 @@ class HardDeleteCommentOperation(
     private val commentRepository: CommentRepository,
     private val entityManager: EntityManager,
 ) : TypedOperation<HardDeleteCommentRequest>(HardDeleteCommentRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(HardDeleteCommentOperation::class.java)
 
     override val priority = 50
 

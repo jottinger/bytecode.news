@@ -38,6 +38,8 @@ streampack:
   karma:
     immune-subjects:
       - nevet
+  weather:
+    api-key: ${OPENWEATHERMAP_API_KEY:change-me}
 
 springdoc:
   api-docs:

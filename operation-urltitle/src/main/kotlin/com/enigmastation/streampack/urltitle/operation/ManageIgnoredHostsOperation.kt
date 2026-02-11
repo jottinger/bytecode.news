@@ -7,7 +7,6 @@ import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.urltitle.service.UrlTitleService
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -15,8 +14,6 @@ import org.springframework.stereotype.Component
 @Component
 class ManageIgnoredHostsOperation(private val urlTitleService: UrlTitleService) :
     TypedOperation<String>(String::class) {
-
-    private val logger = LoggerFactory.getLogger(ManageIgnoredHostsOperation::class.java)
 
     override val priority: Int = 50
 

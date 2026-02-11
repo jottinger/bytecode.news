@@ -10,7 +10,6 @@ import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.TypedOperation
 import java.time.Instant
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -18,10 +17,6 @@ import org.springframework.stereotype.Component
 @Component
 class RetractContentOperation(private val postRepository: PostRepository) :
     TypedOperation<RetractContentRequest>(RetractContentRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(RetractContentOperation::class.java)
-
-    override val priority = 50
 
     override fun handle(payload: RetractContentRequest, message: Message<*>): OperationOutcome {
         val provenance =

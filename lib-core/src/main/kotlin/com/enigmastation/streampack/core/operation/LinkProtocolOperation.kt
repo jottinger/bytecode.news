@@ -13,7 +13,6 @@ import com.enigmastation.streampack.core.service.IdentityProvider
 import com.enigmastation.streampack.core.service.IdentityResolution
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.core.service.UserRegistrationService
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -24,8 +23,6 @@ class LinkProtocolOperation(
     private val userRegistrationService: UserRegistrationService,
     private val identityProviders: List<IdentityProvider>,
 ) : TranslatingOperation<LinkProtocolRequest>(LinkProtocolRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(LinkProtocolOperation::class.java)
 
     override val priority = 50
 

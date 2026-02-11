@@ -16,7 +16,6 @@ import com.enigmastation.streampack.core.service.TypedOperation
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -26,10 +25,6 @@ class FindCommentsOperation(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository,
 ) : TypedOperation<FindCommentsRequest>(FindCommentsRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(FindCommentsOperation::class.java)
-
-    override val priority = 50
 
     override fun handle(payload: FindCommentsRequest, message: Message<*>): OperationOutcome {
         val provenance = message.headers[Provenance.HEADER] as? Provenance

@@ -9,7 +9,6 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.urltitle.config.UrlTitleProperties
 import com.enigmastation.streampack.urltitle.service.UrlTitleService
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -19,8 +18,6 @@ class UrlTitleOperation(
     private val urlTitleService: UrlTitleService,
     private val properties: UrlTitleProperties,
 ) : TypedOperation<String>(String::class) {
-
-    private val logger = LoggerFactory.getLogger(UrlTitleOperation::class.java)
 
     override val priority: Int = 91
 

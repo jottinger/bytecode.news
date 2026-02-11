@@ -12,7 +12,6 @@ import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import java.time.Duration
 import java.time.Instant
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -22,8 +21,6 @@ class EditCommentOperation(
     private val commentRepository: CommentRepository,
     private val markdownRenderingService: MarkdownRenderingService,
 ) : TypedOperation<EditCommentRequest>(EditCommentRequest::class) {
-
-    private val logger = LoggerFactory.getLogger(EditCommentOperation::class.java)
 
     override val priority = 50
 

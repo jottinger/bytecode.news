@@ -4,6 +4,8 @@ package com.enigmastation.streampack.core.service
 import com.enigmastation.streampack.core.model.Declined
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 
 /**
@@ -29,6 +31,9 @@ import org.springframework.messaging.Message
  * collects all Operation beans at startup and sorts them by priority.
  */
 interface Operation {
+    val logger: Logger
+        get() = LoggerFactory.getLogger(javaClass)
+
     /** Execution order within the chain. Lower values run first. */
     val priority: Int
         get() = 50
