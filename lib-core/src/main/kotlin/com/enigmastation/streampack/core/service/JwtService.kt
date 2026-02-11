@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.config.StreampackProperties
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import io.jsonwebtoken.Jwts
+import java.security.MessageDigest
 import java.util.Date
 import java.util.UUID
 import javax.crypto.SecretKey
@@ -22,11 +23,9 @@ class JwtService(properties: StreampackProperties) {
         val configuredSecret = properties.jwt.secret
         key =
             if (configuredSecret.isNotBlank()) {
-                Jwts.SIG.HS256.key().build().also {
-                    // Use configured secret as seed for deterministic key
-                    Jwts.SIG.HS256.key().build()
-                }
-                io.jsonwebtoken.security.Keys.hmacShaKeyFor(configuredSecret.toByteArray())
+                val hash =
+                    MessageDigest.getInstance("SHA-256").digest(configuredSecret.toByteArray())
+                io.jsonwebtoken.security.Keys.hmacShaKeyFor(hash)
             } else {
                 logger.warn(
                     "No JWT secret configured (streampack.jwt.secret). Using generated key - tokens will not survive restart."
