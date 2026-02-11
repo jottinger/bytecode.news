@@ -49,6 +49,7 @@
         <module>operation-factoid</module>
         <module>operation-urltitle</module>
         <module>service-factoid</module>
+        <module>service-rss</module>
         <module>app</module>
     </modules>
 

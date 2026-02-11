@@ -49,6 +49,11 @@
         </dependency>
         <dependency>
             <groupId>com.enigmastation</groupId>
+            <artifactId>service-rss</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
             <artifactId>service-console</artifactId>
             <version>${project.version}</version>
         </dependency>
