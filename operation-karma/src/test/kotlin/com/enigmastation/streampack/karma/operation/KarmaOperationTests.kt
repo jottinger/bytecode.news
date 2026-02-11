@@ -148,6 +148,27 @@ class KarmaOperationTests {
     }
 
     @Test
+    fun `colon completion suffix is stripped from subject`() {
+        val result = eventGateway.process(karmaMessage("jreicher: ++"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("jreicher now has karma of 1.", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `colon without space is stripped from subject`() {
+        val result = eventGateway.process(karmaMessage("jreicher:++"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("jreicher now has karma of 1.", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `comma completion suffix is stripped from subject`() {
+        val result = eventGateway.process(karmaMessage("jreicher, ++"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("jreicher now has karma of 1.", (result as OperationResult.Success).payload)
+    }
+
+    @Test
     fun `neutral karma displays correctly`() {
         eventGateway.process(karmaMessage("balanced++"))
         eventGateway.process(karmaMessage("balanced--"))

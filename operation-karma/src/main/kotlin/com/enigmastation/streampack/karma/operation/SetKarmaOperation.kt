@@ -29,7 +29,7 @@ class SetKarmaOperation(
         val fixed = payload.fixArrows()
         val matcher = KARMA_PATTERN.matcher(fixed)
         if (!matcher.find()) return false
-        val subject = matcher.group(1).trim()
+        val subject = matcher.group(1).stripCompletionSuffix()
         return subject.isNotEmpty() && subject.length <= 150
     }
 
@@ -38,7 +38,7 @@ class SetKarmaOperation(
         val matcher = KARMA_PATTERN.matcher(fixed)
         if (!matcher.find()) return null
 
-        val subject = matcher.group(1).trim()
+        val subject = matcher.group(1).stripCompletionSuffix()
         if (subject.isEmpty() || subject.length > 150) return null
 
         val predicate = matcher.group(2)
@@ -83,5 +83,8 @@ class SetKarmaOperation(
         private val KARMA_PATTERN: Pattern = Pattern.compile("^(.+)(\\+{2}|--).*\$")
 
         private fun String.fixArrows() = this.replace("-->", "->").replace("<--", "<-")
+
+        /** Strip IRC nick-completion suffixes (colon, comma, semicolon) */
+        private fun String.stripCompletionSuffix() = this.trim().trimEnd(':', ',', ';').trim()
     }
 }

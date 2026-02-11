@@ -6,6 +6,7 @@ import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.OperationService
+import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.irc.entity.IrcMessage
 import com.enigmastation.streampack.irc.model.IrcMessageType
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
@@ -32,6 +33,7 @@ class IrcAdapter(
     val networkName: String,
     private val eventGateway: EventGateway,
     private val operationService: OperationService,
+    private val userResolutionService: UserResolutionService,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
     private val messageRepository: IrcMessageRepository,
@@ -110,14 +112,15 @@ class IrcAdapter(
                 val channelName = event.channel.name
                 logMessage(channelName, event.actor.nick, event.message, IrcMessageType.MESSAGE)
 
+                val nick = event.actor.nick
+                val user = userResolutionService.resolve(Protocol.IRC, networkName, nick)
                 val provenance =
                     Provenance(
                         protocol = Protocol.IRC,
                         serviceId = networkName,
                         replyTo = channelName,
+                        user = user,
                     )
-
-                val nick = event.actor.nick
                 val host = event.actor.host
                 val ident = event.actor.userString
 
@@ -193,16 +196,19 @@ class IrcAdapter(
     fun onPrivateMessage(event: PrivateMessageEvent) {
         Thread.startVirtualThread {
             try {
+                val nick = event.actor.nick
+                val user = userResolutionService.resolve(Protocol.IRC, networkName, nick)
                 val provenance =
                     Provenance(
                         protocol = Protocol.IRC,
                         serviceId = networkName,
-                        replyTo = event.actor.nick,
+                        replyTo = nick,
+                        user = user,
                     )
                 val builder =
                     MessageBuilder.withPayload(event.message)
                         .setHeader(Provenance.HEADER, provenance)
-                        .setHeader("nick", event.actor.nick)
+                        .setHeader("nick", nick)
                         .setHeader("host", event.actor.host)
                         .setHeader("ident", event.actor.userString)
                 val message = builder.build()

@@ -3,6 +3,7 @@ package com.enigmastation.streampack.irc.service
 
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.service.OperationService
+import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.irc.config.IrcProperties
 import com.enigmastation.streampack.irc.entity.IrcNetwork
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Component
 class IrcConnectionManager(
     private val eventGateway: EventGateway,
     private val operationService: OperationService,
+    private val userResolutionService: UserResolutionService,
     private val ircProperties: IrcProperties,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
@@ -84,6 +86,7 @@ class IrcConnectionManager(
                 networkName = network.name,
                 eventGateway = eventGateway,
                 operationService = operationService,
+                userResolutionService = userResolutionService,
                 networkRepository = networkRepository,
                 channelRepository = channelRepository,
                 messageRepository = messageRepository,
