@@ -3,6 +3,7 @@ package com.enigmastation.streampack.rss.service
 
 import com.enigmastation.streampack.rss.config.RssProperties
 import com.enigmastation.streampack.rss.model.DiscoveryResult
+import com.rometools.rome.feed.synd.SyndFeed
 import com.rometools.rome.io.SyndFeedInput
 import java.io.StringReader
 import java.net.URI
@@ -20,6 +21,12 @@ class FeedDiscoveryService(private val properties: RssProperties) {
 
     private val logger = LoggerFactory.getLogger(FeedDiscoveryService::class.java)
 
+    /** Fetches a known feed URL and parses it directly, without HTML discovery fallback */
+    fun fetchFeed(feedUrl: String): SyndFeed? {
+        val body = fetchBody(feedUrl) ?: return null
+        return tryParseFeed(feedUrl, body)
+    }
+
     /**
      * Discover a feed from the given URL. Tries direct parsing first, then falls back to HTML
      * alternate-link discovery.
@@ -28,7 +35,7 @@ class FeedDiscoveryService(private val properties: RssProperties) {
         val body = fetchBody(url) ?: return null
 
         // Try direct ROME parse
-        val directFeed = tryParseFeed(body)
+        val directFeed = tryParseFeed(url, body)
         if (directFeed != null) {
             return DiscoveryResult(feedUrl = url, feed = directFeed)
         }
@@ -64,11 +71,13 @@ class FeedDiscoveryService(private val properties: RssProperties) {
         }
     }
 
-    private fun tryParseFeed(body: String): com.rometools.rome.feed.synd.SyndFeed? {
+    private fun tryParseFeed(url: String, body: String): com.rometools.rome.feed.synd.SyndFeed? {
         return try {
-            SyndFeedInput().build(StringReader(body))
+            val input = SyndFeedInput()
+            input.isAllowDoctypes = true
+            input.build(StringReader(body))
         } catch (e: Exception) {
-            logger.debug("Not a valid feed: {}", e.message)
+            logger.trace("Not a valid feed at {}: {}", url, e.message)
             null
         }
     }
@@ -87,7 +96,7 @@ class FeedDiscoveryService(private val properties: RssProperties) {
             if (href.isBlank()) continue
 
             val feedBody = fetchBody(href) ?: continue
-            val feed = tryParseFeed(feedBody)
+            val feed = tryParseFeed(href, feedBody)
             if (feed != null) {
                 return DiscoveryResult(feedUrl = href, feed = feed)
             }

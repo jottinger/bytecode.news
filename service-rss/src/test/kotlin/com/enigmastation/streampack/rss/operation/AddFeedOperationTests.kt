@@ -5,10 +5,13 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.rss.service.FeedDiscoveryServiceTests.Companion.htmlWithFeedLink
 import com.enigmastation.streampack.rss.service.FeedDiscoveryServiceTests.Companion.sampleRss
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
+import java.util.UUID
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -28,8 +31,16 @@ class AddFeedOperationTests {
     private lateinit var httpServer: HttpServer
     private var baseUrl: String = ""
 
+    private val adminUser =
+        UserPrincipal(
+            id = UUID.randomUUID(),
+            username = "admin",
+            displayName = "Admin",
+            role = Role.ADMIN,
+        )
+
     private fun provenance() =
-        Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
+        Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local", user = adminUser)
 
     private fun message(text: String) =
         MessageBuilder.withPayload(text).setHeader(Provenance.HEADER, provenance()).build()
@@ -120,7 +131,12 @@ class AddFeedOperationTests {
         }
 
         val ircProvenance =
-            Provenance(protocol = Protocol.IRC, serviceId = "libera", replyTo = "#java")
+            Provenance(
+                protocol = Protocol.IRC,
+                serviceId = "libera",
+                replyTo = "#java",
+                user = adminUser,
+            )
         val msg =
             MessageBuilder.withPayload("feed add $baseUrl/feed.xml")
                 .setHeader(Provenance.HEADER, ircProvenance)
@@ -128,5 +144,43 @@ class AddFeedOperationTests {
 
         val result = eventGateway.process(msg)
         assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
+    fun `feed add without admin role is not handled`() {
+        val guestProvenance =
+            Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
+        val msg =
+            MessageBuilder.withPayload("feed add http://example.com/feed.xml")
+                .setHeader(Provenance.HEADER, guestProvenance)
+                .build()
+
+        val result = eventGateway.process(msg)
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `feed add with regular user role is not handled`() {
+        val userPrincipal =
+            UserPrincipal(
+                id = UUID.randomUUID(),
+                username = "regular",
+                displayName = "Regular",
+                role = Role.USER,
+            )
+        val userProvenance =
+            Provenance(
+                protocol = Protocol.IRC,
+                serviceId = "libera",
+                replyTo = "#java",
+                user = userPrincipal,
+            )
+        val msg =
+            MessageBuilder.withPayload("feed add http://example.com/feed.xml")
+                .setHeader(Provenance.HEADER, userProvenance)
+                .build()
+
+        val result = eventGateway.process(msg)
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
     }
 }

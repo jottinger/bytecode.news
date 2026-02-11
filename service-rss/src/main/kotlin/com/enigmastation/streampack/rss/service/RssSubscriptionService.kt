@@ -3,9 +3,13 @@ package com.enigmastation.streampack.rss.service
 
 import com.enigmastation.streampack.rss.entity.RssEntry
 import com.enigmastation.streampack.rss.entity.RssFeed
+import com.enigmastation.streampack.rss.entity.RssFeedSubscription
 import com.enigmastation.streampack.rss.model.AddFeedOutcome
+import com.enigmastation.streampack.rss.model.RemoveFeedOutcome
+import com.enigmastation.streampack.rss.model.SubscriptionOutcome
 import com.enigmastation.streampack.rss.repository.RssEntryRepository
 import com.enigmastation.streampack.rss.repository.RssFeedRepository
+import com.enigmastation.streampack.rss.repository.RssFeedSubscriptionRepository
 import java.time.Instant
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -17,6 +21,7 @@ class RssSubscriptionService(
     private val discoveryService: FeedDiscoveryService,
     private val feedRepository: RssFeedRepository,
     private val entryRepository: RssEntryRepository,
+    private val subscriptionRepository: RssFeedSubscriptionRepository,
 ) {
 
     private val logger = LoggerFactory.getLogger(RssSubscriptionService::class.java)
@@ -77,6 +82,86 @@ class RssSubscriptionService(
         entryRepository.saveAll(entries)
         logger.info("Added feed \"{}\" with {} entries", feed.title, entries.size)
         return AddFeedOutcome.Added(feed, entries.size)
+    }
+
+    /** Subscribe a destination to a feed, resolving the feed URL if needed */
+    @Transactional
+    fun subscribe(feedUrl: String, destinationUri: String): SubscriptionOutcome {
+        val feed = resolveFeed(feedUrl) ?: return SubscriptionOutcome.FeedNotFound(feedUrl)
+        val existing = subscriptionRepository.findByFeedAndDestinationUri(feed, destinationUri)
+        if (existing != null && existing.active) {
+            return SubscriptionOutcome.AlreadySubscribed(feed)
+        }
+        if (existing != null) {
+            // Reactivate an inactive subscription
+            subscriptionRepository.save(existing.copy(active = true))
+        } else {
+            subscriptionRepository.save(
+                RssFeedSubscription(feed = feed, destinationUri = destinationUri)
+            )
+        }
+        logger.info("Subscribed {} to feed \"{}\"", destinationUri, feed.title)
+        return SubscriptionOutcome.Subscribed(feed)
+    }
+
+    /** Unsubscribe a destination from a feed */
+    @Transactional
+    fun unsubscribe(feedUrl: String, destinationUri: String): SubscriptionOutcome {
+        val feed = resolveFeed(feedUrl) ?: return SubscriptionOutcome.FeedNotFound(feedUrl)
+        val existing = subscriptionRepository.findByFeedAndDestinationUri(feed, destinationUri)
+        if (existing == null || !existing.active) {
+            return SubscriptionOutcome.NotSubscribed(feed)
+        }
+        subscriptionRepository.save(existing.copy(active = false))
+        logger.info("Unsubscribed {} from feed \"{}\"", destinationUri, feed.title)
+        return SubscriptionOutcome.Unsubscribed(feed)
+    }
+
+    /** Deactivate a feed and all its subscriptions */
+    @Transactional
+    fun removeFeed(feedUrl: String): RemoveFeedOutcome {
+        val feed = resolveFeed(feedUrl) ?: return RemoveFeedOutcome.FeedNotFound(feedUrl)
+        if (!feed.active) {
+            return RemoveFeedOutcome.AlreadyInactive(feed)
+        }
+        val activeSubscriptions = subscriptionRepository.findByFeedAndActiveTrue(feed)
+        activeSubscriptions.forEach { subscriptionRepository.save(it.copy(active = false)) }
+        feedRepository.save(feed.copy(active = false))
+        logger.info(
+            "Removed feed \"{}\" and deactivated {} subscriptions",
+            feed.title,
+            activeSubscriptions.size,
+        )
+        return RemoveFeedOutcome.Removed(feed, activeSubscriptions.size)
+    }
+
+    /** List all registered feeds */
+    fun listFeeds(): List<RssFeed> = feedRepository.findAll()
+
+    /** List active subscriptions for a destination */
+    fun listSubscriptions(destinationUri: String): List<RssFeedSubscription> =
+        subscriptionRepository.findByDestinationUriAndActiveTrue(destinationUri)
+
+    /** Resolve a URL to an existing feed: exact match first, then discovery fallback */
+    fun resolveFeed(url: String): RssFeed? {
+        val normalized = normalizeUrl(url)
+        // Try exact match on feedUrl
+        feedRepository.findByFeedUrl(normalized)?.let {
+            return it
+        }
+        if (normalized != url) {
+            feedRepository.findByFeedUrl(url)?.let {
+                return it
+            }
+        }
+        // Try discovery to resolve site URLs to feed URLs
+        val result = discoveryService.discover(normalized)
+        if (result != null) {
+            feedRepository.findByFeedUrl(result.feedUrl)?.let {
+                return it
+            }
+        }
+        return null
     }
 
     /** Ensure the URL has a scheme */

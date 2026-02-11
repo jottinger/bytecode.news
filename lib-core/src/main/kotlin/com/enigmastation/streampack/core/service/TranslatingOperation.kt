@@ -25,11 +25,16 @@ abstract class TranslatingOperation<T : Any>(private val payloadType: KClass<T>)
     /** Process the typed request and produce a result */
     abstract fun handle(payload: T, message: Message<*>): OperationOutcome?
 
+    /** Typed pre-flight check, called only after the payload type has been resolved. */
+    @Suppress("UNCHECKED_CAST") open fun canHandle(payload: T, message: Message<*>): Boolean = true
+
     final override fun canHandle(message: Message<*>): Boolean {
-        return when (val p = message.payload) {
-            is String -> translate(p, message) != null
-            else -> payloadType.isInstance(p)
-        }
+        val resolved =
+            when (val p = message.payload) {
+                is String -> translate(p, message) ?: return false
+                else -> if (payloadType.isInstance(p)) p as T else return false
+            }
+        return canHandle(resolved, message)
     }
 
     override fun execute(message: Message<*>): OperationOutcome? {

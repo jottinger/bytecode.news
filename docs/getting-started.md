@@ -199,6 +199,48 @@ Here is the full sequence from zero to a working IRC-connected superadmin:
 
 From this point, you can admin the bot over IRC by addressing it with the signal character or its nick.
 
+10. `feed add https://inside.java` - register an RSS feed
+11. `nevet: feed subscribe https://inside.java` - (from your IRC channel) subscribe the channel to the feed
+
+## 10. Set Up RSS Feeds (Console or IRC Commands)
+
+Once the bot is running and connected to IRC, you can register RSS feeds and subscribe channels to them.
+
+### Add a feed
+
+```
+feed add https://inside.java
+```
+
+This discovers the RSS feed at the URL (via direct parsing or HTML autodiscovery), stores it, and seeds all current entries as a baseline so you only get notified about new posts.
+
+### Subscribe a channel
+
+From the channel you want to receive notifications in:
+
+```
+nevet: feed subscribe https://inside.java
+```
+
+The feed must already exist (use `feed add` first).
+The subscription target is always the channel where the command is issued.
+
+### Verify
+
+```
+nevet: feed subscriptions
+```
+
+Shows what the current channel is subscribed to.
+
+New entries are polled automatically (default every 5 minutes) and delivered as:
+
+```
+[Inside Java] New JEP: Pattern Matching for switch - https://inside.java/2026/02/10/jep-xxx/
+```
+
+See [rss-service.md](rss-service.md) for the full set of RSS commands and configuration options.
+
 ## HTTP Access
 
 The blog service exposes REST endpoints on port 8080.
