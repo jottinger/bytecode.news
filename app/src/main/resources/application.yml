@@ -36,8 +36,7 @@ streampack:
   irc:
     enabled: ${IRC_ENABLED:false}
   karma:
-    immune-subjects:
-      - nevet
+    immune-subjects: ${KARMA_IMMUNE_SUBJECTS:nevet}
   weather:
     api-key: ${OPENWEATHERMAP_API_KEY:change-me}
   discord:

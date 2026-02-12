@@ -42,36 +42,64 @@ class SetFactoidOperation(private val factoidService: FactoidService) :
     }
 
     companion object {
-        /** Parses "selector[.attribute]=value" into a FactoidSetRequest */
+        private val DELIMITERS = listOf("=" to 1, " is " to 4)
+
+        /** Parses "selector[.attribute]<= or is>value" into a FactoidSetRequest */
         fun parseInput(input: String): FactoidSetRequest? {
-            val eqIndex = input.indexOf('=')
-            if (eqIndex < 1) return null
+            val (matched, result) = tryAttributeSplit(input)
+            if (matched) return result
+            return trySimpleSplit(input)
+        }
 
-            val selectorAttribute = input.substring(0, eqIndex).compress()
-            val value = input.substring(eqIndex + 1).compress()
-            if (selectorAttribute.isBlank() || value.isBlank()) return null
+        /**
+         * Scans for ".attribute=" or ".attribute is " patterns. Returns (true, request) on success,
+         * (true, null) when an attribute pattern was found but the result is invalid, or (false,
+         * null) when no attribute pattern was found at all.
+         */
+        private fun tryAttributeSplit(input: String): Pair<Boolean, FactoidSetRequest?> {
+            data class Match(
+                val position: Int,
+                val attr: FactoidAttributeType,
+                val fullPatternLength: Int,
+            )
 
-            val lastDotIndex = selectorAttribute.lastIndexOf('.')
-            val (selector, attribute) =
-                if (lastDotIndex != -1) {
-                    val potentialAttribute =
-                        selectorAttribute.substring(lastDotIndex + 1).trim().lowercase()
-                    if (potentialAttribute in FactoidAttributeType.knownAttributes) {
-                        val attr = FactoidAttributeType.knownAttributes[potentialAttribute]!!
-                        if (attr.mutable) {
-                            selectorAttribute.substring(0, lastDotIndex).trim() to attr
-                        } else {
-                            return null
-                        }
-                    } else {
-                        selectorAttribute to FactoidAttributeType.TEXT
+            val matches = mutableListOf<Match>()
+            for ((name, attr) in FactoidAttributeType.knownAttributes) {
+                if (!attr.mutable) continue
+                for ((delim, _) in DELIMITERS) {
+                    val pattern = ".$name$delim"
+                    val idx = input.indexOf(pattern, ignoreCase = true)
+                    if (idx > 0) {
+                        matches.add(Match(idx, attr, pattern.length))
                     }
-                } else {
-                    selectorAttribute to FactoidAttributeType.TEXT
                 }
+            }
 
-            if (selector.isBlank()) return null
-            return FactoidSetRequest(selector.lowercase(), attribute, value)
+            if (matches.isEmpty()) return false to null
+
+            val best = matches.minByOrNull { it.position }!!
+            val selector = input.substring(0, best.position).compress()
+            val value = input.substring(best.position + best.fullPatternLength).compress()
+            if (selector.isBlank() || value.isBlank()) return true to null
+            if ('=' in selector) return true to null
+            return true to FactoidSetRequest(selector.lowercase(), best.attr, value)
+        }
+
+        /** Falls back to first "=" or " is " as a simple TEXT delimiter */
+        private fun trySimpleSplit(input: String): FactoidSetRequest? {
+            val candidates =
+                DELIMITERS.mapNotNull { (delim, len) ->
+                    val idx = input.indexOf(delim)
+                    if (idx >= 1) idx to len else null
+                }
+            if (candidates.isEmpty()) return null
+
+            val (splitIdx, delimLen) = candidates.minByOrNull { it.first }!!
+            val selector = input.substring(0, splitIdx).compress()
+            val value = input.substring(splitIdx + delimLen).compress()
+            if (selector.isBlank() || value.isBlank()) return null
+
+            return FactoidSetRequest(selector.lowercase(), FactoidAttributeType.TEXT, value)
         }
     }
 }

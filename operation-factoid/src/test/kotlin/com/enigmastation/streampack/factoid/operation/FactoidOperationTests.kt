@@ -246,6 +246,57 @@ class FactoidOperationTests {
         assertSuccess(result, "question is Is this a test?")
     }
 
+    // -- "is" delimiter --
+
+    @Test
+    fun `set TEXT factoid with is delimiter`() {
+        val result = eventGateway.process(msg("kotlin is A modern JVM language"))
+        assertSuccess(result, "ok, testuser: updated kotlin.")
+    }
+
+    @Test
+    fun `get TEXT factoid set with is delimiter`() {
+        eventGateway.process(msg("kotlin is A modern JVM language"))
+        val result = eventGateway.process(msg("kotlin"))
+        assertSuccess(result, "kotlin is A modern JVM language.")
+    }
+
+    @Test
+    fun `set attribute with is delimiter`() {
+        eventGateway.process(msg("kotlin is A modern JVM language"))
+        val result = eventGateway.process(msg("kotlin.url is https://kotlinlang.org"))
+        assertSuccess(result, "ok, testuser: updated kotlin.")
+    }
+
+    @Test
+    fun `get attribute set with is delimiter`() {
+        eventGateway.process(msg("kotlin is A modern JVM language"))
+        eventGateway.process(msg("kotlin.url is https://kotlinlang.org"))
+        val result = eventGateway.process(msg("kotlin.url"))
+        assertSuccess(result, "URL: https://kotlinlang.org")
+    }
+
+    @Test
+    fun `is delimiter with value containing equals`() {
+        eventGateway.process(msg("expression is 2+2=4"))
+        val result = eventGateway.process(msg("expression"))
+        assertSuccess(result, "expression is 2+2=4.")
+    }
+
+    @Test
+    fun `equals delimiter with value containing is`() {
+        eventGateway.process(msg("motto=this is the way"))
+        val result = eventGateway.process(msg("motto"))
+        assertSuccess(result, "motto is this is the way.")
+    }
+
+    @Test
+    fun `attribute-qualified split takes priority over simple is delimiter`() {
+        // "foo is bar.text=baz" - .text= found, selector="foo is bar", value="baz"
+        val result = eventGateway.process(msg("foo is bar.text=baz"))
+        assertSuccess(result, "ok, testuser: updated foo is bar.")
+    }
+
     // -- See also --
 
     @Test
