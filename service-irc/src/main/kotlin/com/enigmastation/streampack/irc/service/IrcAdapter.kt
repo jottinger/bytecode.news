@@ -6,6 +6,7 @@ import com.enigmastation.streampack.core.model.LoggingRequest
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
+import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
 import com.enigmastation.streampack.irc.repository.IrcNetworkRepository
@@ -37,7 +38,9 @@ class IrcAdapter(
     private val channelRepository: IrcChannelRepository,
     private val client: Client,
     private val signalCharacter: String,
-) {
+) : ProtocolAdapter {
+    override val protocol: Protocol = Protocol.IRC
+    override val serviceName: String = networkName
     private val logger = LoggerFactory.getLogger(IrcAdapter::class.java)
 
     init {

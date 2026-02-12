@@ -24,18 +24,36 @@ class SlackService(
 ) {
     private val logger = LoggerFactory.getLogger(SlackService::class.java)
 
-    /** Registers a new workspace and optionally connects */
-    fun connect(name: String, botToken: String, appToken: String): String {
-        if (workspaceRepository.findByNameAndDeletedFalse(name) != null) {
-            return "Error: Workspace '$name' already exists"
+    /** Connects to a workspace, creating or updating the entity as needed */
+    fun connect(name: String, botToken: String? = null, appToken: String? = null): String {
+        val existing = workspaceRepository.findByNameAndDeletedFalse(name)
+
+        if (existing == null && (botToken == null || appToken == null)) {
+            return "Error: Workspace '$name' not found and no tokens provided"
         }
+
         val workspace =
-            workspaceRepository.save(
-                SlackWorkspace(name = name, botToken = botToken, appToken = appToken)
-            )
+            if (existing != null && botToken != null && appToken != null) {
+                connectionManager.ifAvailable { it.disconnect(name) }
+                workspaceRepository
+                    .save(
+                        existing.copy(
+                            botToken = botToken,
+                            appToken = appToken,
+                            updatedAt = Instant.now(),
+                        )
+                    )
+                    .also { logger.info("Updated credentials for Slack workspace '{}'", name) }
+            } else if (existing != null) {
+                existing
+            } else {
+                workspaceRepository
+                    .save(SlackWorkspace(name = name, botToken = botToken!!, appToken = appToken!!))
+                    .also { logger.info("Registered Slack workspace '{}'", name) }
+            }
+
         connectionManager.ifAvailable { it.connect(workspace) }
-        logger.info("Registered Slack workspace '{}'", name)
-        return "Workspace '$name' registered. Connecting..."
+        return "Connecting to '$name'..."
     }
 
     /** Disconnects runtime adapter (workspace entity remains) */

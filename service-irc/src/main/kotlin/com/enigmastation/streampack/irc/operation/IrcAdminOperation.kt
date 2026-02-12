@@ -57,14 +57,14 @@ class IrcAdminOperation(private val ircService: IrcService) :
     }
 
     private fun handleConnect(args: List<String>): OperationResult {
-        if (args.size < 3) {
+        if (args.isEmpty() || args.size == 2) {
             return OperationResult.Error(
-                "Usage: irc connect <name> <host> <nick> [saslAccount] [saslPassword]"
+                "Usage: irc connect <name> [<host> <nick> [saslAccount] [saslPassword]]"
             )
         }
         val name = args[0]
-        val host = args[1]
-        val nick = args[2]
+        val host = args.getOrNull(1)
+        val nick = args.getOrNull(2)
         val saslAccount = args.getOrNull(3)
         val saslPassword = args.getOrNull(4)
         val result = ircService.connect(name, host, nick, saslAccount, saslPassword)
@@ -207,7 +207,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
     private fun helpText(): String =
         """
         |IRC Admin Commands:
-        |  irc connect <name> <host> <nick> [saslAccount] [saslPassword]
+        |  irc connect <name> [<host> <nick> [saslAccount] [saslPassword]]
         |  irc disconnect <name>
         |  irc remove <name>
         |  irc autoconnect <name> <true|false>

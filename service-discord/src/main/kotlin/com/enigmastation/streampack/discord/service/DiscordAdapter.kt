@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
+import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.discord.config.DiscordProperties
 import net.dv8tion.jda.api.JDA
@@ -30,7 +31,9 @@ class DiscordAdapter(
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,
     private val properties: DiscordProperties,
-) : ListenerAdapter(), InitializingBean, DisposableBean {
+) : ListenerAdapter(), InitializingBean, DisposableBean, ProtocolAdapter {
+    override val protocol: Protocol = Protocol.DISCORD
+    override val serviceName: String = "discord"
 
     private val logger = LoggerFactory.getLogger(DiscordAdapter::class.java)
     private lateinit var jda: JDA

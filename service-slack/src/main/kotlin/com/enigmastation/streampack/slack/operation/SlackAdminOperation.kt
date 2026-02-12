@@ -57,12 +57,12 @@ class SlackAdminOperation(private val slackService: SlackService) :
     }
 
     private fun handleConnect(args: List<String>): OperationResult {
-        if (args.size < 3) {
-            return OperationResult.Error("Usage: slack connect <name> <bot-token> <app-token>")
+        if (args.isEmpty() || args.size == 2) {
+            return OperationResult.Error("Usage: slack connect <name> [<bot-token> <app-token>]")
         }
         val name = args[0]
-        val botToken = args[1]
-        val appToken = args[2]
+        val botToken = args.getOrNull(1)
+        val appToken = args.getOrNull(2)
         val result = slackService.connect(name, botToken, appToken)
         return toResult(result)
     }
@@ -182,7 +182,7 @@ class SlackAdminOperation(private val slackService: SlackService) :
     private fun helpText(): String =
         """
         |Slack Admin Commands:
-        |  slack connect <name> <bot-token> <app-token>
+        |  slack connect <name> [<bot-token> <app-token>]
         |  slack disconnect <name>
         |  slack remove <name>
         |  slack autoconnect <name> <true|false>

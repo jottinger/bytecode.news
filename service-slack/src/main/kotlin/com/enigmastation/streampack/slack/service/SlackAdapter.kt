@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
+import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.slack.api.bolt.App
 import com.slack.api.bolt.AppConfig
@@ -26,7 +27,9 @@ class SlackAdapter(
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,
-) {
+) : ProtocolAdapter {
+    override val protocol: Protocol = Protocol.SLACK
+    override val serviceName: String = workspaceName
     private val logger = LoggerFactory.getLogger(SlackAdapter::class.java)
     private lateinit var boltApp: App
     private lateinit var socketModeApp: SocketModeApp

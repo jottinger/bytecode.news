@@ -24,30 +24,52 @@ class IrcService(
 ) {
     private val logger = LoggerFactory.getLogger(IrcService::class.java)
 
-    /** Registers a new network and optionally connects */
+    /** Connects to a network, creating or updating the entity as needed */
     fun connect(
         name: String,
-        host: String,
-        nick: String,
-        saslAccount: String?,
-        saslPassword: String?,
+        host: String? = null,
+        nick: String? = null,
+        saslAccount: String? = null,
+        saslPassword: String? = null,
     ): String {
-        if (networkRepository.findByNameAndDeletedFalse(name) != null) {
-            return "Error: Network '$name' already exists"
+        val existing = networkRepository.findByNameAndDeletedFalse(name)
+
+        if (existing == null && (host == null || nick == null)) {
+            return "Error: Network '$name' not found and no connection details provided"
         }
+
         val network =
-            networkRepository.save(
-                IrcNetwork(
-                    name = name,
-                    host = host,
-                    nick = nick,
-                    saslAccount = saslAccount,
-                    saslPassword = saslPassword,
-                )
-            )
+            if (existing != null && host != null && nick != null) {
+                connectionManager.ifAvailable { it.disconnect(name) }
+                networkRepository
+                    .save(
+                        existing.copy(
+                            host = host,
+                            nick = nick,
+                            saslAccount = saslAccount,
+                            saslPassword = saslPassword,
+                            updatedAt = Instant.now(),
+                        )
+                    )
+                    .also { logger.info("Updated credentials for IRC network '{}'", name) }
+            } else if (existing != null) {
+                existing
+            } else {
+                networkRepository
+                    .save(
+                        IrcNetwork(
+                            name = name,
+                            host = host!!,
+                            nick = nick!!,
+                            saslAccount = saslAccount,
+                            saslPassword = saslPassword,
+                        )
+                    )
+                    .also { logger.info("Registered IRC network '{}'", name) }
+            }
+
         connectionManager.ifAvailable { it.connect(network) }
-        logger.info("Registered network '{}'", name)
-        return "Network '$name' registered. Connecting..."
+        return "Connecting to '$name'..."
     }
 
     /** Disconnects runtime adapter (network entity remains) */

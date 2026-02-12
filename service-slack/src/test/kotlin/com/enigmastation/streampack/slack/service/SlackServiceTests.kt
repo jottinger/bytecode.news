@@ -26,7 +26,7 @@ class SlackServiceTests {
     @Test
     fun `connect persists workspace entity`() {
         val result = slackService.connect("jvm-news", "xoxb-test-token", "xapp-test-token")
-        assertTrue(result.contains("registered"))
+        assertTrue(result.contains("Connecting"))
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")
         assertNotNull(workspace)
@@ -35,9 +35,30 @@ class SlackServiceTests {
     }
 
     @Test
-    fun `connect with duplicate name returns error`() {
+    fun `connect with credentials updates existing workspace`() {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
-        val result = slackService.connect("jvm-news", "xoxb-other", "xapp-other")
+        val result = slackService.connect("jvm-news", "xoxb-new", "xapp-new")
+        assertTrue(result.contains("Connecting"))
+
+        val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
+        assertEquals("xoxb-new", workspace.botToken)
+        assertEquals("xapp-new", workspace.appToken)
+    }
+
+    @Test
+    fun `connect without credentials uses stored data`() {
+        slackService.connect("jvm-news", "xoxb-test", "xapp-test")
+        slackService.disconnect("jvm-news")
+        val result = slackService.connect("jvm-news")
+        assertTrue(result.contains("Connecting"))
+
+        val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
+        assertEquals("xoxb-test", workspace.botToken)
+    }
+
+    @Test
+    fun `connect without credentials for unknown workspace returns error`() {
+        val result = slackService.connect("nonexistent")
         assertTrue(result.startsWith("Error:"))
     }
 
@@ -200,7 +221,7 @@ class SlackServiceTests {
         slackService.connect("jvm-news", "xoxb-test", "xapp-test")
         slackService.remove("jvm-news")
         val result = slackService.connect("jvm-news", "xoxb-new", "xapp-new")
-        assertTrue(result.contains("registered"))
+        assertTrue(result.contains("Connecting"))
     }
 
     @Test

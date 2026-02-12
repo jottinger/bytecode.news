@@ -55,7 +55,7 @@ class IrcAdminOperationTests {
     fun `irc connect with SUPER_ADMIN returns success`() {
         val result = eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        assertTrue((result as OperationResult.Success).payload.toString().contains("registered"))
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Connecting"))
     }
 
     @Test
@@ -183,7 +183,30 @@ class IrcAdminOperationTests {
         eventGateway.process(ircMessage("irc remove libera"))
         val result = eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        assertTrue((result as OperationResult.Success).payload.toString().contains("registered"))
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Connecting"))
+    }
+
+    @Test
+    fun `irc connect by name reconnects existing network`() {
+        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
+        eventGateway.process(ircMessage("irc disconnect libera"))
+        val result = eventGateway.process(ircMessage("irc connect libera"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Connecting"))
+    }
+
+    @Test
+    fun `irc connect by name for unknown network returns error`() {
+        val result = eventGateway.process(ircMessage("irc connect nonexistent"))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+    }
+
+    @Test
+    fun `irc connect with new credentials updates existing network`() {
+        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
+        val result = eventGateway.process(ircMessage("irc connect libera irc.other.net nevet2"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Connecting"))
     }
 
     @Test

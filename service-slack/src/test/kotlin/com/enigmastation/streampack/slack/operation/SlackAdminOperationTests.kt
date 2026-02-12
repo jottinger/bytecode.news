@@ -56,7 +56,7 @@ class SlackAdminOperationTests {
         val result =
             eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        assertTrue((result as OperationResult.Success).payload.toString().contains("registered"))
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Connecting"))
     }
 
     @Test
@@ -184,7 +184,7 @@ class SlackAdminOperationTests {
         eventGateway.process(slackMessage("slack remove jvm-news"))
         val result = eventGateway.process(slackMessage("slack connect jvm-news xoxb-new xapp-new"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        assertTrue((result as OperationResult.Success).payload.toString().contains("registered"))
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Connecting"))
     }
 
     @Test
@@ -194,10 +194,26 @@ class SlackAdminOperationTests {
     }
 
     @Test
-    fun `slack connect with duplicate name returns error`() {
+    fun `slack connect with new credentials updates existing workspace`() {
         eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
         val result =
             eventGateway.process(slackMessage("slack connect jvm-news xoxb-other xapp-other"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Connecting"))
+    }
+
+    @Test
+    fun `slack connect by name reconnects existing workspace`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        eventGateway.process(slackMessage("slack disconnect jvm-news"))
+        val result = eventGateway.process(slackMessage("slack connect jvm-news"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Connecting"))
+    }
+
+    @Test
+    fun `slack connect by name for unknown workspace returns error`() {
+        val result = eventGateway.process(slackMessage("slack connect nonexistent"))
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
 }

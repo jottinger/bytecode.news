@@ -26,7 +26,7 @@ class IrcServiceTests {
     @Test
     fun `connect persists network entity`() {
         val result = ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
-        assertTrue(result.contains("registered"))
+        assertTrue(result.contains("Connecting"))
 
         val network = networkRepository.findByNameAndDeletedFalse("libera")
         assertNotNull(network)
@@ -35,9 +35,32 @@ class IrcServiceTests {
     }
 
     @Test
-    fun `connect with duplicate name returns error`() {
+    fun `connect with credentials updates existing network`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
-        val result = ircService.connect("libera", "irc.other.net", "nevet2", null, null)
+        val result = ircService.connect("libera", "irc.other.net", "nevet2", "acct", "pass")
+        assertTrue(result.contains("Connecting"))
+
+        val network = networkRepository.findByNameAndDeletedFalse("libera")!!
+        assertEquals("irc.other.net", network.host)
+        assertEquals("nevet2", network.nick)
+        assertEquals("acct", network.saslAccount)
+        assertEquals("pass", network.saslPassword)
+    }
+
+    @Test
+    fun `connect without credentials uses stored data`() {
+        ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        ircService.disconnect("libera")
+        val result = ircService.connect("libera")
+        assertTrue(result.contains("Connecting"))
+
+        val network = networkRepository.findByNameAndDeletedFalse("libera")!!
+        assertEquals("irc.libera.chat", network.host)
+    }
+
+    @Test
+    fun `connect without credentials for unknown network returns error`() {
+        val result = ircService.connect("nonexistent")
         assertTrue(result.startsWith("Error:"))
     }
 
@@ -200,7 +223,7 @@ class IrcServiceTests {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
         ircService.remove("libera")
         val result = ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
-        assertTrue(result.contains("registered"))
+        assertTrue(result.contains("Connecting"))
     }
 
     @Test
