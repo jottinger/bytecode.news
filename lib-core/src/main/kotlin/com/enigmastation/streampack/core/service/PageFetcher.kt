@@ -1,0 +1,8 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.core.service
+
+/** Abstraction for retrieving the body of a URL as a string */
+interface PageFetcher {
+    /** Returns the page body for the given URL, or null on any failure */
+    fun fetch(url: String): String?
+}

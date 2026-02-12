@@ -19,8 +19,8 @@ class HebrewCalendarSystem : CalendarSystem {
 
     private val formatter = HebrewDateFormatter().apply { isHebrewFormat = false }
 
-    override fun today(): String {
-        val cal = JewishCalendar()
-        return "${dayFormatter.format(LocalDate.now())}, ${formatter.format(cal)}"
+    override fun formatDate(date: LocalDate): String {
+        val cal = JewishCalendar(date)
+        return "${dayFormatter.format(date)}, ${formatter.format(cal)}"
     }
 }

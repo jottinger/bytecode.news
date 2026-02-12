@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.cal.service
 
 import com.enigmastation.streampack.cal.model.CalendarSystem
+import java.time.LocalDate
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -53,5 +54,28 @@ class CalendarServiceTests {
     fun `defaultCalendar returns Gregorian`() {
         val cal = service.defaultCalendar()
         assertEquals("gregorian", cal.name)
+    }
+
+    @Test
+    fun `formatDate with explicit date returns non-blank for all calendars`() {
+        val date = LocalDate.of(2026, 3, 15)
+        for (calendar in calendars) {
+            val result = service.formatDate(date, calendar.name)
+            assertNotNull(result, "${calendar.name} returned null for formatDate")
+            assertTrue(result!!.isNotBlank(), "${calendar.name} returned blank for formatDate")
+        }
+    }
+
+    @Test
+    fun `formatDate with null calendar uses Gregorian`() {
+        val date = LocalDate.of(2026, 1, 1)
+        val result = service.formatDate(date)
+        assertNotNull(result)
+        assertTrue(result!!.contains("2026"), "Expected year 2026 in Gregorian: $result")
+    }
+
+    @Test
+    fun `formatDate with unknown calendar returns null`() {
+        assertNull(service.formatDate(LocalDate.now(), "nonexistent"))
     }
 }

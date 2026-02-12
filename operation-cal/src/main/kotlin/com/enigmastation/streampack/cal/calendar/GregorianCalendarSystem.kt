@@ -15,5 +15,5 @@ class GregorianCalendarSystem : CalendarSystem {
 
     private val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.ENGLISH)
 
-    override fun today(): String = LocalDate.now().format(formatter)
+    override fun formatDate(date: LocalDate): String = date.format(formatter)
 }

@@ -1,20 +1,16 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.specs.service
 
+import com.enigmastation.streampack.core.service.PageFetcher
 import com.enigmastation.streampack.specs.model.SpecRequest
 import com.enigmastation.streampack.specs.model.SpecType
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 /** Fetches spec titles from RFC Editor, OpenJDK, and JCP websites */
 @Service
-class SpecLookupService {
+class SpecLookupService(private val pageFetcher: PageFetcher) {
 
     private val logger = LoggerFactory.getLogger(SpecLookupService::class.java)
 
@@ -25,35 +21,8 @@ class SpecLookupService {
 
     /** Fetch a spec page by URL and extract its title */
     fun lookupUrl(url: String, type: SpecType): String? {
-        val body = fetchBody(url) ?: return null
+        val body = pageFetcher.fetch(url) ?: return null
         return extractTitle(body, type)
-    }
-
-    private fun fetchBody(url: String): String? {
-        return try {
-            val client =
-                HttpClient.newBuilder()
-                    .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofSeconds(5))
-                    .build()
-            val request =
-                HttpRequest.newBuilder()
-                    .uri(URI(url))
-                    .timeout(Duration.ofSeconds(10))
-                    .header("User-Agent", "Mozilla/5.0 (compatible; Nevet/1.0; +https://jvm.news)")
-                    .GET()
-                    .build()
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-            if (response.statusCode() in 200..299) {
-                response.body()
-            } else {
-                logger.debug("HTTP {} fetching {}", response.statusCode(), url)
-                null
-            }
-        } catch (e: Exception) {
-            logger.debug("Failed to fetch {}: {}", url, e.message)
-            null
-        }
     }
 
     private fun extractTitle(html: String, type: SpecType): String? {

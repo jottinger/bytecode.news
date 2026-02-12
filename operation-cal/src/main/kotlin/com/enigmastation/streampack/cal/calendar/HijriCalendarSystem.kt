@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.cal.calendar
 
 import com.enigmastation.streampack.cal.model.CalendarSystem
+import java.time.LocalDate
 import java.time.chrono.HijrahChronology
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -15,8 +16,8 @@ class HijriCalendarSystem : CalendarSystem {
 
     private val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy GGGG", Locale.ENGLISH)
 
-    override fun today(): String {
-        val date = HijrahChronology.INSTANCE.dateNow()
-        return date.format(formatter)
+    override fun formatDate(date: LocalDate): String {
+        val hijriDate = HijrahChronology.INSTANCE.date(date)
+        return hijriDate.format(formatter)
     }
 }

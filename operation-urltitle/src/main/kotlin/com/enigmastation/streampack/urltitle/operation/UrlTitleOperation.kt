@@ -33,6 +33,7 @@ class UrlTitleOperation(
         val urls = urlTitleService.extractUrls(payload)
         val titles =
             urls
+                .distinct()
                 .filter { !urlTitleService.isIgnoredHost(it) }
                 .mapNotNull { url ->
                     val title = urlTitleService.fetchTitle(url) ?: return@mapNotNull null

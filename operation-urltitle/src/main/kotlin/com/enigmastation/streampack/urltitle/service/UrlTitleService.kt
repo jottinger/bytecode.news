@@ -2,15 +2,11 @@
 package com.enigmastation.streampack.urltitle.service
 
 import com.enigmastation.streampack.core.extensions.compress
+import com.enigmastation.streampack.core.service.TitleFetcher
 import com.enigmastation.streampack.urltitle.config.UrlTitleProperties
 import com.enigmastation.streampack.urltitle.entity.IgnoredHost
 import com.enigmastation.streampack.urltitle.repository.IgnoredHostRepository
 import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-import java.time.Duration
-import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.stereotype.Service
@@ -20,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 class UrlTitleService(
     private val ignoredHostRepository: IgnoredHostRepository,
     private val properties: UrlTitleProperties,
+    private val titleFetcher: TitleFetcher,
 ) : InitializingBean {
 
     private val logger = LoggerFactory.getLogger(UrlTitleService::class.java)
@@ -37,33 +34,8 @@ class UrlTitleService(
         }
     }
 
-    /** Fetches the HTML title from a URL, returning null on any failure */
-    fun fetchTitle(url: String): String? {
-        return try {
-            val client =
-                HttpClient.newBuilder()
-                    .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofSeconds(properties.connectTimeoutSeconds.toLong()))
-                    .build()
-            val request =
-                HttpRequest.newBuilder()
-                    .uri(URI(url))
-                    .timeout(Duration.ofSeconds(properties.readTimeoutSeconds.toLong()))
-                    .header("User-Agent", "Mozilla/5.0 (compatible; Nevet/1.0; +https://jvm.news)")
-                    .GET()
-                    .build()
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-            if (response.statusCode() in 200..299) {
-                val title = Jsoup.parse(response.body()).title()
-                title.ifBlank { null }
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            logger.debug("Failed to fetch title for {}: {}", url, e.message)
-            null
-        }
-    }
+    /** Delegates to the TitleFetcher to retrieve the page title */
+    fun fetchTitle(url: String): String? = titleFetcher.fetchTitle(url)
 
     /** Computes Jaccard similarity between URL path tokens and title tokens */
     fun calculateJaccardSimilarity(url: String, title: String): Double {

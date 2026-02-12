@@ -9,24 +9,23 @@ import java.time.LocalDate
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Reports today's date in various calendar systems. */
+/** Reports tomorrow's date in various calendar systems. */
 @Component
-class TodayOperation(private val calendarService: CalendarService) :
+class TomorrowOperation(private val calendarService: CalendarService) :
     TypedOperation<String>(String::class) {
 
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         val trimmed = payload.trim()
-        return trimmed == "today" || trimmed.startsWith("today ")
+        return trimmed == "tomorrow" || trimmed.startsWith("tomorrow ")
     }
 
     override fun handle(payload: String, message: Message<*>): OperationOutcome {
         val trimmed = payload.trim()
-        val argument = trimmed.removePrefix("today").trim()
+        val argument = trimmed.removePrefix("tomorrow").trim()
+        val tomorrow = LocalDate.now().plusDays(1)
 
         if (argument.isEmpty()) {
-            return OperationResult.Success(
-                "Today is ${calendarService.formatDate(LocalDate.now())}"
-            )
+            return OperationResult.Success("Tomorrow is ${calendarService.formatDate(tomorrow)}")
         }
 
         if (argument.equals("list", ignoreCase = true)) {
@@ -34,13 +33,13 @@ class TodayOperation(private val calendarService: CalendarService) :
             return OperationResult.Success("Available calendars: $names")
         }
 
-        val formatted = calendarService.formatDate(LocalDate.now(), argument)
+        val formatted = calendarService.formatDate(tomorrow, argument)
         return if (formatted != null) {
             val displayName = calendarService.getCalendar(argument)!!.displayName
-            OperationResult.Success("Today is $formatted ($displayName)")
+            OperationResult.Success("Tomorrow is $formatted ($displayName)")
         } else {
             OperationResult.Error(
-                "Unknown calendar: $argument. Use 'today list' to see available calendars."
+                "Unknown calendar: $argument. Use 'tomorrow list' to see available calendars."
             )
         }
     }

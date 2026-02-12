@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.cal.service
 
 import com.enigmastation.streampack.cal.model.CalendarSystem
+import java.time.LocalDate
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -30,4 +31,15 @@ class CalendarService(private val calendars: List<CalendarSystem>) {
     fun defaultCalendar(): CalendarSystem =
         calendarsByName["gregorian"]
             ?: throw IllegalStateException("Gregorian calendar system not registered")
+
+    /**
+     * Formats a date using the named calendar, or the default (Gregorian) if name is null. Returns
+     * null if the calendar name is not found.
+     */
+    fun formatDate(date: LocalDate, calendarName: String? = null): String? {
+        val calendar =
+            if (calendarName == null) defaultCalendar()
+            else getCalendar(calendarName) ?: return null
+        return calendar.formatDate(date)
+    }
 }

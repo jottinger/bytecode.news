@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.service.PageFetcher
 import com.enigmastation.streampack.specs.model.SpecRequest
 import com.enigmastation.streampack.specs.model.SpecType
 import com.enigmastation.streampack.specs.service.SpecLookupService
@@ -58,7 +59,8 @@ class SpecsOperationTests {
     class Config {
         @Bean
         @Primary
-        fun localSpecLookupService(): LocalSpecLookupService = LocalSpecLookupService()
+        fun localSpecLookupService(pageFetcher: PageFetcher): LocalSpecLookupService =
+            LocalSpecLookupService(pageFetcher)
     }
 
     @Test
@@ -152,7 +154,7 @@ class SpecsOperationTests {
 }
 
 /** SpecLookupService that rewrites URLs to point at a local HTTP server */
-class LocalSpecLookupService : SpecLookupService() {
+class LocalSpecLookupService(pageFetcher: PageFetcher) : SpecLookupService(pageFetcher) {
     var baseUrl: String = ""
 
     override fun lookup(request: SpecRequest): String? {

@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.cal.calendar
 
 import com.enigmastation.streampack.cal.model.CalendarSystem
+import java.time.LocalDate
 import java.time.chrono.ThaiBuddhistChronology
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -15,8 +16,8 @@ class ThaiBuddhistCalendarSystem : CalendarSystem {
 
     private val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, y GGGG", Locale.ENGLISH)
 
-    override fun today(): String {
-        val date = ThaiBuddhistChronology.INSTANCE.dateNow()
-        return date.format(formatter)
+    override fun formatDate(date: LocalDate): String {
+        val thaiDate = ThaiBuddhistChronology.INSTANCE.date(date)
+        return thaiDate.format(formatter)
     }
 }
