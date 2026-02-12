@@ -37,6 +37,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
         return when (subcommand) {
             "connect" -> handleConnect(tokens.drop(1))
             "disconnect" -> handleDisconnect(tokens.drop(1))
+            "remove" -> handleRemove(tokens.drop(1))
             "autoconnect" -> handleAutoconnect(tokens.drop(1))
             "join" -> handleJoin(tokens.drop(1))
             "leave" -> handleLeave(tokens.drop(1))
@@ -75,6 +76,14 @@ class IrcAdminOperation(private val ircService: IrcService) :
     private fun handleDisconnect(args: List<String>): OperationResult {
         if (args.isEmpty()) return OperationResult.Error("Usage: irc disconnect <name>")
         val result = ircService.disconnect(args[0])
+        return if (result.startsWith("Error:"))
+            OperationResult.Error(result.removePrefix("Error: "))
+        else OperationResult.Success(result)
+    }
+
+    private fun handleRemove(args: List<String>): OperationResult {
+        if (args.isEmpty()) return OperationResult.Error("Usage: irc remove <name>")
+        val result = ircService.remove(args[0])
         return if (result.startsWith("Error:"))
             OperationResult.Error(result.removePrefix("Error: "))
         else OperationResult.Success(result)
@@ -200,6 +209,7 @@ class IrcAdminOperation(private val ircService: IrcService) :
         |IRC Admin Commands:
         |  irc connect <name> <host> <nick> [saslAccount] [saslPassword]
         |  irc disconnect <name>
+        |  irc remove <name>
         |  irc autoconnect <name> <true|false>
         |  irc join <network> <#channel>
         |  irc leave <network> <#channel>

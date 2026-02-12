@@ -1,5 +1,5 @@
 /* Joseph B. Ottinger (C)2026 */
-package com.enigmastation.streampack.irc.operation
+package com.enigmastation.streampack.slack.operation
 
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @Transactional
-class IrcAdminOperationTests {
+class SlackAdminOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
 
@@ -38,7 +38,7 @@ class IrcAdminOperationTests {
             role = Role.USER,
         )
 
-    private fun ircMessage(text: String, user: UserPrincipal = superAdmin) =
+    private fun slackMessage(text: String, user: UserPrincipal = superAdmin) =
         MessageBuilder.withPayload(text)
             .setHeader(
                 Provenance.HEADER,
@@ -52,152 +52,152 @@ class IrcAdminOperationTests {
             .build()
 
     @Test
-    fun `irc connect with SUPER_ADMIN returns success`() {
-        val result = eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
+    fun `slack connect with SUPER_ADMIN returns success`() {
+        val result =
+            eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("registered"))
     }
 
     @Test
-    fun `irc connect without SUPER_ADMIN returns error`() {
+    fun `slack connect without SUPER_ADMIN returns error`() {
         val result =
             eventGateway.process(
-                ircMessage("irc connect libera irc.libera.chat nevet", regularUser)
+                slackMessage("slack connect jvm-news xoxb-test xapp-test", regularUser)
             )
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue((result as OperationResult.Error).message.contains("SUPER_ADMIN"))
     }
 
     @Test
-    fun `irc status returns success`() {
-        val result = eventGateway.process(ircMessage("irc status"))
+    fun `slack status returns success`() {
+        val result = eventGateway.process(slackMessage("slack status"))
         assertInstanceOf(OperationResult.Success::class.java, result)
     }
 
     @Test
-    fun `irc join after connect returns success`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        val result = eventGateway.process(ircMessage("irc join libera #java"))
+    fun `slack join after connect returns success`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        val result = eventGateway.process(slackMessage("slack join jvm-news #java"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("Joined"))
     }
 
     @Test
-    fun `irc autojoin updates flag`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        eventGateway.process(ircMessage("irc join libera #java"))
-        val result = eventGateway.process(ircMessage("irc autojoin libera #java true"))
+    fun `slack autojoin updates flag`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        eventGateway.process(slackMessage("slack join jvm-news #java"))
+        val result = eventGateway.process(slackMessage("slack autojoin jvm-news #java true"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("true"))
     }
 
     @Test
-    fun `irc join nonexistent network returns error`() {
-        val result = eventGateway.process(ircMessage("irc join nonexistent #java"))
+    fun `slack join nonexistent workspace returns error`() {
+        val result = eventGateway.process(slackMessage("slack join nonexistent #java"))
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
 
     @Test
-    fun `bare irc returns help text`() {
-        val result = eventGateway.process(ircMessage("irc"))
+    fun `bare slack returns help text`() {
+        val result = eventGateway.process(slackMessage("slack"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue(
-            (result as OperationResult.Success).payload.toString().contains("IRC Admin Commands")
+            (result as OperationResult.Success).payload.toString().contains("Slack Admin Commands")
         )
     }
 
     @Test
-    fun `irc unknown subcommand returns error`() {
-        val result = eventGateway.process(ircMessage("irc frobnicate"))
+    fun `slack unknown subcommand returns error`() {
+        val result = eventGateway.process(slackMessage("slack frobnicate"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertTrue((result as OperationResult.Error).message.contains("Unknown"))
     }
 
     @Test
-    fun `non-irc message is not handled`() {
-        val result = eventGateway.process(ircMessage("karma foo++"))
+    fun `non-slack message is not handled`() {
+        val result = eventGateway.process(slackMessage("karma foo++"))
         assertInstanceOf(OperationResult.NotHandled::class.java, result)
     }
 
     @Test
-    fun `irc autoconnect updates flag`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        val result = eventGateway.process(ircMessage("irc autoconnect libera true"))
+    fun `slack autoconnect updates flag`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        val result = eventGateway.process(slackMessage("slack autoconnect jvm-news true"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("true"))
     }
 
     @Test
-    fun `irc mute returns success for valid channel`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        eventGateway.process(ircMessage("irc join libera #java"))
-        val result = eventGateway.process(ircMessage("irc mute libera #java"))
+    fun `slack mute returns success for valid channel`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        eventGateway.process(slackMessage("slack join jvm-news #java"))
+        val result = eventGateway.process(slackMessage("slack mute jvm-news #java"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("Muted"))
     }
 
     @Test
-    fun `irc unmute returns success for valid channel`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        eventGateway.process(ircMessage("irc join libera #java"))
-        val result = eventGateway.process(ircMessage("irc unmute libera #java"))
+    fun `slack unmute returns success for valid channel`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        eventGateway.process(slackMessage("slack join jvm-news #java"))
+        val result = eventGateway.process(slackMessage("slack unmute jvm-news #java"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("Unmuted"))
     }
 
     @Test
-    fun `irc disconnect returns success for known network`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        val result = eventGateway.process(ircMessage("irc disconnect libera"))
+    fun `slack disconnect returns success for known workspace`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        val result = eventGateway.process(slackMessage("slack disconnect jvm-news"))
         assertInstanceOf(OperationResult.Success::class.java, result)
     }
 
     @Test
-    fun `irc signal sets per-network signal character`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        val result = eventGateway.process(ircMessage("irc signal libera ~"))
+    fun `slack signal sets per-workspace signal character`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        val result = eventGateway.process(slackMessage("slack signal jvm-news ~"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("~"))
     }
 
     @Test
-    fun `irc signal without character resets to default`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        eventGateway.process(ircMessage("irc signal libera ~"))
-        val result = eventGateway.process(ircMessage("irc signal libera"))
+    fun `slack signal without character resets to default`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        eventGateway.process(slackMessage("slack signal jvm-news ~"))
+        val result = eventGateway.process(slackMessage("slack signal jvm-news"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("reset"))
     }
 
     @Test
-    fun `irc remove returns success for known network`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        val result = eventGateway.process(ircMessage("irc remove libera"))
+    fun `slack remove returns success for known workspace`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        val result = eventGateway.process(slackMessage("slack remove jvm-news"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("removed"))
     }
 
     @Test
-    fun `irc remove allows reconnect with same name`() {
-        eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
-        eventGateway.process(ircMessage("irc remove libera"))
-        val result = eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
+    fun `slack remove allows reconnect with same name`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
+        eventGateway.process(slackMessage("slack remove jvm-news"))
+        val result = eventGateway.process(slackMessage("slack connect jvm-news xoxb-new xapp-new"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("registered"))
     }
 
     @Test
-    fun `irc remove nonexistent network returns error`() {
-        val result = eventGateway.process(ircMessage("irc remove nonexistent"))
+    fun `slack remove nonexistent workspace returns error`() {
+        val result = eventGateway.process(slackMessage("slack remove nonexistent"))
         assertInstanceOf(OperationResult.Error::class.java, result)
     }
 
     @Test
-    fun `irc connect with SASL credentials returns success`() {
+    fun `slack connect with duplicate name returns error`() {
+        eventGateway.process(slackMessage("slack connect jvm-news xoxb-test xapp-test"))
         val result =
-            eventGateway.process(
-                ircMessage("irc connect libera irc.libera.chat nevet myaccount mypassword")
-            )
-        assertInstanceOf(OperationResult.Success::class.java, result)
+            eventGateway.process(slackMessage("slack connect jvm-news xoxb-other xapp-other"))
+        assertInstanceOf(OperationResult.Error::class.java, result)
     }
 }

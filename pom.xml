@@ -30,6 +30,7 @@
         <jsoupVersion>1.18.3</jsoupVersion>
         <romeVersion>2.1.0</romeVersion>
         <jdaVersion>6.3.0</jdaVersion>
+        <slackSdkVersion>1.47.0</slackSdkVersion>
     </properties>
 
     <groupId>com.enigmastation</groupId>
@@ -54,6 +55,8 @@
         <module>operation-weather</module>
         <module>service-factoid</module>
         <module>service-rss</module>
+        <module>lib-slack</module>
+        <module>service-slack</module>
         <module>app</module>
     </modules>
 
@@ -165,6 +168,11 @@
                 <groupId>net.dv8tion</groupId>
                 <artifactId>JDA</artifactId>
                 <version>${jdaVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.slack.api</groupId>
+                <artifactId>bolt-jakarta-socket-mode</artifactId>
+                <version>${slackSdkVersion}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

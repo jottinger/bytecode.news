@@ -46,6 +46,9 @@ streampack:
     permissions: 3072
     token: ${DISCORD_BOT_TOKEN:no-token}
     signal-character: "!"
+  slack:
+    enabled: true # ${SLACK_ENABLED:false}
+    signal-character: ${SLACK_SIGNAL:!}
 springdoc:
   api-docs:
     enabled: true

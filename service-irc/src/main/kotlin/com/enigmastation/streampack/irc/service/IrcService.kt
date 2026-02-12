@@ -149,6 +149,21 @@ class IrcService(
         return "Channel '$channelName' on '$networkName' logged set to $logged"
     }
 
+    /** Soft-deletes a network and its channels, disconnecting the runtime adapter if active */
+    fun remove(name: String): String {
+        val network =
+            networkRepository.findByNameAndDeletedFalse(name)
+                ?: return "Error: Network '$name' not found"
+        connectionManager.ifAvailable { it.disconnect(name) }
+        val channels = channelRepository.findByNetworkAndDeletedFalse(network)
+        for (channel in channels) {
+            channelRepository.save(channel.copy(deleted = true, updatedAt = Instant.now()))
+        }
+        networkRepository.save(network.copy(deleted = true, updatedAt = Instant.now()))
+        logger.info("Removed IRC network '{}' and {} channel(s)", name, channels.size)
+        return "Network '$name' removed"
+    }
+
     /** Updates the per-network signal character override */
     fun setSignal(name: String, signalCharacter: String?): String {
         val network =

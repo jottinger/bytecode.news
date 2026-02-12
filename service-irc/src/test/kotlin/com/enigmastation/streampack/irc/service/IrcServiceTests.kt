@@ -173,6 +173,37 @@ class IrcServiceTests {
     }
 
     @Test
+    fun `remove soft-deletes network and channels`() {
+        ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        ircService.join("libera", "#java")
+        ircService.join("libera", "#kotlin")
+
+        val result = ircService.remove("libera")
+        assertTrue(result.contains("removed"))
+
+        assertNull(networkRepository.findByNameAndDeletedFalse("libera"))
+        val network = networkRepository.findAll().first { it.name == "libera" }
+        assertTrue(network.deleted)
+
+        val channels = channelRepository.findByNetworkAndDeletedFalse(network)
+        assertTrue(channels.isEmpty())
+    }
+
+    @Test
+    fun `remove with unknown network returns error`() {
+        val result = ircService.remove("nonexistent")
+        assertTrue(result.startsWith("Error:"))
+    }
+
+    @Test
+    fun `connect after remove reuses name`() {
+        ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        ircService.remove("libera")
+        val result = ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
+        assertTrue(result.contains("registered"))
+    }
+
+    @Test
     fun `status with no networks shows empty message`() {
         val result = ircService.status(null)
         assertEquals("No IRC networks configured", result)

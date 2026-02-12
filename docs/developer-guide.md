@@ -492,5 +492,6 @@ Exceptions are for unexpected infrastructure failures, not business logic.
 | IRC service commands | [irc-service.md](irc-service.md) |
 | Karma operations | [karma-operations.md](karma-operations.md) |
 | RSS service commands | [rss-service.md](rss-service.md) |
+| Slack service setup | [slack-service.md](slack-service.md) |
 | JWT and security | [jwt-security-integration.md](jwt-security-integration.md) |
 | Project overview and module map | [CLAUDE.md](../CLAUDE.md) (the project root) |
