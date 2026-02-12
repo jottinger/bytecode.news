@@ -176,4 +176,96 @@ class KarmaOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals("balanced has neutral karma.", (result as OperationResult.Success).payload)
     }
+
+    // -- Karma ranking --
+
+    @Test
+    fun `top karma with no data returns empty message`() {
+        val result = eventGateway.process(karmaMessage("top karma"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("No karma data yet.", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `top karma returns subjects in descending order`() {
+        eventGateway.process(karmaMessage("alpha++"))
+        eventGateway.process(karmaMessage("alpha++"))
+        eventGateway.process(karmaMessage("alpha++"))
+        eventGateway.process(karmaMessage("bravo++"))
+        eventGateway.process(karmaMessage("bravo++"))
+        eventGateway.process(karmaMessage("charlie++"))
+
+        val result = eventGateway.process(karmaMessage("top karma"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.startsWith("Top karma: "))
+        assertTrue(payload.indexOf("alpha") < payload.indexOf("bravo"))
+        assertTrue(payload.indexOf("bravo") < payload.indexOf("charlie"))
+    }
+
+    @Test
+    fun `bottom karma returns subjects in ascending order`() {
+        eventGateway.process(karmaMessage("hero++"))
+        eventGateway.process(karmaMessage("hero++"))
+        eventGateway.process(karmaMessage("villain--"))
+        eventGateway.process(karmaMessage("villain--"))
+        eventGateway.process(karmaMessage("sidekick--"))
+
+        val result = eventGateway.process(karmaMessage("bottom karma"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.startsWith("Bottom karma: "))
+        assertTrue(payload.indexOf("villain") < payload.indexOf("sidekick"))
+        // hero has positive karma, should not appear in bottom results
+        assertTrue(!payload.contains("hero"))
+    }
+
+    @Test
+    fun `top karma with explicit count`() {
+        eventGateway.process(karmaMessage("first++"))
+        eventGateway.process(karmaMessage("first++"))
+        eventGateway.process(karmaMessage("first++"))
+        eventGateway.process(karmaMessage("second++"))
+        eventGateway.process(karmaMessage("second++"))
+        eventGateway.process(karmaMessage("third++"))
+
+        val result = eventGateway.process(karmaMessage("top 2 karma"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.contains("first"))
+        assertTrue(payload.contains("second"))
+        assertTrue(!payload.contains("third"))
+    }
+
+    @Test
+    fun `top karma count after keyword`() {
+        eventGateway.process(karmaMessage("aaa++"))
+        eventGateway.process(karmaMessage("aaa++"))
+        eventGateway.process(karmaMessage("bbb++"))
+
+        val result = eventGateway.process(karmaMessage("top karma 1"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.contains("aaa"))
+        assertTrue(!payload.contains("bbb"))
+    }
+
+    @Test
+    fun `neutral karma subjects are excluded from ranking`() {
+        eventGateway.process(karmaMessage("winner++"))
+        eventGateway.process(karmaMessage("neutral++"))
+        eventGateway.process(karmaMessage("neutral--"))
+
+        val result = eventGateway.process(karmaMessage("top karma"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.contains("winner"))
+        assertTrue(!payload.contains("neutral"))
+    }
+
+    // -- Helper --
+
+    private fun assertTrue(condition: Boolean) {
+        org.junit.jupiter.api.Assertions.assertTrue(condition)
+    }
 }

@@ -5,6 +5,7 @@ import com.enigmastation.streampack.karma.entity.KarmaRecord
 import java.time.LocalDate
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 
 interface KarmaRecordRepository : JpaRepository<KarmaRecord, UUID> {
     fun findBySubjectAndRecordDate(subject: String, recordDate: LocalDate): KarmaRecord?
@@ -12,4 +13,6 @@ interface KarmaRecordRepository : JpaRepository<KarmaRecord, UUID> {
     fun findBySubject(subject: String): List<KarmaRecord>
 
     fun deleteByRecordDateBefore(cutoff: LocalDate)
+
+    @Query("SELECT DISTINCT k.subject FROM KarmaRecord k") fun findDistinctSubjects(): List<String>
 }

@@ -55,4 +55,18 @@ class KarmaService(private val repository: KarmaRecordRepository) {
     fun hasKarma(subject: String): Boolean {
         return repository.findBySubject(subject.lowercase()).isNotEmpty()
     }
+
+    /**
+     * Returns subjects ranked by decayed karma score. Top returns positive, bottom returns
+     * negative.
+     */
+    @Transactional
+    fun getRanking(limit: Int, ascending: Boolean): List<Pair<String, Int>> {
+        val subjects = repository.findDistinctSubjects()
+        return subjects
+            .map { it to getKarma(it) }
+            .filter { if (ascending) it.second < 0 else it.second > 0 }
+            .sortedBy { if (ascending) it.second else -it.second }
+            .take(limit)
+    }
 }
