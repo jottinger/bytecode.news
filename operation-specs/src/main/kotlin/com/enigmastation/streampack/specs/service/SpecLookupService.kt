@@ -75,6 +75,6 @@ class SpecLookupService {
             SpecType.RFC -> raw.removePrefix("RFC ").replace(Regex("^\\d+\\s*-\\s*"), "").trim()
             SpecType.JEP -> raw.removePrefix("JEP ").replace(Regex("^\\d+:\\s*"), "").trim()
             SpecType.JSR -> raw.removePrefix("JSR ").replace(Regex("^\\d+:\\s*"), "").trim()
-        }
+        }.replace("TM", "")
     }
 }

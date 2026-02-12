@@ -73,7 +73,7 @@ class SpecsOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload.toString()
         assertTrue(payload.contains("Internet Relay Chat: Client Protocol"))
-        assertTrue(payload.contains("rfc 2812 is"))
+        assertTrue(payload.contains("rfc 2812:"))
     }
 
     @Test

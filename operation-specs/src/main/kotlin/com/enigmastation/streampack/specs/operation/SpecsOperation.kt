@@ -4,7 +4,6 @@ package com.enigmastation.streampack.specs.operation
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.specs.model.SpecRequest
 import com.enigmastation.streampack.specs.model.SpecType
@@ -51,19 +50,17 @@ class SpecsOperation(
 
         val description = "$title (${payload.url})"
 
-        seedFactoid(payload.selector, description, message)
+        seedFactoid(payload.selector, title)
+        seedFactoid("${payload.selector}.url", payload.url)
 
-        return OperationResult.Success("${payload.selector} is $description")
+        return OperationResult.Success("${payload.selector}: $description")
     }
 
     /** Create a factoid so future lookups hit the factoid cache instead of the web */
-    private fun seedFactoid(selector: String, value: String, originalMessage: Message<*>) {
+    private fun seedFactoid(selector: String, value: String) {
         try {
             val factoidText = "$selector=$value"
-            val msg =
-                MessageBuilder.withPayload(factoidText)
-                    .setHeader(Provenance.HEADER, originalMessage.headers[Provenance.HEADER])
-                    .build()
+            val msg = MessageBuilder.withPayload(factoidText).build()
             eventGateway.process(msg)
         } catch (e: Exception) {
             logger.debug("Could not cache spec as factoid: {}", e.message)
