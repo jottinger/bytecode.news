@@ -161,21 +161,41 @@ Valid roles are `user` (default), `admin`, and `super-admin`.
 User accounts start with no protocol bindings.
 To allow a user to be recognized over IRC (or any other protocol), you need to link their protocol identity to their account.
 
-The syntax is:
+If you're not sure what values to use, `link help` shows what each protocol expects:
 
 ```
-link user <username> <protocol> <serviceId> <externalIdentifier>
+link help
+```
+```
+Available protocols for identity binding:
+  IRC: link user <username> irc <network> <nick>
+    Networks: libera
 ```
 
-For example, to link the superadmin's IRC nick on Libera:
+You can also filter to a specific protocol with `link help <protocol>`.
+
+Here is a concrete example.
+You're on the console, the bot is connected to Libera, and you want the IRC user `random_person` to be recognized as the `admin` account.
+First, check what IRC needs:
 
 ```
-link user admin irc libera dreamreal
+link help irc
+```
+```
+IRC: link user <username> irc <network> <nick>
+  Networks: libera
 ```
 
-This creates a service binding so that when `dreamreal` speaks on the `libera` IRC network, the bot recognizes them as the `admin` user with `SUPER_ADMIN` privileges.
+The output tells you the serviceId is a network name (and `libera` is available), and the externalIdentifier is a nick.
+Now link them:
 
-After this, `dreamreal` can issue admin commands directly from IRC:
+```
+link user admin irc libera random_person
+```
+
+This creates a service binding so that when `random_person` speaks on the `libera` IRC network, the bot recognizes them as the `admin` user with `SUPER_ADMIN` privileges.
+
+After this, `random_person` can issue admin commands directly from IRC:
 
 ```
 nevet: irc join libera #kotlin
@@ -195,12 +215,13 @@ Here is the full sequence from zero to a working IRC-connected superadmin:
 6. `irc join libera #yourchannel` - join a channel
 7. `irc autoconnect libera true` - persist the connection across restarts
 8. `irc autojoin libera #yourchannel true` - persist the channel join across restarts
-9. `link user admin irc libera yournick` - link your IRC nick to the superadmin account
+9. `link help irc` - confirm the network name and field names for IRC
+10. `link user admin irc libera yournick` - link your IRC nick to the superadmin account
 
 From this point, you can admin the bot over IRC by addressing it with the signal character or its nick.
 
-10. `feed add https://inside.java` - register an RSS feed
-11. `nevet: feed subscribe https://inside.java` - (from your IRC channel) subscribe the channel to the feed
+11. `feed add https://inside.java` - register an RSS feed
+12. `nevet: feed subscribe https://inside.java` - (from your IRC channel) subscribe the channel to the feed
 
 ## 10. Set Up RSS Feeds (Console or IRC Commands)
 

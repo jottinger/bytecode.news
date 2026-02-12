@@ -16,4 +16,7 @@ interface IdentityProvider {
 
     /** Validate a (serviceId, externalIdentifier) pair for this protocol */
     fun resolveIdentity(serviceId: String, externalIdentifier: String): IdentityResolution
+
+    /** Describe how this protocol identifies users so admins can discover valid field values */
+    fun describeIdentity(): IdentityDescription
 }

@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.slack.service
 
 import com.enigmastation.streampack.core.model.Protocol
+import com.enigmastation.streampack.core.service.IdentityDescription
 import com.enigmastation.streampack.core.service.IdentityProvider
 import com.enigmastation.streampack.core.service.IdentityResolution
 import com.enigmastation.streampack.slack.repository.SlackWorkspaceRepository
@@ -31,4 +32,12 @@ class SlackIdentityProvider(private val workspaceRepository: SlackWorkspaceRepos
             externalIdentifier = externalIdentifier,
         )
     }
+
+    override fun describeIdentity(): IdentityDescription =
+        IdentityDescription(
+            protocol = Protocol.SLACK,
+            serviceIdLabel = "workspace",
+            externalIdLabel = "user-id",
+            availableServices = workspaceRepository.findByDeletedFalse().map { it.name },
+        )
 }

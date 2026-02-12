@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.irc.service
 
 import com.enigmastation.streampack.core.model.Protocol
+import com.enigmastation.streampack.core.service.IdentityDescription
 import com.enigmastation.streampack.core.service.IdentityProvider
 import com.enigmastation.streampack.core.service.IdentityResolution
 import com.enigmastation.streampack.irc.repository.IrcNetworkRepository
@@ -30,4 +31,12 @@ class IrcIdentityProvider(private val networkRepository: IrcNetworkRepository) :
             externalIdentifier = externalIdentifier,
         )
     }
+
+    override fun describeIdentity(): IdentityDescription =
+        IdentityDescription(
+            protocol = Protocol.IRC,
+            serviceIdLabel = "network",
+            externalIdLabel = "nick",
+            availableServices = networkRepository.findByDeletedFalse().map { it.name },
+        )
 }
