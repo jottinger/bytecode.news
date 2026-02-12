@@ -45,7 +45,7 @@ class IrcServiceTests {
     fun `join persists channel entity and creates ChannelControlOptions`() {
         ircService.connect("libera", "irc.libera.chat", "nevet", null, null)
         val result = ircService.join("libera", "#java")
-        assertTrue(result.contains("registered"))
+        assertTrue(result.contains("Joined"))
 
         val network = networkRepository.findByNameAndDeletedFalse("libera")!!
         val channel = channelRepository.findByNetworkAndNameAndDeletedFalse(network, "#java")

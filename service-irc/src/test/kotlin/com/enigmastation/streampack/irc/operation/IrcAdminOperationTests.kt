@@ -79,7 +79,7 @@ class IrcAdminOperationTests {
         eventGateway.process(ircMessage("irc connect libera irc.libera.chat nevet"))
         val result = eventGateway.process(ircMessage("irc join libera #java"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        assertTrue((result as OperationResult.Success).payload.toString().contains("registered"))
+        assertTrue((result as OperationResult.Success).payload.toString().contains("Joined"))
     }
 
     @Test

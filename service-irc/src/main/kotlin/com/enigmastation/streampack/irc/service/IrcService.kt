@@ -68,19 +68,19 @@ class IrcService(
         return "Network '$name' autoconnect set to $enabled"
     }
 
-    /** Registers a channel and optionally joins it, creating default ChannelControlOptions */
+    /** Registers a channel if needed and joins it, creating default ChannelControlOptions */
     fun join(networkName: String, channelName: String): String {
         val network =
             networkRepository.findByNameAndDeletedFalse(networkName)
                 ?: return "Error: Network '$networkName' not found"
-        if (channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName) != null) {
-            return "Error: Channel '$channelName' already registered on '$networkName'"
-        }
-        val channel = channelRepository.save(IrcChannel(network = network, name = channelName))
+        val channel =
+            channelRepository.findByNetworkAndNameAndDeletedFalse(network, channelName)
+                ?: channelRepository.save(IrcChannel(network = network, name = channelName)).also {
+                    logger.info("Registered channel '{}' on '{}'", channelName, networkName)
+                }
         channelControlService.getOrCreateOptions(channel.provenanceUri())
         connectionManager.ifAvailable { it.join(networkName, channelName) }
-        logger.info("Registered channel '{}' on '{}'", channelName, networkName)
-        return "Channel '$channelName' registered on '$networkName'. Joining..."
+        return "Joined '$channelName' on '$networkName'"
     }
 
     /** Leaves a channel at runtime (entity remains) */
