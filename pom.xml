@@ -16,7 +16,7 @@
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
         <springBootVersion>4.0.2</springBootVersion>
-        <kotlinVersion>2.2.21</kotlinVersion>
+        <kotlinVersion>2.3.0</kotlinVersion>
         <logbackVersion>1.5.27</logbackVersion>
         <testcontainersVersion>2.0.3</testcontainersVersion>
         <springdocVersion>3.0.1</springdocVersion>

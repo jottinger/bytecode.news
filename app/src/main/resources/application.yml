@@ -46,7 +46,7 @@ streampack:
     public-key: ${DISCORD_PUBLIC_KEY:no-key}
     permissions: 3072
     token: ${DISCORD_BOT_TOKEN:no-token}
-
+    signal-character: "!"
 springdoc:
   api-docs:
     enabled: true

@@ -71,7 +71,10 @@ class OperationService(
             return OperationResult.Error("Maximum hop count exceeded")
         }
 
+        val isAddressed = message.headers[Provenance.ADDRESSED] as? Boolean ?: true
+
         for (op in sortedOperations) {
+            if (op.addressed && !isAddressed) continue
             if (op.canHandle(message)) {
                 logger.debug(
                     "Operation {} handling message {}",

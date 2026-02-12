@@ -101,11 +101,8 @@ class IrcAdapter(
                 val ident = event.actor.userString
 
                 val strippedText = extractAddressedText(event.message)
-                if (strippedText != null) {
-                    dispatch(strippedText, provenance, nick, host, ident)
-                } else {
-                    dispatch(event.message, provenance, nick, host, ident)
-                }
+                val isAddressed = strippedText != null
+                dispatch(strippedText ?: event.message, provenance, isAddressed, nick, host, ident)
             } catch (e: Exception) {
                 logger.error("Error processing channel message on {}: {}", networkName, e.message)
             }
@@ -116,11 +113,15 @@ class IrcAdapter(
     private fun dispatch(
         payload: String,
         provenance: Provenance,
+        addressed: Boolean,
         nick: String? = null,
         host: String? = null,
         ident: String? = null,
     ) {
-        val builder = MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance)
+        val builder =
+            MessageBuilder.withPayload(payload)
+                .setHeader(Provenance.HEADER, provenance)
+                .setHeader(Provenance.ADDRESSED, addressed)
         if (nick != null) builder.setHeader("nick", nick)
         if (host != null) builder.setHeader("host", host)
         if (ident != null) builder.setHeader("ident", ident)
@@ -164,7 +165,14 @@ class IrcAdapter(
                         user = user,
                         metadata = mapOf(Provenance.BOT_NICK to client.nick),
                     )
-                dispatch(event.message, provenance, nick, event.actor.host, event.actor.userString)
+                dispatch(
+                    event.message,
+                    provenance,
+                    addressed = true,
+                    nick,
+                    event.actor.host,
+                    event.actor.userString,
+                )
             } catch (e: Exception) {
                 logger.error("Error processing private message on {}: {}", networkName, e.message)
             }

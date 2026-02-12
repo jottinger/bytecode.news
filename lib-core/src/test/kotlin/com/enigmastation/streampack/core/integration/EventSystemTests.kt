@@ -28,12 +28,13 @@ import org.springframework.messaging.support.MessageBuilder
  * will follow. Study them as the canonical examples of how to implement an Operation.
  *
  * ## Test Operations (in priority order)
- * | Priority | Operation      | canHandle                  | execute behavior              |
- * |----------|----------------|----------------------------|-------------------------------|
- * | 1        | Indecisive     | payload contains "maybe"   | always returns null (passes)  |
- * | 3        | Bouncer        | payload contains "private" | returns Declined              |
- * | 5        | Error reporter | payload contains "error"   | returns Error                 |
- * | 10       | Greeter        | payload contains "hello"   | returns Success("greetings!") |
+ * |Priority|Operation     |canHandle                 |execute behavior             |addressed|
+ * |--------|--------------|--------------------------|-----------------------------|---------|
+ * |1       |Indecisive    |payload contains "maybe"  |always returns null (passes) |true     |
+ * |3       |Bouncer       |payload contains "private"|returns Declined             |true     |
+ * |5       |Error reporter|payload contains "error"  |returns Error                |true     |
+ * |10      |Greeter       |payload contains "hello"  |returns Success("greetings!")|true     |
+ * |50      |Listener      |payload contains "music"  |returns Success("heard it")  |false    |
  */
 @SpringBootTest
 class EventSystemTests {
@@ -95,6 +96,20 @@ class EventSystemTests {
                 override fun execute(message: Message<*>): OperationOutcome =
                     OperationResult.Success("greetings!")
             }
+
+        /** Priority 50: handles "music" messages, does not require addressing */
+        @Bean
+        fun listenerOperation() =
+            object : Operation {
+                override val priority = 50
+                override val addressed = false
+
+                override fun canHandle(message: Message<*>): Boolean =
+                    (message.payload as? String)?.contains("music") == true
+
+                override fun execute(message: Message<*>): OperationOutcome =
+                    OperationResult.Success("heard it")
+            }
     }
 
     @Autowired lateinit var eventGateway: EventGateway
@@ -106,6 +121,16 @@ class EventSystemTests {
                 Provenance.HEADER,
                 Provenance(protocol = Protocol.HTTP, serviceId = "test-service", replyTo = "test"),
             )
+            .build()
+
+    /** Builds a message with explicit addressed header, mimicking a protocol adapter dispatch */
+    private fun buildMessage(payload: String, addressed: Boolean): Message<String> =
+        MessageBuilder.withPayload(payload)
+            .setHeader(
+                Provenance.HEADER,
+                Provenance(protocol = Protocol.HTTP, serviceId = "test-service", replyTo = "test"),
+            )
+            .setHeader(Provenance.ADDRESSED, addressed)
             .build()
 
     // ---- Happy path: an operation handles the message ----
@@ -216,5 +241,49 @@ class EventSystemTests {
 
         // Default canHandle should return true for any message
         assertEquals(true, catchAll.canHandle(buildMessage("anything")))
+    }
+
+    // ---- Addressed header filtering ----
+
+    @Test
+    fun `addressed operation handles message when addressed header is true`() {
+        val result = eventGateway.process(buildMessage("hello", addressed = true))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("greetings!", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `addressed operation handles message when addressed header is absent`() {
+        // No addressed header -- defaults to true for backward compatibility
+        val result = eventGateway.process(buildMessage("hello"))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("greetings!", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `addressed operation is skipped when addressed header is false`() {
+        // greeterOperation (addressed=true) should be skipped on unaddressed messages
+        val result = eventGateway.process(buildMessage("hello", addressed = false))
+
+        assertEquals(OperationResult.NotHandled, result)
+    }
+
+    @Test
+    fun `unaddressed operation handles message regardless of addressed header`() {
+        // listenerOperation (addressed=false) handles "music" even when not addressed
+        val result = eventGateway.process(buildMessage("music", addressed = false))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("heard it", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `unaddressed operation also handles addressed messages`() {
+        val result = eventGateway.process(buildMessage("music", addressed = true))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("heard it", (result as OperationResult.Success).payload)
     }
 }

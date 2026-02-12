@@ -117,7 +117,8 @@ class DiscordAdapter(
                 )
 
             val addressedText = extractAddressedText(rawText, event)
-            dispatch(addressedText ?: rawText, provenance)
+            val isAddressed = addressedText != null
+            dispatch(addressedText ?: rawText, provenance, isAddressed)
         } else {
             // Direct message
             val user = userResolutionService.resolve(Protocol.DISCORD, "", event.author.id)
@@ -129,7 +130,7 @@ class DiscordAdapter(
                     metadata = mapOf(Provenance.BOT_NICK to event.jda.selfUser.name),
                 )
             // DMs are always addressed
-            dispatch(rawText, provenance)
+            dispatch(rawText, provenance, addressed = true)
         }
     }
 
@@ -154,10 +155,11 @@ class DiscordAdapter(
         return null
     }
 
-    private fun dispatch(payload: String, provenance: Provenance) {
+    private fun dispatch(payload: String, provenance: Provenance, addressed: Boolean) {
         val message =
             MessageBuilder.withPayload(payload as Any)
                 .setHeader(Provenance.HEADER, provenance)
+                .setHeader(Provenance.ADDRESSED, addressed)
                 .build()
         eventGateway.send(message)
     }

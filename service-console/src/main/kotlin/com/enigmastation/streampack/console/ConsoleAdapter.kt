@@ -55,7 +55,10 @@ class ConsoleAdapter(
             if (line == "exit" || line == "quit") break
 
             val message =
-                MessageBuilder.withPayload(line).setHeader(Provenance.HEADER, provenance).build()
+                MessageBuilder.withPayload(line)
+                    .setHeader(Provenance.HEADER, provenance)
+                    .setHeader(Provenance.ADDRESSED, true)
+                    .build()
 
             eventGateway.send(message)
         }
