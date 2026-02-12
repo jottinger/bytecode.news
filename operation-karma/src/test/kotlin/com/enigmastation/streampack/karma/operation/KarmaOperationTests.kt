@@ -216,8 +216,7 @@ class KarmaOperationTests {
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.startsWith("Bottom karma: "))
         assertTrue(payload.indexOf("villain") < payload.indexOf("sidekick"))
-        // hero has positive karma, should not appear in bottom results
-        assertTrue(!payload.contains("hero"))
+        assertTrue(payload.indexOf("sidekick") < payload.indexOf("hero"))
     }
 
     @Test

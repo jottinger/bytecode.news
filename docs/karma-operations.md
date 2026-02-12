@@ -91,8 +91,8 @@ bottom <N> karma    show bottom N subjects
 
 - Default count is 5, maximum is 10.
   Counts outside this range are clamped.
-- "Top" returns only subjects with positive karma, sorted highest first.
-- "Bottom" returns only subjects with negative karma, sorted lowest first.
+- "Top" returns subjects sorted highest karma first.
+- "Bottom" returns subjects sorted lowest karma first.
 - Subjects with exactly zero karma are excluded from both rankings.
 - The output is built entry by entry, stopping when the next entry would push the response past 400 characters.
   This keeps the response within a single IRC message.
