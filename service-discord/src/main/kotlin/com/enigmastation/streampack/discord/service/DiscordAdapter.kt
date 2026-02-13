@@ -120,9 +120,10 @@ class DiscordAdapter(
                 )
 
             val nick = event.member?.effectiveName ?: event.author.effectiveName
+            val displayText = event.message.contentDisplay
             val addressedText = extractAddressedText(rawText, event)
             val isAddressed = addressedText != null
-            dispatch(addressedText ?: rawText, provenance, isAddressed, nick)
+            dispatch(addressedText ?: rawText, provenance, isAddressed, nick, displayText)
         } else {
             // Direct message
             val user = userResolutionService.resolve(Protocol.DISCORD, "", event.author.id)
@@ -134,7 +135,8 @@ class DiscordAdapter(
                     metadata = mapOf(Provenance.BOT_NICK to event.jda.selfUser.name),
                 )
             // DMs are always addressed
-            dispatch(rawText, provenance, addressed = true, event.author.effectiveName)
+            val displayText = event.message.contentDisplay
+            dispatch(rawText, provenance, addressed = true, event.author.effectiveName, displayText)
         }
     }
 
@@ -164,12 +166,14 @@ class DiscordAdapter(
         provenance: Provenance,
         addressed: Boolean,
         nick: String? = null,
+        displayText: String? = null,
     ) {
         val builder =
             MessageBuilder.withPayload(payload as Any)
                 .setHeader(Provenance.HEADER, provenance)
                 .setHeader(Provenance.ADDRESSED, addressed)
         if (nick != null) builder.setHeader("nick", nick)
+        if (displayText != null) builder.setHeader("displayText", displayText)
         eventGateway.send(builder.build())
     }
 

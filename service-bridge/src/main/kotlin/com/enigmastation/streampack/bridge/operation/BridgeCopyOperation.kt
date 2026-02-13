@@ -35,7 +35,9 @@ class BridgeCopyOperation(
         val targets = bridgeService.getCopyTargets(provenance.encode())
         if (targets.isEmpty()) return null
 
-        val attributed = "<$nick@${provenance.protocol.name.lowercase()}> $payload"
+        // Prefer display-resolved text (e.g. Discord mention resolution) over raw payload
+        val displayText = message.headers[DISPLAY_TEXT_HEADER] as? String ?: payload
+        val attributed = "<${provenance.encode()}/$nick> $displayText"
         for (targetUri in targets) {
             val targetProvenance = Provenance.decode(targetUri)
             val egressMessage =
@@ -61,5 +63,8 @@ class BridgeCopyOperation(
     companion object {
         /** Metadata key marking a message as already bridged to prevent re-copy loops */
         const val BRIDGED_KEY = "streampack_bridged"
+
+        /** Header containing display-resolved text for bridging (e.g. Discord mentions resolved) */
+        const val DISPLAY_TEXT_HEADER = "displayText"
     }
 }

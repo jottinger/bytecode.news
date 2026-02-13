@@ -14,7 +14,9 @@ import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.integration.channel.PublishSubscribeChannel
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.transaction.annotation.Transactional
 
@@ -25,6 +27,8 @@ class BridgeOperationTests {
     @Autowired lateinit var eventGateway: EventGateway
 
     @Autowired lateinit var bridgeService: BridgeService
+
+    @Autowired @Qualifier("egressChannel") lateinit var egressChannel: PublishSubscribeChannel
 
     private val adminUser =
         UserPrincipal(
@@ -209,6 +213,70 @@ class BridgeOperationTests {
         // BridgeCopyOperation returns null, so the chain continues to NotHandled
         val result = eventGateway.process(message)
         assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `bridge attribution uses full provenance URI with nick`() {
+        val sourceUri =
+            Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "#test").encode()
+        bridgeService.copy(sourceUri, "irc://othernet/%23other")
+
+        val captured = mutableListOf<String>()
+        val handler =
+            org.springframework.messaging.MessageHandler { msg ->
+                val result = msg.payload
+                if (result is OperationResult.Success) {
+                    captured.add(result.payload.toString())
+                }
+            }
+        egressChannel.subscribe(handler)
+        try {
+            val message =
+                MessageBuilder.withPayload("hello world")
+                    .setHeader(Provenance.HEADER, provenance("#test", "testnet"))
+                    .setHeader(Provenance.ADDRESSED, false)
+                    .setHeader("nick", "dreamreal")
+                    .build()
+            eventGateway.process(message)
+
+            assertTrue(captured.any { it.contains("<$sourceUri/dreamreal>") })
+            assertTrue(captured.any { it.contains("hello world") })
+        } finally {
+            egressChannel.unsubscribe(handler)
+        }
+    }
+
+    @Test
+    fun `bridge prefers displayText header over raw payload`() {
+        val sourceUri =
+            Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "#test").encode()
+        bridgeService.copy(sourceUri, "irc://othernet/%23other")
+
+        val captured = mutableListOf<String>()
+        val handler =
+            org.springframework.messaging.MessageHandler { msg ->
+                val result = msg.payload
+                if (result is OperationResult.Success) {
+                    captured.add(result.payload.toString())
+                }
+            }
+        egressChannel.subscribe(handler)
+        try {
+            val message =
+                MessageBuilder.withPayload("hello <@857685522533056522>")
+                    .setHeader(Provenance.HEADER, provenance("#test", "testnet"))
+                    .setHeader(Provenance.ADDRESSED, false)
+                    .setHeader("nick", "testuser")
+                    .setHeader("displayText", "hello @josephbottinger")
+                    .build()
+            eventGateway.process(message)
+
+            // Should use the display-resolved text, not the raw mention
+            assertTrue(captured.any { it.contains("hello @josephbottinger") })
+            assertTrue(captured.none { it.contains("<@857685522533056522>") })
+        } finally {
+            egressChannel.unsubscribe(handler)
+        }
     }
 
     @Test
