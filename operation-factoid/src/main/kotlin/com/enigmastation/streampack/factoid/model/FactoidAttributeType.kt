@@ -65,6 +65,7 @@ enum class FactoidAttributeType(val mutable: Boolean = true, val includeInSummar
     FORGET(mutable = false, includeInSummary = false),
     UNKNOWN(mutable = false, includeInSummary = false),
     INFO(mutable = false, includeInSummary = false),
+    LITERAL(mutable = false, includeInSummary = false),
     LOCK(mutable = false, includeInSummary = false),
     UNLOCK(mutable = false, includeInSummary = false);
 
