@@ -27,7 +27,7 @@ class UrlTitleService(
     @Transactional
     override fun afterPropertiesSet() {
         properties.defaultIgnoredHosts.forEach { hostName ->
-            val normalized = hostName.lowercase()
+            val normalized = normalizeHost(hostName)
             if (ignoredHostRepository.findByHostNameIgnoreCase(normalized) == null) {
                 ignoredHostRepository.save(IgnoredHost(hostName = normalized))
             }
@@ -63,16 +63,16 @@ class UrlTitleService(
     fun isIgnoredHost(url: String): Boolean {
         val host =
             try {
-                URI(url).host?.lowercase()
+                normalizeHost(URI(url).host ?: return false)
             } catch (_: Exception) {
-                null
-            } ?: return false
+                return false
+            }
         return ignoredHostRepository.findByHostNameIgnoreCase(host) != null
     }
 
     @Transactional
     fun addIgnoredHost(hostName: String) {
-        val normalized = hostName.lowercase()
+        val normalized = normalizeHost(hostName)
         if (ignoredHostRepository.findByHostNameIgnoreCase(normalized) == null) {
             ignoredHostRepository.save(IgnoredHost(hostName = normalized))
         }
@@ -80,7 +80,7 @@ class UrlTitleService(
 
     @Transactional
     fun deleteIgnoredHost(hostName: String) {
-        val normalized = hostName.lowercase()
+        val normalized = normalizeHost(hostName)
         val existing = ignoredHostRepository.findByHostNameIgnoreCase(normalized)
         if (existing != null) {
             ignoredHostRepository.delete(existing)
@@ -93,6 +93,9 @@ class UrlTitleService(
     }
 
     companion object {
+        /** Strips www. prefix and lowercases for consistent ignore-list matching */
+        fun normalizeHost(host: String): String = host.lowercase().removePrefix("www.")
+
         fun tokenize(text: String): Set<String> {
             return text.lowercase().split("\\W+".toRegex()).filter { it.isNotEmpty() }.toSet()
         }
