@@ -545,6 +545,47 @@ class FactoidOperationTests {
         assertSuccess(restored, "a is goodbye.")
     }
 
+    // -- Nested selection (8ball) --
+
+    @Test
+    fun `nested selection groups resolve correctly end to end`() {
+        eventGateway.process(
+            msg(
+                "8ball=<reply>(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)" +
+                    "|It's (unclear|unknowable))."
+            )
+        )
+        val validResults =
+            setOf(
+                "Yes.",
+                "No.",
+                "Maybe.",
+                "Ask me tomorrow.",
+                "Ask me again.",
+                "Ask me again tomorrow.",
+                "It's unclear.",
+                "It's unknowable.",
+            )
+        repeat(50) {
+            val result = eventGateway.process(msg("8ball"))
+            assertInstanceOf(OperationResult.Success::class.java, result)
+            val payload = (result as OperationResult.Success).payload as String
+            assertTrue(payload in validResults)
+        }
+    }
+
+    @Test
+    fun `empty option in selection can produce empty result`() {
+        eventGateway.process(msg("maybe=<reply>(something|)"))
+        val validResults = setOf("something.", ".")
+        repeat(20) {
+            val result = eventGateway.process(msg("maybe"))
+            assertInstanceOf(OperationResult.Success::class.java, result)
+            val payload = (result as OperationResult.Success).payload as String
+            assertTrue(payload in validResults)
+        }
+    }
+
     // -- Helper --
 
     private fun assertTrue(condition: Boolean) {

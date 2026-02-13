@@ -99,4 +99,88 @@ class FactoidTextRendererTests {
         val result = renderer.resolveReference("outer", 3)
         assertEquals("deep value", result)
     }
+
+    // -- Nested parentheses --
+
+    @Test
+    fun `nested parentheses resolve correctly`() {
+        val validOuter = setOf("Yes", "No", "Ask me tomorrow", "Ask me again")
+        repeat(50) {
+            val result = renderer.resolveSelections("(Yes|No|Ask me( tomorrow| again))", 3)
+            assertTrue(result in validOuter, "Unexpected result: $result")
+        }
+    }
+
+    @Test
+    fun `deeply nested groups with surrounding text`() {
+        val validInner = setOf("unclear", "unknowable")
+        val validOuter =
+            setOf(
+                "Yes",
+                "No",
+                "Maybe",
+                "Ask me tomorrow",
+                "Ask me again",
+                "Ask me again tomorrow",
+                "It's unclear",
+                "It's unknowable",
+            )
+        repeat(50) {
+            val result =
+                renderer.resolveSelections(
+                    "(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)|It's (unclear|unknowable))",
+                    3,
+                )
+            assertTrue(result in validOuter, "Unexpected result: $result")
+        }
+    }
+
+    @Test
+    fun `8ball expression with trailing punctuation`() {
+        val input =
+            "(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)|It's (unclear|unknowable))."
+        repeat(50) {
+            val result = renderer.resolveSelections(input, 3)
+            // Should always end with a period and never contain unresolved | or )
+            assertTrue(result.endsWith("."), "Missing period: $result")
+            assertTrue("|" !in result, "Unresolved pipe: $result")
+            assertTrue(")" !in result, "Unresolved paren: $result")
+        }
+    }
+
+    // -- Empty options --
+
+    @Test
+    fun `empty option is valid`() {
+        val validResults = setOf("hello", "")
+        repeat(20) {
+            val result = renderer.resolveSelections("(hello|)", 3)
+            assertTrue(result in validResults, "Unexpected result: '$result'")
+        }
+    }
+
+    @Test
+    fun `leading empty option is valid`() {
+        val validResults = setOf("", "world")
+        repeat(20) {
+            val result = renderer.resolveSelections("(|world)", 3)
+            assertTrue(result in validResults, "Unexpected result: '$result'")
+        }
+    }
+
+    // -- Edge cases --
+
+    @Test
+    fun `unbalanced open paren passes through`() {
+        assertEquals("(oops", renderer.resolveSelections("(oops", 3))
+    }
+
+    @Test
+    fun `selection embedded in surrounding text`() {
+        val validResults = setOf("I say hello to you", "I say goodbye to you")
+        repeat(20) {
+            val result = renderer.resolveSelections("I say (hello|goodbye) to you", 3)
+            assertTrue(result in validResults, "Unexpected result: $result")
+        }
+    }
 }
