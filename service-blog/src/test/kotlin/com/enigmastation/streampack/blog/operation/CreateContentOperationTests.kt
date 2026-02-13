@@ -1,11 +1,15 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
+import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.model.CreateContentRequest
 import com.enigmastation.streampack.blog.model.CreateContentResponse
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
+import com.enigmastation.streampack.blog.repository.TagRepository
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
@@ -14,6 +18,7 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.repository.UserRepository
+import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -33,6 +38,9 @@ class CreateContentOperationTests {
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var slugRepository: SlugRepository
+    @Autowired lateinit var tagRepository: TagRepository
+    @Autowired lateinit var postTagRepository: PostTagRepository
+    @Autowired lateinit var categoryRepository: CategoryRepository
 
     private lateinit var verifiedUser: User
     private lateinit var unverifiedUser: User
@@ -173,5 +181,55 @@ class CreateContentOperationTests {
         assertNotNull(slug)
         assertEquals(response.slug, slug!!.path)
         assertTrue(slug.canonical)
+    }
+
+    @Test
+    fun `create with tags creates tag entities and associations`() {
+        val request =
+            CreateContentRequest("Tagged Post", "Content.", tags = listOf("kotlin", "spring"))
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals(listOf("kotlin", "spring"), response.tags)
+
+        val postTags = postTagRepository.findByPost(response.id)
+        assertEquals(2, postTags.size)
+
+        assertNotNull(tagRepository.findByName("kotlin"))
+        assertNotNull(tagRepository.findByName("spring"))
+    }
+
+    @Test
+    fun `create with unknown tags auto-creates them`() {
+        val request = CreateContentRequest("New Tags", "Content.", tags = listOf("brandnewtag"))
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals(listOf("brandnewtag"), response.tags)
+
+        val tag = tagRepository.findByName("brandnewtag")
+        assertNotNull(tag)
+        assertEquals("brandnewtag", tag!!.slug)
+    }
+
+    @Test
+    fun `create with categoryIds creates associations`() {
+        val category = categoryRepository.save(Category(name = "JVM", slug = "jvm"))
+        val request =
+            CreateContentRequest("Categorized Post", "Content.", categoryIds = listOf(category.id))
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals(listOf("JVM"), response.categories)
+    }
+
+    @Test
+    fun `create with nonexistent categoryId silently skips it`() {
+        val request =
+            CreateContentRequest("Missing Cat", "Content.", categoryIds = listOf(UUID.randomUUID()))
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertTrue(response.categories.isEmpty())
     }
 }

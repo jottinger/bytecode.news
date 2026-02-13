@@ -4,6 +4,7 @@ package com.enigmastation.streampack.blog.repository
 import com.enigmastation.streampack.blog.entity.PostCategory
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 
 /** Manages post-to-category assignments */
@@ -13,4 +14,8 @@ interface PostCategoryRepository : JpaRepository<PostCategory, UUID> {
 
     @Query("SELECT pc FROM PostCategory pc WHERE pc.category.id = :categoryId")
     fun findByCategory(categoryId: UUID): List<PostCategory>
+
+    @Modifying
+    @Query("DELETE FROM PostCategory pc WHERE pc.post.id = :postId")
+    fun deleteByPost(postId: UUID)
 }

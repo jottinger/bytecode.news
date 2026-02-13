@@ -12,4 +12,6 @@ data class ContentSummary(
     val excerpt: String?,
     val authorDisplayName: String,
     val publishedAt: Instant?,
+    val tags: List<String> = emptyList(),
+    val categories: List<String> = emptyList(),
 )

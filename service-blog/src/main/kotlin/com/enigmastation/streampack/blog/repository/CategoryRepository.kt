@@ -17,4 +17,6 @@ interface CategoryRepository : JpaRepository<Category, UUID> {
     fun findChildren(parentId: UUID): List<Category>
 
     fun findBySlug(slug: String): Category?
+
+    fun findByName(name: String): Category?
 }

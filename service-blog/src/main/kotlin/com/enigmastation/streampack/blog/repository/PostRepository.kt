@@ -59,4 +59,14 @@ interface PostRepository : JpaRepository<Post, UUID> {
             "SELECT COUNT(p) FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.DRAFT AND p.deleted = false",
     )
     fun findDrafts(pageable: Pageable): Page<Post>
+
+    /** Full-text search on published posts, ranked by relevance */
+    @Query(
+        nativeQuery = true,
+        value =
+            "SELECT p.* FROM posts p WHERE p.search_vector @@ plainto_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now ORDER BY ts_rank(p.search_vector, plainto_tsquery('english', :query)) DESC",
+        countQuery =
+            "SELECT count(*) FROM posts p WHERE p.search_vector @@ plainto_tsquery('english', :query) AND p.status = 'APPROVED' AND p.deleted = FALSE AND p.published_at <= :now",
+    )
+    fun searchPublished(query: String, now: Instant, pageable: Pageable): Page<Post>
 }

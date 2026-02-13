@@ -1,16 +1,24 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
+import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.entity.Comment
 import com.enigmastation.streampack.blog.entity.Post
+import com.enigmastation.streampack.blog.entity.PostCategory
+import com.enigmastation.streampack.blog.entity.PostTag
 import com.enigmastation.streampack.blog.entity.Slug
+import com.enigmastation.streampack.blog.entity.Tag
 import com.enigmastation.streampack.blog.model.ContentDetail
 import com.enigmastation.streampack.blog.model.ContentListResponse
 import com.enigmastation.streampack.blog.model.FindContentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CategoryRepository
 import com.enigmastation.streampack.blog.repository.CommentRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
+import com.enigmastation.streampack.blog.repository.TagRepository
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
@@ -40,6 +48,10 @@ class FindContentOperationTests {
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var slugRepository: SlugRepository
     @Autowired lateinit var commentRepository: CommentRepository
+    @Autowired lateinit var tagRepository: TagRepository
+    @Autowired lateinit var postTagRepository: PostTagRepository
+    @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var postCategoryRepository: PostCategoryRepository
 
     private lateinit var author: User
     private lateinit var admin: User
@@ -351,5 +363,85 @@ class FindContentOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
         assertEquals(0, detail.commentCount)
+    }
+
+    @Test
+    fun `FindBySlug includes tags and categories`() {
+        val tag = tagRepository.save(Tag(name = "kotlin", slug = "kotlin"))
+        val category = categoryRepository.save(Category(name = "JVM", slug = "jvm"))
+        postTagRepository.save(PostTag(post = publishedPost, tag = tag))
+        postCategoryRepository.save(PostCategory(post = publishedPost, category = category))
+
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"))
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals(listOf("kotlin"), detail.tags)
+        assertEquals(listOf("JVM"), detail.categories)
+    }
+
+    @Test
+    fun `FindPublished includes tags and categories in summaries`() {
+        val tag = tagRepository.save(Tag(name = "spring", slug = "spring"))
+        postTagRepository.save(PostTag(post = publishedPost, tag = tag))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindPublished()))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        val summary = response.posts.first { it.title == "Published Post" }
+        assertEquals(listOf("spring"), summary.tags)
+    }
+
+    @Test
+    fun `Search finds posts by title`() {
+        val result = eventGateway.process(findMessage(FindContentRequest.Search("Published")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(1, response.posts.size)
+        assertEquals("Published Post", response.posts[0].title)
+    }
+
+    @Test
+    fun `Search finds posts by excerpt content`() {
+        val result =
+            eventGateway.process(findMessage(FindContentRequest.Search("Published content")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(1, response.posts.size)
+    }
+
+    @Test
+    fun `Search returns empty for no matches`() {
+        val result = eventGateway.process(findMessage(FindContentRequest.Search("xyznonexistent")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(0, response.posts.size)
+        assertEquals(0, response.totalCount)
+    }
+
+    @Test
+    fun `Search ignores drafts and deleted posts`() {
+        val result = eventGateway.process(findMessage(FindContentRequest.Search("Draft")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        // Draft and deleted posts should not appear
+        assertEquals(0, response.posts.size)
+    }
+
+    @Test
+    fun `Search with blank query returns empty`() {
+        val result = eventGateway.process(findMessage(FindContentRequest.Search("  ")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(0, response.posts.size)
     }
 }

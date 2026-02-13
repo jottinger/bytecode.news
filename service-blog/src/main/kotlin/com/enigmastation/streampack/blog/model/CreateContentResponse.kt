@@ -14,4 +14,6 @@ data class CreateContentResponse(
     val authorId: UUID,
     val authorDisplayName: String,
     val createdAt: Instant,
+    val tags: List<String> = emptyList(),
+    val categories: List<String> = emptyList(),
 )

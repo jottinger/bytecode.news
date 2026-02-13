@@ -1,13 +1,20 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
+import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.entity.Post
+import com.enigmastation.streampack.blog.entity.PostTag
 import com.enigmastation.streampack.blog.entity.Slug
+import com.enigmastation.streampack.blog.entity.Tag
 import com.enigmastation.streampack.blog.model.ContentDetail
 import com.enigmastation.streampack.blog.model.EditContentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CategoryRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
+import com.enigmastation.streampack.blog.repository.TagRepository
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
@@ -37,6 +44,10 @@ class EditContentOperationTests {
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var slugRepository: SlugRepository
+    @Autowired lateinit var tagRepository: TagRepository
+    @Autowired lateinit var postTagRepository: PostTagRepository
+    @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var postCategoryRepository: PostCategoryRepository
 
     private lateinit var author: User
     private lateinit var admin: User
@@ -225,5 +236,50 @@ class EditContentOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
         assertEquals("2026/02/original-draft-title", detail.slug)
+    }
+
+    @Test
+    fun `edit with tags replaces existing tags`() {
+        // First create a tag association
+        val oldTag = tagRepository.save(Tag(name = "oldtag", slug = "oldtag"))
+        postTagRepository.save(PostTag(post = draftPost, tag = oldTag))
+
+        val request =
+            EditContentRequest(
+                draftPost.id,
+                "Updated Title",
+                "Updated content.",
+                tags = listOf("newtag1", "newtag2"),
+            )
+        val result = eventGateway.process(editMessage(request, author))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals(listOf("newtag1", "newtag2"), detail.tags)
+
+        val postTags = postTagRepository.findByPost(draftPost.id)
+        assertEquals(2, postTags.size)
+    }
+
+    @Test
+    fun `edit with categories replaces existing categories`() {
+        val cat1 = categoryRepository.save(Category(name = "Cat1", slug = "cat1"))
+        val cat2 = categoryRepository.save(Category(name = "Cat2", slug = "cat2"))
+
+        val request =
+            EditContentRequest(
+                draftPost.id,
+                "Updated Title",
+                "Updated content.",
+                categoryIds = listOf(cat2.id),
+            )
+        val result = eventGateway.process(editMessage(request, author))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals(listOf("Cat2"), detail.categories)
+
+        val postCategories = postCategoryRepository.findByPost(draftPost.id)
+        assertEquals(1, postCategories.size)
     }
 }

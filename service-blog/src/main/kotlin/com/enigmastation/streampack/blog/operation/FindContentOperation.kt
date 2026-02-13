@@ -8,7 +8,9 @@ import com.enigmastation.streampack.blog.model.ContentSummary
 import com.enigmastation.streampack.blog.model.FindContentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
 import com.enigmastation.streampack.blog.repository.CommentRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
@@ -17,6 +19,7 @@ import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.service.TypedOperation
 import java.time.Instant
+import java.util.UUID
 import org.springframework.data.domain.PageRequest
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
@@ -27,6 +30,8 @@ class FindContentOperation(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
     private val commentRepository: CommentRepository,
+    private val postTagRepository: PostTagRepository,
+    private val postCategoryRepository: PostCategoryRepository,
 ) : TypedOperation<FindContentRequest>(FindContentRequest::class) {
 
     override val priority = 50
@@ -39,6 +44,8 @@ class FindContentOperation(
             is FindContentRequest.FindBySlug -> findBySlug(payload.path, user)
             is FindContentRequest.FindById -> findById(payload.id, user)
             is FindContentRequest.FindPublished -> findPublished(payload.page, payload.size)
+            is FindContentRequest.Search ->
+                searchPublished(payload.query, payload.page, payload.size)
         }
     }
 
@@ -84,6 +91,43 @@ class FindContentOperation(
                     excerpt = post.excerpt,
                     authorDisplayName = post.author?.displayName ?: "Anonymous",
                     publishedAt = post.publishedAt,
+                    tags = tagNamesForPost(post.id),
+                    categories = categoryNamesForPost(post.id),
+                )
+            }
+
+        return OperationResult.Success(
+            ContentListResponse(
+                posts = summaries,
+                page = pageResult.number,
+                totalPages = pageResult.totalPages,
+                totalCount = pageResult.totalElements,
+            )
+        )
+    }
+
+    private fun searchPublished(query: String, page: Int, size: Int): OperationResult {
+        if (query.isBlank()) {
+            return OperationResult.Success(
+                ContentListResponse(posts = emptyList(), page = 0, totalPages = 0, totalCount = 0)
+            )
+        }
+
+        val now = Instant.now()
+        val pageResult = postRepository.searchPublished(query, now, PageRequest.of(page, size))
+
+        val summaries =
+            pageResult.content.map { post ->
+                val canonicalSlug = slugRepository.findCanonical(post.id)
+                ContentSummary(
+                    id = post.id,
+                    title = post.title,
+                    slug = canonicalSlug?.path ?: "",
+                    excerpt = post.excerpt,
+                    authorDisplayName = post.author?.displayName ?: "Anonymous",
+                    publishedAt = post.publishedAt,
+                    tags = tagNamesForPost(post.id),
+                    categories = categoryNamesForPost(post.id),
                 )
             }
 
@@ -129,6 +173,14 @@ class FindContentOperation(
             createdAt = post.createdAt,
             updatedAt = post.updatedAt,
             commentCount = commentRepository.countActiveByPost(post.id).toInt(),
+            tags = tagNamesForPost(post.id),
+            categories = categoryNamesForPost(post.id),
         )
     }
+
+    private fun tagNamesForPost(postId: UUID): List<String> =
+        postTagRepository.findByPost(postId).map { it.tag.name }
+
+    private fun categoryNamesForPost(postId: UUID): List<String> =
+        postCategoryRepository.findByPost(postId).map { it.category.name }
 }

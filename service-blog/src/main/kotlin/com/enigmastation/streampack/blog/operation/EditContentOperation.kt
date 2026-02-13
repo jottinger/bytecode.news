@@ -1,19 +1,22 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
+import com.enigmastation.streampack.blog.entity.Post
+import com.enigmastation.streampack.blog.entity.PostCategory
+import com.enigmastation.streampack.blog.entity.PostTag
+import com.enigmastation.streampack.blog.entity.Tag
 import com.enigmastation.streampack.blog.model.ContentDetail
 import com.enigmastation.streampack.blog.model.EditContentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
-import com.enigmastation.streampack.blog.repository.CommentRepository
-import com.enigmastation.streampack.blog.repository.PostRepository
-import com.enigmastation.streampack.blog.repository.SlugRepository
+import com.enigmastation.streampack.blog.repository.*
 import com.enigmastation.streampack.blog.service.MarkdownRenderingService
+import com.enigmastation.streampack.blog.service.SlugGenerationService
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
-import java.time.Instant
+import java.util.*
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -24,6 +27,11 @@ class EditContentOperation(
     private val slugRepository: SlugRepository,
     private val commentRepository: CommentRepository,
     private val markdownRenderingService: MarkdownRenderingService,
+    private val slugGenerationService: SlugGenerationService,
+    private val tagRepository: TagRepository,
+    private val postTagRepository: PostTagRepository,
+    private val categoryRepository: CategoryRepository,
+    private val postCategoryRepository: PostCategoryRepository,
 ) : TypedOperation<EditContentRequest>(EditContentRequest::class) {
 
     override fun handle(payload: EditContentRequest, message: Message<*>): OperationOutcome {
@@ -33,20 +41,18 @@ class EditContentOperation(
 
         val principal = provenance.user ?: return OperationResult.Error("Authentication required")
 
-        if (payload.title.isBlank()) {
-            return OperationResult.Error("Title is required")
-        }
-        if (payload.markdownSource.isBlank()) {
-            return OperationResult.Error("Content is required")
-        }
-
         val post =
             postRepository.findActiveByIdWithAuthor(payload.id)
                 ?: return OperationResult.Error("Post not found")
 
         val isAdmin = principal.role == Role.ADMIN || principal.role == Role.SUPER_ADMIN
         val isAuthor = post.author != null && post.author.id == principal.id
-
+        if ((payload.title ?: "").trim().isBlank()) {
+            return OperationResult.Error("Title is required")
+        }
+        if ((payload.markdownSource ?: "").trim().isBlank()) {
+            return OperationResult.Error("Content is required")
+        }
         // Author can edit own drafts; admin can edit anything
         if (!isAdmin) {
             if (!isAuthor) {
@@ -57,20 +63,10 @@ class EditContentOperation(
             }
         }
 
-        val renderedHtml = markdownRenderingService.render(payload.markdownSource)
-        val excerpt = markdownRenderingService.excerpt(payload.markdownSource)
-        val now = Instant.now()
+        val updated = postRepository.save(payload.applyTo(post, markdownRenderingService))
 
-        val updated =
-            postRepository.save(
-                post.copy(
-                    title = payload.title,
-                    markdownSource = payload.markdownSource,
-                    renderedHtml = renderedHtml,
-                    excerpt = excerpt,
-                    updatedAt = now,
-                )
-            )
+        val tagNames = replaceTags(updated, payload.tags ?: emptyList())
+        val categoryNames = replaceCategories(updated, payload.categoryIds ?: emptyList())
 
         val canonicalSlug = slugRepository.findCanonical(updated.id)
 
@@ -90,7 +86,40 @@ class EditContentOperation(
                 createdAt = updated.createdAt,
                 updatedAt = updated.updatedAt,
                 commentCount = commentRepository.countActiveByPost(updated.id).toInt(),
+                tags = tagNames,
+                categories = categoryNames,
             )
         )
+    }
+
+    /** Removes existing tag associations and creates new ones from the request */
+    private fun replaceTags(post: Post, tagNames: List<String>): List<String> {
+        postTagRepository.deleteByPost(post.id)
+        val resolved =
+            tagNames
+                .map { it.trim().lowercase() }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .map { name ->
+                    tagRepository.findByName(name)
+                        ?: tagRepository.save(
+                            Tag(name = name, slug = slugGenerationService.slugify(name))
+                        )
+                }
+        resolved.forEach { tag -> postTagRepository.save(PostTag(post = post, tag = tag)) }
+        return resolved.map { it.name }
+    }
+
+    /** Removes existing category associations and creates new ones from the request */
+    private fun replaceCategories(post: Post, categoryIds: List<UUID>): List<String> {
+        postCategoryRepository.deleteByPost(post.id)
+        val resolved =
+            categoryIds.distinct().mapNotNull { id ->
+                categoryRepository.findById(id).orElse(null)?.takeIf { !it.deleted }
+            }
+        resolved.forEach { category ->
+            postCategoryRepository.save(PostCategory(post = post, category = category))
+        }
+        return resolved.map { it.name }
     }
 }

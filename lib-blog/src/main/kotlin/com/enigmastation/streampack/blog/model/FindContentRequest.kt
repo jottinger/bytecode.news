@@ -10,4 +10,6 @@ sealed interface FindContentRequest {
     data class FindById(val id: UUID) : FindContentRequest
 
     data class FindPublished(val page: Int = 0, val size: Int = 20) : FindContentRequest
+
+    data class Search(val query: String, val page: Int = 0, val size: Int = 20) : FindContentRequest
 }

@@ -4,7 +4,9 @@ package com.enigmastation.streampack.blog.operation
 import com.enigmastation.streampack.blog.model.ContentListResponse
 import com.enigmastation.streampack.blog.model.ContentSummary
 import com.enigmastation.streampack.blog.model.FindDraftsRequest
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
@@ -20,6 +22,8 @@ import org.springframework.stereotype.Component
 class FindDraftsOperation(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
+    private val postTagRepository: PostTagRepository,
+    private val postCategoryRepository: PostCategoryRepository,
 ) : TypedOperation<FindDraftsRequest>(FindDraftsRequest::class) {
 
     override val priority = 50
@@ -47,6 +51,8 @@ class FindDraftsOperation(
                     excerpt = post.excerpt,
                     authorDisplayName = post.author?.displayName ?: "Anonymous",
                     publishedAt = post.publishedAt,
+                    tags = postTagRepository.findByPost(post.id).map { it.tag.name },
+                    categories = postCategoryRepository.findByPost(post.id).map { it.category.name },
                 )
             }
 

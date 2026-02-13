@@ -2,12 +2,19 @@
 package com.enigmastation.streampack.blog.operation
 
 import com.enigmastation.streampack.blog.entity.Post
+import com.enigmastation.streampack.blog.entity.PostCategory
+import com.enigmastation.streampack.blog.entity.PostTag
 import com.enigmastation.streampack.blog.entity.Slug
+import com.enigmastation.streampack.blog.entity.Tag
 import com.enigmastation.streampack.blog.model.CreateContentRequest
 import com.enigmastation.streampack.blog.model.CreateContentResponse
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CategoryRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
+import com.enigmastation.streampack.blog.repository.TagRepository
 import com.enigmastation.streampack.blog.service.MarkdownRenderingService
 import com.enigmastation.streampack.blog.service.SlugGenerationService
 import com.enigmastation.streampack.core.model.OperationOutcome
@@ -26,6 +33,10 @@ class CreateContentOperation(
     private val userRepository: UserRepository,
     private val markdownRenderingService: MarkdownRenderingService,
     private val slugGenerationService: SlugGenerationService,
+    private val tagRepository: TagRepository,
+    private val postTagRepository: PostTagRepository,
+    private val categoryRepository: CategoryRepository,
+    private val postCategoryRepository: PostCategoryRepository,
 ) : TypedOperation<CreateContentRequest>(CreateContentRequest::class) {
 
     override fun handle(payload: CreateContentRequest, message: Message<*>): OperationOutcome {
@@ -71,6 +82,9 @@ class CreateContentOperation(
         val slugPath = slugGenerationService.generateSlug(payload.title, now)
         slugRepository.save(Slug(path = slugPath, post = post, canonical = true))
 
+        val tagNames = assignTags(post, payload.tags ?: emptyList())
+        val categoryNames = assignCategories(post, payload.categoryIds ?: emptyList())
+
         logger.info("Post created: {} with slug {}", post.id, slugPath)
 
         return OperationResult.Success(
@@ -83,7 +97,38 @@ class CreateContentOperation(
                 authorId = user.id,
                 authorDisplayName = user.displayName,
                 createdAt = post.createdAt,
+                tags = tagNames,
+                categories = categoryNames,
             )
         )
+    }
+
+    /** Resolves or creates tags by name and associates them with the post */
+    private fun assignTags(post: Post, tagNames: List<String>): List<String> {
+        val resolved =
+            tagNames
+                .map { it.trim().lowercase() }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .map { name ->
+                    tagRepository.findByName(name)
+                        ?: tagRepository.save(
+                            Tag(name = name, slug = slugGenerationService.slugify(name))
+                        )
+                }
+        resolved.forEach { tag -> postTagRepository.save(PostTag(post = post, tag = tag)) }
+        return resolved.map { it.name }
+    }
+
+    /** Associates existing categories with the post, skipping missing or deleted ones */
+    private fun assignCategories(post: Post, categoryIds: List<java.util.UUID>): List<String> {
+        val resolved =
+            categoryIds.distinct().mapNotNull { id ->
+                categoryRepository.findById(id).orElse(null)?.takeIf { !it.deleted }
+            }
+        resolved.forEach { category ->
+            postCategoryRepository.save(PostCategory(post = post, category = category))
+        }
+        return resolved.map { it.name }
     }
 }

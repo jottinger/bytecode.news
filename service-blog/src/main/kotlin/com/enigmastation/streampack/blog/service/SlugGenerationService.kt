@@ -30,7 +30,7 @@ class SlugGenerationService(private val slugRepository: SlugRepository) {
     }
 
     /** Convert a title to a URL-safe slug segment */
-    private fun slugify(title: String): String {
+    fun slugify(title: String): String {
         return title
             .lowercase()
             .replace(Regex("[^a-z0-9]+"), "-") // non-alphanumeric to hyphens

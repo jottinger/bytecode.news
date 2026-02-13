@@ -5,7 +5,9 @@ import com.enigmastation.streampack.blog.model.ApproveContentRequest
 import com.enigmastation.streampack.blog.model.ContentDetail
 import com.enigmastation.streampack.blog.model.PostStatus
 import com.enigmastation.streampack.blog.repository.CommentRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
@@ -22,6 +24,8 @@ class ApproveContentOperation(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
     private val commentRepository: CommentRepository,
+    private val postTagRepository: PostTagRepository,
+    private val postCategoryRepository: PostCategoryRepository,
 ) : TypedOperation<ApproveContentRequest>(ApproveContentRequest::class) {
 
     override val priority = 50
@@ -73,6 +77,8 @@ class ApproveContentOperation(
                 createdAt = approved.createdAt,
                 updatedAt = approved.updatedAt,
                 commentCount = commentRepository.countActiveByPost(approved.id).toInt(),
+                tags = postTagRepository.findByPost(approved.id).map { it.tag.name },
+                categories = postCategoryRepository.findByPost(approved.id).map { it.category.name },
             )
         )
     }
