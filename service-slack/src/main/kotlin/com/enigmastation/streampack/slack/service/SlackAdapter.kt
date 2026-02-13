@@ -12,6 +12,7 @@ import com.slack.api.bolt.AppConfig
 import com.slack.api.bolt.jakarta_socket_mode.SocketModeApp
 import com.slack.api.methods.MethodsClient
 import com.slack.api.model.event.MessageEvent
+import java.util.concurrent.ConcurrentHashMap
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.support.MessageBuilder
 
@@ -34,6 +35,7 @@ class SlackAdapter(
     private lateinit var boltApp: App
     private lateinit var socketModeApp: SocketModeApp
     private var botUserId: String? = null
+    private val displayNameCache = ConcurrentHashMap<String, String>()
 
     /** Creates the Bolt app, registers event handlers, and starts the Socket Mode connection */
     fun connect() {
@@ -121,6 +123,38 @@ class SlackAdapter(
     /** Returns an authenticated Slack API client using the bot token */
     private fun methodsClient(): MethodsClient = boltApp.slack.methods(botToken)
 
+    /** Resolves a Slack user ID to a display name, caching results */
+    private fun resolveDisplayName(slackUserId: String): String {
+        return displayNameCache.getOrPut(slackUserId) {
+            try {
+                val response = methodsClient().usersInfo { r -> r.user(slackUserId) }
+                if (response.isOk) {
+                    val profile = response.user.profile
+                    profile.displayName?.ifBlank { null }
+                        ?: profile.realName?.ifBlank { null }
+                        ?: response.user.name
+                        ?: slackUserId
+                } else {
+                    logger.warn(
+                        "users.info failed for {} on '{}': {}",
+                        slackUserId,
+                        workspaceName,
+                        response.error,
+                    )
+                    slackUserId
+                }
+            } catch (e: Exception) {
+                logger.warn(
+                    "Could not resolve display name for {} on '{}': {}",
+                    slackUserId,
+                    workspaceName,
+                    e.message,
+                )
+                slackUserId
+            }
+        }
+    }
+
     /** Resolves the bot's own user ID for mention detection */
     private fun resolveBotUserId() {
         try {
@@ -175,10 +209,11 @@ class SlackAdapter(
                         },
                 )
 
+            val nick = resolveDisplayName(slackUserId)
             val addressedText = if (isDm) rawText else extractAddressedText(rawText)
             val isAddressed = isDm || addressedText != null
 
-            dispatch(addressedText ?: rawText, provenance, isAddressed)
+            dispatch(addressedText ?: rawText, provenance, isAddressed, nick)
         } catch (e: Exception) {
             logger.error("Error processing Slack message on '{}': {}", workspaceName, e.message)
         }
@@ -209,12 +244,17 @@ class SlackAdapter(
     }
 
     /** Sends payload through the EventGateway as fire-and-forget */
-    private fun dispatch(payload: String, provenance: Provenance, addressed: Boolean) {
-        val message =
+    private fun dispatch(
+        payload: String,
+        provenance: Provenance,
+        addressed: Boolean,
+        nick: String? = null,
+    ) {
+        val builder =
             MessageBuilder.withPayload(payload as Any)
                 .setHeader(Provenance.HEADER, provenance)
                 .setHeader(Provenance.ADDRESSED, addressed)
-                .build()
-        eventGateway.send(message)
+        if (nick != null) builder.setHeader("nick", nick)
+        eventGateway.send(builder.build())
     }
 }
