@@ -48,6 +48,7 @@ enum class FactoidAttributeType(val mutable: Boolean = true, val includeInSummar
             return "See also: ${values.joinToStringWithAnd()}"
         }
     },
+    SEE(includeInSummary = false),
     MAVEN(includeInSummary = false) {
         override fun doRender(selector: String, value: String): String {
             val parts = value.split(":")
