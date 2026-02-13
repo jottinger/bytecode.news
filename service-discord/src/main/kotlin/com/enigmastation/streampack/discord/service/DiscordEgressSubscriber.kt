@@ -36,11 +36,10 @@ class DiscordEgressSubscriber(
                 is OperationResult.NotHandled -> return
             }
 
-        val guildId = provenance.serviceId
-        if (guildId != null) {
-            discordAdapter.sendToChannel(guildId, provenance.replyTo, text)
-        } else {
-            discordAdapter.sendPrivateMessage(provenance.replyTo, text)
+        if (discordAdapter.wouldTriggerIngress(text)) {
+            logger.warn("Suppressing looping output on '{}': {}", provenance.replyTo, text.take(80))
+            return
         }
+        discordAdapter.sendReply(provenance, text)
     }
 }

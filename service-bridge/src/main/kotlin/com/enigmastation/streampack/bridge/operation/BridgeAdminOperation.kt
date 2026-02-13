@@ -1,0 +1,115 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.bridge.operation
+
+import com.enigmastation.streampack.bridge.service.BridgeService
+import com.enigmastation.streampack.core.model.OperationOutcome
+import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.service.TypedOperation
+import org.springframework.messaging.Message
+import org.springframework.stereotype.Component
+
+/** Admin commands for managing directional bridge pairs. Requires ADMIN role. */
+@Component
+class BridgeAdminOperation(private val bridgeService: BridgeService) :
+    TypedOperation<String>(String::class) {
+
+    override fun canHandle(payload: String, message: Message<*>): Boolean {
+        val trimmed = payload.trim()
+        return trimmed == "bridge" || trimmed.startsWith("bridge ")
+    }
+
+    override fun handle(payload: String, message: Message<*>): OperationOutcome {
+        val provenance = message.headers[Provenance.HEADER] as? Provenance
+
+        val args = payload.trim().removePrefix("bridge").trim()
+        if (args.isBlank()) return OperationResult.Success(helpText())
+
+        val tokens = args.split("\\s+".toRegex())
+        val subcommand = tokens[0]
+
+        // Provenance discovery is available to all users
+        if (subcommand == "provenance") {
+            return handleProvenance(provenance)
+        }
+
+        val role = provenance?.user?.role ?: Role.GUEST
+        if (role < Role.ADMIN) {
+            return OperationResult.Error("Bridge commands require ADMIN role")
+        }
+
+        return when (subcommand) {
+            "copy" -> handleCopy(tokens.drop(1))
+            "remove" -> handleRemove(tokens.drop(1))
+            "list" -> handleList()
+            else ->
+                OperationResult.Error(
+                    "Unknown bridge subcommand '$subcommand'. Use 'bridge' for available commands."
+                )
+        }
+    }
+
+    private fun handleCopy(args: List<String>): OperationResult {
+        if (args.size < 2) {
+            return OperationResult.Error("Usage: bridge copy <source-uri> <target-uri>")
+        }
+        val sourceUri = args[0]
+        val targetUri = args[1]
+
+        return when (val result = bridgeService.copy(sourceUri, targetUri)) {
+            is BridgeService.CopyResult.Success ->
+                OperationResult.Success("Bridge established: $sourceUri -> $targetUri")
+            is BridgeService.CopyResult.AlreadyExists ->
+                OperationResult.Success("Bridge already exists: $sourceUri -> $targetUri")
+            is BridgeService.CopyResult.Error -> OperationResult.Error(result.message)
+        }
+    }
+
+    private fun handleRemove(args: List<String>): OperationResult {
+        if (args.size < 2) {
+            return OperationResult.Error("Usage: bridge remove <source-uri> <target-uri>")
+        }
+        val sourceUri = args[0]
+        val targetUri = args[1]
+        val removed = bridgeService.removeCopy(sourceUri, targetUri)
+        return if (removed) {
+            OperationResult.Success("Bridge removed: $sourceUri -> $targetUri")
+        } else {
+            OperationResult.Error("No bridge found from $sourceUri to $targetUri")
+        }
+    }
+
+    private fun handleList(): OperationResult {
+        val pairs = bridgeService.listAll()
+        if (pairs.isEmpty()) {
+            return OperationResult.Success("No bridge pairs configured")
+        }
+        val lines =
+            pairs.map { pair ->
+                val directions = mutableListOf<String>()
+                if (pair.copyFirstToSecond) directions.add("${pair.firstUri} -> ${pair.secondUri}")
+                if (pair.copySecondToFirst) directions.add("${pair.secondUri} -> ${pair.firstUri}")
+                "  " + directions.joinToString(", ")
+            }
+        return OperationResult.Success("Bridge pairs:\n${lines.joinToString("\n")}")
+    }
+
+    private fun handleProvenance(provenance: Provenance?): OperationResult {
+        if (provenance == null) {
+            return OperationResult.Error("No provenance available for this channel")
+        }
+        return OperationResult.Success(provenance.encode())
+    }
+
+    private fun helpText(): String =
+        """
+        |Bridge Commands:
+        |  bridge provenance                         - Show this channel's provenance URI
+        |Bridge Admin Commands (requires ADMIN):
+        |  bridge copy <source-uri> <target-uri>     - Copy source content to target
+        |  bridge remove <source-uri> <target-uri>   - Remove directional copy
+        |  bridge list                               - Show all bridge pairs
+        """
+            .trimMargin()
+}

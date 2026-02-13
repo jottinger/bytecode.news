@@ -47,11 +47,17 @@ class SlackEgressSubscriber(
             return
         }
 
-        val channelId = provenance.replyTo
-        when (result) {
-            is OperationResult.Success -> adapter.sendMessage(channelId, result.payload.toString())
-            is OperationResult.Error -> adapter.sendMessage(channelId, "Error: ${result.message}")
-            is OperationResult.NotHandled -> {}
+        val text =
+            when (result) {
+                is OperationResult.Success -> result.payload.toString()
+                is OperationResult.Error -> "Error: ${result.message}"
+                is OperationResult.NotHandled -> return
+            }
+
+        if (adapter.wouldTriggerIngress(text)) {
+            logger.warn("Suppressing looping output on '{}': {}", provenance.replyTo, text.take(80))
+            return
         }
+        adapter.sendReply(provenance, text)
     }
 }
