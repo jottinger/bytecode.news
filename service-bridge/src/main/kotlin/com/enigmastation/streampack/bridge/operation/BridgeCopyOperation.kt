@@ -37,7 +37,11 @@ class BridgeCopyOperation(
 
         // Prefer display-resolved text (e.g. Discord mention resolution) over raw payload
         val displayText = message.headers[DISPLAY_TEXT_HEADER] as? String ?: payload
-        val attributed = "<${provenance.encode()}/$nick> $displayText"
+        // Build human-readable origin URI (no percent-encoding)
+        val scheme = provenance.protocol.name.lowercase()
+        val authority = provenance.serviceId ?: ""
+        val displayUri = "$scheme://$authority/${provenance.replyTo}"
+        val attributed = "<$displayUri/$nick> $displayText"
         for (targetUri in targets) {
             val targetProvenance = Provenance.decode(targetUri)
             val egressMessage =
