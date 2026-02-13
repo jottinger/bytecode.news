@@ -68,6 +68,20 @@ class IrcAdapter(
         client.sendMessage(target, text)
     }
 
+    override fun wouldTriggerIngress(text: String): Boolean {
+        if (signalCharacter.isNotEmpty() && text.startsWith(signalCharacter)) return true
+        val nick = client.nick.lowercase()
+        val lowerText = text.lowercase()
+        for (separator in listOf(": ", ", ")) {
+            if (lowerText.startsWith("$nick$separator")) return true
+        }
+        return false
+    }
+
+    override fun sendReply(provenance: Provenance, text: String) {
+        sendMessage(provenance.replyTo, text)
+    }
+
     /** Returns channels the client has joined */
     fun getJoinedChannels(): Set<String> = client.channels.map { it.name }.toSet()
 
@@ -87,6 +101,7 @@ class IrcAdapter(
 
     @Handler
     fun onChannelMessage(event: ChannelMessageEvent) {
+        if (event.actor.nick == client.nick) return
         Thread.startVirtualThread {
             try {
                 val channelName = event.channel.name

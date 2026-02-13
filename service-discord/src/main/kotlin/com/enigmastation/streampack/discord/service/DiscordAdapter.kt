@@ -173,6 +173,29 @@ class DiscordAdapter(
         eventGateway.send(builder.build())
     }
 
+    override fun wouldTriggerIngress(text: String): Boolean {
+        if (
+            properties.signalCharacter.isNotEmpty() && text.startsWith(properties.signalCharacter)
+        ) {
+            return true
+        }
+        if (::jda.isInitialized) {
+            val selfId = jda.selfUser.id
+            val mentionPatterns = listOf("<@$selfId>", "<@!$selfId>")
+            if (mentionPatterns.any { text.startsWith(it) }) return true
+        }
+        return false
+    }
+
+    override fun sendReply(provenance: Provenance, text: String) {
+        val guildId = provenance.serviceId
+        if (guildId != null) {
+            sendToChannel(guildId, provenance.replyTo, text)
+        } else {
+            sendPrivateMessage(provenance.replyTo, text)
+        }
+    }
+
     /** Sends a text message to a guild channel */
     fun sendToChannel(guildId: String, channelName: String, text: String) {
         if (!::jda.isInitialized) {

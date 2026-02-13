@@ -120,6 +120,17 @@ class SlackAdapter(
         return null
     }
 
+    override fun wouldTriggerIngress(text: String): Boolean {
+        if (signalCharacter.isNotEmpty() && text.startsWith(signalCharacter)) return true
+        val userId = botUserId
+        if (userId != null && text.startsWith("<@$userId>")) return true
+        return false
+    }
+
+    override fun sendReply(provenance: Provenance, text: String) {
+        sendMessage(provenance.replyTo, text)
+    }
+
     /** Returns an authenticated Slack API client using the bot token */
     private fun methodsClient(): MethodsClient = boltApp.slack.methods(botToken)
 

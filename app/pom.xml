@@ -98,6 +98,16 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.enigmastation</groupId>
+            <artifactId>service-bridge</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
+            <artifactId>operation-tell</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>

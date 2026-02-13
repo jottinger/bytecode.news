@@ -1,0 +1,86 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.tell.operation
+
+import com.enigmastation.streampack.core.model.OperationOutcome
+import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.service.TranslatingOperation
+import com.enigmastation.streampack.tell.model.TellRequest
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.messaging.Message
+import org.springframework.messaging.MessageChannel
+import org.springframework.messaging.support.MessageBuilder
+import org.springframework.stereotype.Component
+
+/**
+ * Delivers a message to a target destination identified by name, channel, or full URI.
+ *
+ * Target resolution inherits context from the source provenance:
+ * - Just a name ("blue") resolves to a private message on the same protocol/service
+ * - A channel name ("#java") resolves to a channel on the same protocol/service
+ * - A full URI ("irc://othernet/#java") uses the URI as-is
+ */
+@Component
+class TellOperation(@Qualifier("egressChannel") private val egressChannel: MessageChannel) :
+    TranslatingOperation<TellRequest>(TellRequest::class) {
+
+    override val priority: Int = 50
+
+    override fun translate(payload: String, message: Message<*>): TellRequest? {
+        val trimmed = payload.trim()
+        if (!trimmed.startsWith("tell ")) return null
+
+        val rest = trimmed.removePrefix("tell ").trim()
+        val spaceIndex = rest.indexOf(' ')
+        if (spaceIndex <= 0) return null
+
+        val rawTarget = rest.substring(0, spaceIndex)
+        val messageText = rest.substring(spaceIndex + 1).trim()
+        if (messageText.isBlank()) return null
+
+        val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return null
+        val targetProvenance = resolveTarget(rawTarget, provenance)
+        return TellRequest(targetProvenance = targetProvenance, message = messageText)
+    }
+
+    override fun handle(payload: TellRequest, message: Message<*>): OperationOutcome {
+        val sourceProvenance = message.headers[Provenance.HEADER] as? Provenance
+        val senderNick =
+            message.headers["nick"] as? String ?: sourceProvenance?.user?.username ?: "someone"
+
+        val attributed = "<$senderNick> ${payload.message}"
+        val egressMessage =
+            MessageBuilder.withPayload(OperationResult.Success(attributed) as Any)
+                .setHeader(Provenance.HEADER, payload.targetProvenance)
+                .build()
+        try {
+            egressChannel.send(egressMessage)
+        } catch (e: Exception) {
+            logger.warn(
+                "Failed to deliver tell message to {}: {}",
+                payload.targetProvenance.encode(),
+                e.message,
+            )
+            return OperationResult.Error(
+                "Failed to deliver message to ${payload.targetProvenance.replyTo}"
+            )
+        }
+
+        return OperationResult.Success("Message delivered to ${payload.targetProvenance.replyTo}")
+    }
+
+    /**
+     * Resolves a target string against the source provenance. Full URIs are used directly;
+     * otherwise the target inherits protocol and serviceId from the source.
+     */
+    private fun resolveTarget(rawTarget: String, source: Provenance): Provenance {
+        if (rawTarget.contains("://")) {
+            return Provenance.decode(rawTarget)
+        }
+        return Provenance(
+            protocol = source.protocol,
+            serviceId = source.serviceId,
+            replyTo = rawTarget,
+        )
+    }
+}
