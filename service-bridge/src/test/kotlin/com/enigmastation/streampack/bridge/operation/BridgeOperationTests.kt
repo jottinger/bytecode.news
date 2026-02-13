@@ -239,7 +239,8 @@ class BridgeOperationTests {
                     .build()
             eventGateway.process(message)
 
-            assertTrue(captured.any { it.contains("<$sourceUri/dreamreal>") })
+            // Attribution uses human-readable URI (no percent-encoding)
+            assertTrue(captured.any { it.contains("<irc://testnet/#test/dreamreal>") })
             assertTrue(captured.any { it.contains("hello world") })
         } finally {
             egressChannel.unsubscribe(handler)
