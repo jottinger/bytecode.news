@@ -52,6 +52,7 @@
         <module>operation-factoid</module>
         <module>operation-urltitle</module>
         <module>operation-specs</module>
+        <module>operation-dictionary</module>
         <module>operation-weather</module>
         <module>service-factoid</module>
         <module>service-rss</module>
