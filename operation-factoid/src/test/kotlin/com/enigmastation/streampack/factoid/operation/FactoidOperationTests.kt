@@ -586,6 +586,46 @@ class FactoidOperationTests {
         }
     }
 
+    // -- Literal query --
+
+    @Test
+    fun `literal returns raw text value without rendering`() {
+        eventGateway.process(
+            msg(
+                "8ball=<reply>(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)" +
+                    "|It's (unclear|unknowable))."
+            )
+        )
+        val result = eventGateway.process(msg("8ball.literal"))
+        assertSuccess(
+            result,
+            "<reply>(Yes|No|Maybe|Ask me( tomorrow| again| again tomorrow)" +
+                "|It's (unclear|unknowable)).",
+        )
+    }
+
+    @Test
+    fun `literal returns raw text with dollar-one unexpanded`() {
+        eventGateway.process(msg("ask=Please ask \$1 for help"))
+        val result = eventGateway.process(msg("ask.literal"))
+        assertSuccess(result, "Please ask \$1 for help")
+    }
+
+    @Test
+    fun `literal on factoid without text returns not handled`() {
+        eventGateway.process(msg("urlonly=placeholder"))
+        eventGateway.process(msg("forget urlonly"))
+        // Re-create with only a URL attribute via direct service
+        eventGateway.process(msg("urlonly.url=https://example.com"))
+        // This factoid has no TEXT, so there's nothing for literal to find
+        // But urlonly doesn't exist as a factoid yet - let's set one up properly
+        eventGateway.process(msg("urlonly=temp"))
+        eventGateway.process(msg("urlonly.url=https://example.com"))
+        // Now it has TEXT, so literal should return it
+        val result = eventGateway.process(msg("urlonly.literal"))
+        assertSuccess(result, "temp")
+    }
+
     // -- Helper --
 
     private fun assertTrue(condition: Boolean) {

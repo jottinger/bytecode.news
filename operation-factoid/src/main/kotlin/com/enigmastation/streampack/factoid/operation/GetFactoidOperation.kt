@@ -58,6 +58,7 @@ class GetFactoidOperation(
                 FactoidAttributeType.FORGET -> handleForget(selector, message)
                 FactoidAttributeType.UNKNOWN -> handleSummary(selector, attributes, argument)
                 FactoidAttributeType.INFO -> handleInfo(selector, attributes)
+                FactoidAttributeType.LITERAL -> handleLiteral(selector, attributes)
                 FactoidAttributeType.LOCK -> handleLock(selector, true, message)
                 FactoidAttributeType.UNLOCK -> handleLock(selector, false, message)
                 else -> handleSpecificAttribute(selector, payload.attribute, attributes, argument)
@@ -132,6 +133,16 @@ class GetFactoidOperation(
             }
         }
         return OperationResult.Success(response)
+    }
+
+    /** Returns the raw TEXT value with no rendering, interpolation, or selection resolution */
+    private fun handleLiteral(
+        selector: String,
+        attributes: List<FactoidAttribute>,
+    ): OperationOutcome? {
+        val textAttr =
+            attributes.firstOrNull { it.attributeType == FactoidAttributeType.TEXT } ?: return null
+        return OperationResult.Success(textAttr.attributeValue ?: return null)
     }
 
     /** Admin-only lock/unlock toggle */
