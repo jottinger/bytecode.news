@@ -164,6 +164,7 @@ class LocalSpecLookupService(pageFetcher: PageFetcher) : SpecLookupService(pageF
                 SpecType.RFC -> "/rfc/rfc${request.identifier}.html"
                 SpecType.JEP -> "/jeps/${request.identifier}"
                 SpecType.JSR -> "/en/jsr/detail?id=${request.identifier}"
+                SpecType.PEP -> "/pep-${"%04d".format(request.identifier)}/"
             }
         return lookupUrl("$baseUrl$path", request.type)
     }

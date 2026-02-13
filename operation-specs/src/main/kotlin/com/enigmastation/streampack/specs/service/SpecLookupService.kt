@@ -44,6 +44,8 @@ class SpecLookupService(private val pageFetcher: PageFetcher) {
             SpecType.RFC -> raw.removePrefix("RFC ").replace(Regex("^\\d+\\s*-\\s*"), "").trim()
             SpecType.JEP -> raw.removePrefix("JEP ").replace(Regex("^\\d+:\\s*"), "").trim()
             SpecType.JSR -> raw.removePrefix("JSR ").replace(Regex("^\\d+:\\s*"), "").trim()
+            SpecType.PEP ->
+                raw.removePrefix("PEP ").replace(Regex("^\\d+\\s*\\p{Pd}\\s*"), "").trim()
         }.replace("TM", "")
     }
 }

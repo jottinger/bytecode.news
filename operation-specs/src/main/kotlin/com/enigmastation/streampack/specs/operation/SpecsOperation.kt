@@ -29,7 +29,7 @@ class SpecsOperation(
 
     override val addressed: Boolean = true
 
-    private val specPattern = Regex("^(rfc|jep|jsr)\\s*(\\d+)$", RegexOption.IGNORE_CASE)
+    private val specPattern = Regex("^(rfc|jep|jsr|pep)\\s*(\\d+)$", RegexOption.IGNORE_CASE)
 
     override fun translate(payload: String, message: Message<*>): SpecRequest? {
         val match = specPattern.matchEntire(payload.trim()) ?: return null
