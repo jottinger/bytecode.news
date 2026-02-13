@@ -616,32 +616,493 @@ Add `?hard=true` for permanent removal.
 | PUT | `/comments/{id}` | Yes | Edit comment (5 min window) |
 | DELETE | `/admin/comments/{id}` | Admin+ | Soft/hard delete comment |
 
+## Implemented Endpoints: Posts
+
+---
+
+### GET /posts
+
+List published posts, paginated.
+
+**Auth**: None
+
+**Query parameters**:
+- `page` (optional, default `0`) - zero-based page index
+- `size` (optional, default `20`) - page size
+
+**Success (200)**:
+```json
+{
+  "posts": [
+    {
+      "id": "01234567-89ab-7def-8123-456789abcdef",
+      "title": "Understanding Virtual Threads",
+      "slug": "2026/01/understanding-virtual-threads",
+      "excerpt": "Virtual threads change the concurrency model...",
+      "authorDisplayName": "Joe Ottinger",
+      "publishedAt": "2026-01-15T12:00:00Z",
+      "tags": ["java", "concurrency"],
+      "categories": ["JVM Internals"]
+    }
+  ],
+  "page": 0,
+  "totalPages": 3,
+  "totalCount": 42
+}
+```
+
+Only posts with `status = APPROVED`, `deleted = false`, and `publishedAt <= now` are included.
+
+---
+
+### GET /posts/{year}/{month}/{slug}
+
+Get a single published post by its slug path.
+
+**Auth**: None
+
+**Path parameters**: `year`, `month`, `slug` - the post's slug path segments (e.g. `2026/01/my-post-title`)
+
+**Success (200)**:
+```json
+{
+  "id": "01234567-89ab-7def-8123-456789abcdef",
+  "title": "Understanding Virtual Threads",
+  "slug": "2026/01/understanding-virtual-threads",
+  "renderedHtml": "<p>Virtual threads change the concurrency model...</p>",
+  "excerpt": "Virtual threads change the concurrency model...",
+  "authorId": "22222222-2222-7222-8222-222222222222",
+  "authorDisplayName": "Joe Ottinger",
+  "status": "APPROVED",
+  "publishedAt": "2026-01-15T12:00:00Z",
+  "createdAt": "2026-01-14T09:00:00Z",
+  "updatedAt": "2026-01-14T11:00:00Z",
+  "commentCount": 5,
+  "tags": ["java", "concurrency"],
+  "categories": ["JVM Internals"]
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 404 | Slug does not resolve to a post | "Post not found" |
+
+---
+
+### GET /posts/search
+
+Full-text search across published posts.
+Searches title (weighted higher) and excerpt.
+
+**Auth**: None
+
+**Query parameters**:
+- `q` (required) - search query string
+- `page` (optional, default `0`) - zero-based page index
+- `size` (optional, default `20`) - page size
+
+**Success (200)**: Same shape as `GET /posts` - a `ContentListResponse` with matching posts ranked by relevance.
+
+Returns an empty list for blank queries.
+Only searches published, non-deleted posts.
+
+---
+
+### POST /posts
+
+Submit a new blog post as a draft.
+Requires a verified email.
+
+**Auth**: Required (Bearer token, email verified)
+
+**Request**:
+```json
+{
+  "title": "Understanding Virtual Threads",
+  "markdownSource": "Virtual threads change the concurrency model...",
+  "tags": ["java", "concurrency"],
+  "categoryIds": ["01234567-89ab-7def-8123-456789abcdef"]
+}
+```
+
+`tags` and `categoryIds` are optional (default empty).
+Tags are created automatically if they don't exist yet.
+Category IDs that don't exist or point to deleted categories are silently skipped.
+
+**Success (201)**:
+```json
+{
+  "id": "01234567-89ab-7def-8123-456789abcdef",
+  "title": "Understanding Virtual Threads",
+  "slug": "2026/01/understanding-virtual-threads",
+  "excerpt": "Virtual threads change the concurrency model...",
+  "status": "DRAFT",
+  "authorId": "22222222-2222-7222-8222-222222222222",
+  "authorDisplayName": "Joe Ottinger",
+  "createdAt": "2026-01-14T09:00:00Z",
+  "tags": ["java", "concurrency"],
+  "categories": ["JVM Internals"]
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 400 | Email not verified | "Email verification required" |
+| 400 | Blank title | "Title is required" |
+| 400 | Blank content | "Content is required" |
+
+---
+
+### PUT /posts/{id}
+
+Edit a post.
+Authors can edit their own drafts.
+Admins can edit any post.
+
+**Auth**: Required (Bearer token)
+
+**Path parameters**: `id` - the post's UUID
+
+**Request**:
+```json
+{
+  "title": "Updated Title",
+  "markdownSource": "Updated content...",
+  "tags": ["java", "concurrency", "loom"],
+  "categoryIds": ["01234567-89ab-7def-8123-456789abcdef"]
+}
+```
+
+`tags` and `categoryIds` are optional (default empty).
+Edit replaces all existing tag and category associations.
+
+**Success (200)**: Returns a `ContentDetail` (same shape as `GET /posts/{year}/{month}/{slug}`).
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 403 | Not the author and not admin | "Not authorized to edit this post" |
+| 404 | Post not found or deleted | "Post not found" |
+
+---
+
+## Implemented Endpoints: Admin Post Management
+
+All admin post endpoints require authentication with Admin or Super-admin role.
+
+---
+
+### GET /admin/posts/pending
+
+List draft posts awaiting review, paginated.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Query parameters**:
+- `page` (optional, default `0`) - zero-based page index
+- `size` (optional, default `20`) - page size
+
+**Success (200)**: Same shape as `GET /posts` - a `ContentListResponse` with draft posts.
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 403 | Caller lacks admin role | "Admin access required" |
+
+---
+
+### PUT /admin/posts/{id}/approve
+
+Approve a draft post and set its publication date.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `id` - the post's UUID
+
+**Request**:
+```json
+{
+  "publishedAt": "2026-01-15T12:00:00Z"
+}
+```
+
+Set `publishedAt` to a future time for scheduled publishing, or to now/past for immediate publication.
+
+**Success (200)**: Returns a `ContentDetail` with `status: "APPROVED"`.
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 403 | Caller lacks admin role | "Admin access required" |
+| 404 | Post not found or deleted | "Post not found" |
+| 400 | Post already approved | "Post is already approved" |
+
+---
+
+### PUT /admin/posts/{id}
+
+Admin edit of any post (same as `PUT /posts/{id}` but uses admin privilege).
+
+**Auth**: Required (Admin or Super-admin)
+
+**Request and response**: Same as `PUT /posts/{id}`.
+
+---
+
+### DELETE /admin/posts/{id}
+
+Delete a post.
+Soft-deletes by default (hidden from public, visible to admins).
+Add `?hard=true` for permanent removal.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `id` - the post's UUID
+
+**Query parameters**: `hard` (optional, default `false`) - set to `true` for permanent deletion
+
+**Request**: No body required.
+
+**Success (200)** (soft delete):
+```json
+{
+  "id": "01234567-89ab-7def-8123-456789abcdef",
+  "message": "Post deleted"
+}
+```
+
+**Success (200)** (hard delete):
+```json
+{
+  "id": "01234567-89ab-7def-8123-456789abcdef",
+  "message": "Post permanently removed"
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 403 | Caller lacks admin role | "Admin access required" |
+| 404 | Post not found | "Post not found" |
+| 400 | Post already soft-deleted (soft delete only) | "Post is already deleted" |
+
+---
+
+## Implemented Endpoints: Categories
+
+---
+
+### GET /categories
+
+List all active (non-deleted) categories.
+
+**Auth**: None
+
+**Success (200)**:
+```json
+[
+  {
+    "id": "01234567-89ab-7def-8123-456789abcdef",
+    "name": "JVM Internals",
+    "slug": "jvm-internals",
+    "parentName": null
+  },
+  {
+    "id": "11111111-1111-7111-8111-111111111111",
+    "name": "Kotlin Multiplatform",
+    "slug": "kotlin-multiplatform",
+    "parentName": "Kotlin"
+  }
+]
+```
+
+`parentName` is null for top-level categories.
+
+---
+
+## Implemented Endpoints: Admin Category Management
+
+All admin category endpoints require authentication with Admin or Super-admin role.
+
+---
+
+### POST /admin/categories
+
+Create a new category.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Request**:
+```json
+{
+  "name": "Kotlin",
+  "parentId": null
+}
+```
+
+`parentId` is optional.
+Omit or set to `null` for a top-level category.
+Provide a category UUID to create a child category.
+
+**Success (201)**:
+```json
+{
+  "id": "01234567-89ab-7def-8123-456789abcdef",
+  "name": "Kotlin",
+  "slug": "kotlin",
+  "parentName": null
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 403 | Caller lacks admin role | "Admin access required" |
+| 400 | Blank name | "Category name is required" |
+| 400 | Duplicate name | "Category name already exists" |
+| 404 | Parent category not found or deleted | "Parent category not found" |
+
+---
+
+### DELETE /admin/categories/{id}
+
+Soft-delete a category.
+Hidden from selection, existing post associations preserved.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `id` - the category's UUID
+
+**Request**: No body required.
+
+**Success (200)**:
+```json
+{
+  "id": "01234567-89ab-7def-8123-456789abcdef",
+  "message": "Category deleted"
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Authentication required" |
+| 403 | Caller lacks admin role | "Admin access required" |
+| 404 | Category not found | "Category not found" |
+| 400 | Category already deleted | "Category is already deleted" |
+
+---
+
+## User Flows
+
+**Registration and email verification**:
+1. `POST /auth/register` - creates account, returns UserPrincipal, sends verification email
+2. User clicks link in email (contains token)
+3. `POST /auth/verify` with the token - marks email as verified
+4. User can log in immediately after step 1, but email-gated features (posting, commenting) require step 3
+
+**Login and session management**:
+1. `POST /auth/login` - returns JWT token + UserPrincipal
+2. Store token client-side (localStorage, cookie, etc.)
+3. Include `Authorization: Bearer <token>` on protected requests
+4. `POST /auth/refresh` before token expires to get a fresh token
+5. `POST /auth/logout` - discard the stored token client-side
+
+**Forgot password**:
+1. `POST /auth/forgot-password` with email - always returns success (prevents enumeration)
+2. If email exists, user receives reset email with token link
+3. `POST /auth/reset-password` with token + new password
+4. User logs in with new password
+
+**Change password** (while logged in):
+1. `PUT /auth/password` with old and new password (requires Bearer token)
+
+**Admin password reset**:
+1. `POST /admin/users/{username}/reset-password` - returns temporary password
+2. Admin communicates temporary password to user out-of-band
+
+**Post submission and approval**:
+1. User creates a draft: `POST /posts` with title, markdown, optional tags and categories
+2. Draft is visible to the author and admins only
+3. Author can edit freely: `PUT /posts/{id}`
+4. Admin reviews pending drafts: `GET /admin/posts/pending`
+5. Admin approves with a publication date: `PUT /admin/posts/{id}/approve`
+6. Post becomes publicly visible when `publishedAt <= now`
+
+**Searching posts**:
+1. `GET /posts/search?q=virtual+threads` - full-text search across title and excerpt
+2. Results ranked by relevance, only published posts included
+
+**Commenting on a post**:
+1. User must be logged in with a verified email
+2. `GET /posts/{year}/{month}/{slug}/comments` - view existing comments
+3. `POST /posts/{year}/{month}/{slug}/comments` - add a top-level comment or reply (include `parentCommentId` for replies)
+4. `PUT /comments/{id}` - edit own comment within 5 minutes of creation
+
+**Admin comment moderation**:
+1. `DELETE /admin/comments/{id}` - soft-delete a comment (shows as "[deleted]" in thread)
+2. `DELETE /admin/comments/{id}?hard=true` - permanently remove a comment and its children
+
+**Admin category management**:
+1. `POST /admin/categories` - create a new category (optionally nested under a parent)
+2. `GET /categories` - list active categories (public, for populating UI selectors)
+3. `DELETE /admin/categories/{id}` - soft-delete a category (existing post associations preserved)
+
+## Endpoint Summary
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/auth/register` | No | Create account |
+| POST | `/auth/verify` | No | Verify email token |
+| POST | `/auth/login` | No | Authenticate |
+| POST | `/auth/logout` | No | Client-side logout (204) |
+| POST | `/auth/forgot-password` | No | Request reset email |
+| POST | `/auth/reset-password` | No | Reset password with token |
+| POST | `/auth/refresh` | No | Refresh JWT |
+| PUT | `/auth/password` | Yes | Change own password |
+| DELETE | `/auth/account` | Yes | Delete account |
+| PUT | `/admin/users/{username}/role` | Super-admin | Change user role |
+| POST | `/admin/users/{username}/reset-password` | Admin+ | Reset user password |
+| GET | `/posts` | No | List published posts |
+| GET | `/posts/{year}/{month}/{slug}` | No | Get single post |
+| GET | `/posts/search?q=` | No | Search published posts |
+| POST | `/posts` | Yes (verified) | Submit new post (draft) |
+| PUT | `/posts/{id}` | Yes | Edit post |
+| GET | `/admin/posts/pending` | Admin+ | List drafts for review |
+| PUT | `/admin/posts/{id}/approve` | Admin+ | Approve and schedule post |
+| PUT | `/admin/posts/{id}` | Admin+ | Admin edit any post |
+| DELETE | `/admin/posts/{id}` | Admin+ | Soft/hard delete post |
+| GET | `/categories` | No | List active categories |
+| POST | `/admin/categories` | Admin+ | Create category |
+| DELETE | `/admin/categories/{id}` | Admin+ | Soft-delete category |
+| GET | `/posts/{year}/{month}/{slug}/comments` | No | Get comment thread |
+| POST | `/posts/{year}/{month}/{slug}/comments` | Yes (verified) | Add comment |
+| PUT | `/comments/{id}` | Yes | Edit comment (5 min window) |
+| DELETE | `/admin/comments/{id}` | Admin+ | Soft/hard delete comment |
+
 ## Planned Endpoints (Not Yet Implemented)
-
-These are part of the design but have no HTTP adapter yet.
-
-**Blog**:
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/posts` | List posts (paginated) |
-| GET | `/posts/{slug}` | Get single post |
-| GET | `/posts/search?q=` | Search posts |
-| POST | `/posts` | Submit new post (draft) |
-| PUT | `/posts/{slug}` | Edit own draft |
 
 **Admin Blog**:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/admin/posts/pending` | List drafts awaiting approval |
-| PUT | `/admin/posts/{id}/approve` | Approve and set publishedAt |
-| PUT | `/admin/posts/{id}/reject` | Reject post |
-| PUT | `/admin/posts/{id}` | Edit any post |
-| DELETE | `/admin/posts/{id}` | Soft delete |
-| DELETE | `/admin/posts/{id}?hard=true` | Hard delete (permanent) |
-| POST | `/admin/categories` | Create category |
-| POST | `/admin/tags` | Create tag |
+| PUT | `/admin/posts/{id}/reject` | Reject post (needs its own operation) |
 
 **RSS**:
 
