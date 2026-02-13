@@ -312,6 +312,239 @@ class FactoidOperationTests {
         assertTrue(payload.contains("python"))
     }
 
+    // -- SEE redirect --
+
+    @Test
+    fun `see redirect resolves to target factoid`() {
+        eventGateway.process(msg("bar=hello"))
+        eventGateway.process(msg("foo.see=bar"))
+        val result = eventGateway.process(msg("foo"))
+        assertSuccess(result, "bar is hello.")
+    }
+
+    @Test
+    fun `see redirect to nonexistent factoid returns not handled`() {
+        eventGateway.process(msg("foo=placeholder"))
+        eventGateway.process(msg("foo.see=nonexistent"))
+        val result = eventGateway.process(msg("foo"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `see cycle protection returns not handled`() {
+        eventGateway.process(msg("foo=placeholder"))
+        eventGateway.process(msg("bar=placeholder"))
+        eventGateway.process(msg("foo.see=bar"))
+        eventGateway.process(msg("bar.see=foo"))
+        val result = eventGateway.process(msg("foo"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `see redirect with explicit attribute still queries original factoid`() {
+        eventGateway.process(msg("foo=own text"))
+        eventGateway.process(msg("foo.see=bar"))
+        eventGateway.process(msg("bar=bar text"))
+        val result = eventGateway.process(msg("foo.text"))
+        assertSuccess(result, "foo is own text.")
+    }
+
+    @Test
+    fun `see chain resolves through multiple hops`() {
+        eventGateway.process(msg("a=placeholder"))
+        eventGateway.process(msg("b=placeholder"))
+        eventGateway.process(msg("c=final value"))
+        eventGateway.process(msg("a.see=b"))
+        eventGateway.process(msg("b.see=c"))
+        val result = eventGateway.process(msg("a"))
+        assertSuccess(result, "c is final value.")
+    }
+
+    // -- Random selection --
+
+    @Test
+    fun `selection group picks one option`() {
+        eventGateway.process(msg("coin=<reply>(heads|tails)"))
+        val validResults = setOf("heads.", "tails.")
+        repeat(20) {
+            val result = eventGateway.process(msg("coin"))
+            assertInstanceOf(OperationResult.Success::class.java, result)
+            val payload = (result as OperationResult.Success).payload as String
+            assertTrue(payload in validResults)
+        }
+    }
+
+    @Test
+    fun `selection with selector-is framing`() {
+        eventGateway.process(msg("greeting=(hello|world)"))
+        val validResults = setOf("greeting is hello.", "greeting is world.")
+        repeat(20) {
+            val result = eventGateway.process(msg("greeting"))
+            assertInstanceOf(OperationResult.Success::class.java, result)
+            val payload = (result as OperationResult.Success).payload as String
+            assertTrue(payload in validResults)
+        }
+    }
+
+    @Test
+    fun `multiple selection groups resolve independently`() {
+        eventGateway.process(msg("combo=<reply>(a|b) and (c|d)"))
+        val validResults = setOf("a and c.", "a and d.", "b and c.", "b and d.")
+        repeat(20) {
+            val result = eventGateway.process(msg("combo"))
+            assertInstanceOf(OperationResult.Success::class.java, result)
+            val payload = (result as OperationResult.Success).payload as String
+            assertTrue(payload in validResults)
+        }
+    }
+
+    @Test
+    fun `selection with dollar-one interpolation`() {
+        eventGateway.process(msg("greet=<reply>(hello|goodbye) \$1"))
+        val result = eventGateway.process(msg("greet world"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload == "hello world." || payload == "goodbye world.")
+    }
+
+    // -- Tilde reference in selection --
+
+    @Test
+    fun `tilde reference resolves factoid in selection`() {
+        eventGateway.process(msg("target=<reply>resolved"))
+        eventGateway.process(msg("ref=<reply>(~target|literal)"))
+        val validResults = setOf("resolved.", "literal.")
+        repeat(20) {
+            val result = eventGateway.process(msg("ref"))
+            assertInstanceOf(OperationResult.Success::class.java, result)
+            val payload = (result as OperationResult.Success).payload as String
+            assertTrue(payload in validResults)
+        }
+    }
+
+    @Test
+    fun `tilde reference miss returns empty string`() {
+        eventGateway.process(msg("ref=<reply>(~nonexistent|fallback)"))
+        val validResults = setOf(".", "fallback.")
+        repeat(20) {
+            val result = eventGateway.process(msg("ref"))
+            assertInstanceOf(OperationResult.Success::class.java, result)
+            val payload = (result as OperationResult.Success).payload as String
+            assertTrue(payload in validResults)
+        }
+    }
+
+    @Test
+    fun `parenthesized text without pipe is not treated as selection`() {
+        eventGateway.process(msg("note=(just a note)"))
+        val result = eventGateway.process(msg("note"))
+        assertSuccess(result, "note is (just a note).")
+    }
+
+    // -- Forget verb command --
+
+    @Test
+    fun `forget verb deletes entire factoid`() {
+        eventGateway.process(msg("ephemeral=temporary"))
+        val result = eventGateway.process(msg("forget ephemeral"))
+        assertSuccess(result, "ok, forgot ephemeral.")
+
+        val lookupResult = eventGateway.process(msg("ephemeral"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, lookupResult)
+    }
+
+    @Test
+    fun `forget verb deletes single attribute`() {
+        eventGateway.process(msg("multi=some text"))
+        eventGateway.process(msg("multi.see=other"))
+        val result = eventGateway.process(msg("forget multi.see"))
+        assertSuccess(result, "ok, forgot see on multi.")
+
+        // TEXT should still be there
+        val lookupResult = eventGateway.process(msg("multi"))
+        assertSuccess(lookupResult, "multi is some text.")
+    }
+
+    @Test
+    fun `forget verb on nonexistent factoid returns error`() {
+        val result = eventGateway.process(msg("forget nonexistent"))
+        assertError(result)
+    }
+
+    @Test
+    fun `forget verb on nonexistent attribute returns error`() {
+        eventGateway.process(msg("exists=value"))
+        val result = eventGateway.process(msg("forget exists.see"))
+        assertError(result)
+    }
+
+    @Test
+    fun `forget verb on locked factoid returns error`() {
+        eventGateway.process(msg("locked=value"))
+        eventGateway.process(msg("locked.lock", role = Role.ADMIN))
+        val result = eventGateway.process(msg("forget locked.text"))
+        assertError(result)
+    }
+
+    // -- Set verb command --
+
+    @Test
+    fun `set verb sets attribute`() {
+        eventGateway.process(msg("set target.text hello world"))
+        val result = eventGateway.process(msg("target"))
+        assertSuccess(result, "target is hello world.")
+    }
+
+    @Test
+    fun `set verb sets see attribute`() {
+        eventGateway.process(msg("destination=the real value"))
+        eventGateway.process(msg("set alias.see destination"))
+        val result = eventGateway.process(msg("alias"))
+        assertSuccess(result, "destination is the real value.")
+    }
+
+    @Test
+    fun `set verb with multi-word selector`() {
+        eventGateway.process(msg("set spring boot.text An opinionated framework"))
+        val result = eventGateway.process(msg("spring boot"))
+        assertSuccess(result, "spring boot is An opinionated framework.")
+    }
+
+    @Test
+    fun `set verb on locked factoid returns error`() {
+        eventGateway.process(msg("guarded2=original"))
+        eventGateway.process(msg("guarded2.lock", role = Role.ADMIN))
+        val result = eventGateway.process(msg("set guarded2.text new value"))
+        assertError(result)
+    }
+
+    @Test
+    fun `set verb without attribute returns not handled`() {
+        val result = eventGateway.process(msg("set noattr"))
+        // Falls through to other operations since "set noattr" doesn't parse as a set command
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    // -- Forget + See integration: the original use case --
+
+    @Test
+    fun `see redirect removed by forget verb restores original text`() {
+        eventGateway.process(msg("a=goodbye"))
+        eventGateway.process(msg("b=hello"))
+        eventGateway.process(msg("a.see=b"))
+
+        // Verify redirect is active
+        val redirected = eventGateway.process(msg("a"))
+        assertSuccess(redirected, "b is hello.")
+
+        // Remove the see redirect
+        eventGateway.process(msg("forget a.see"))
+
+        // Original text should be back
+        val restored = eventGateway.process(msg("a"))
+        assertSuccess(restored, "a is goodbye.")
+    }
+
     // -- Helper --
 
     private fun assertTrue(condition: Boolean) {

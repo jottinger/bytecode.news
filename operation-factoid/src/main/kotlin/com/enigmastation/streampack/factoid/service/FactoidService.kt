@@ -36,6 +36,12 @@ class FactoidService(
         )
     }
 
+    /** Returns the SEE redirect target for a selector, or null if none exists */
+    @Transactional(readOnly = true)
+    fun findSeeTarget(selector: String): String? {
+        return findBySelectorAndType(selector, FactoidAttributeType.SEE)?.attributeValue
+    }
+
     /** Upserts a factoid attribute; creates the parent factoid if needed; respects lock */
     @Transactional
     fun save(
@@ -110,6 +116,23 @@ class FactoidService(
         }
     }
 
+    /** Deletes a single attribute from a factoid; respects lock */
+    @Transactional
+    fun deleteAttribute(selector: String, type: FactoidAttributeType): DeleteResult {
+        val factoid =
+            factoidRepository.findBySelectorIgnoreCase(selector) ?: return DeleteResult.NotFound
+        if (factoid.locked) return DeleteResult.Locked(selector)
+
+        val attribute =
+            factoidAttributeRepository.findByFactoidSelectorIgnoreCaseAndAttributeType(
+                selector,
+                type,
+            ) ?: return DeleteResult.NotFound
+        factoidAttributeRepository.delete(attribute)
+        factoidAttributeRepository.flush()
+        return DeleteResult.Ok
+    }
+
     /** Toggles the lock flag on a factoid */
     @Transactional
     fun setLocked(selector: String, locked: Boolean): Boolean {
@@ -163,5 +186,14 @@ class FactoidService(
         data object Ok : SaveResult
 
         data class Locked(val selector: String) : SaveResult
+    }
+
+    /** Result of a delete-attribute attempt */
+    sealed interface DeleteResult {
+        data object Ok : DeleteResult
+
+        data object NotFound : DeleteResult
+
+        data class Locked(val selector: String) : DeleteResult
     }
 }

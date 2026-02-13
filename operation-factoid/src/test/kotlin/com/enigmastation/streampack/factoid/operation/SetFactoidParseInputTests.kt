@@ -133,4 +133,69 @@ class SetFactoidParseInputTests {
         assertEquals("spring boot", result!!.selector)
         assertEquals("An opinionated framework", result.value)
     }
+
+    // -- SEE attribute --
+
+    @Test
+    fun `see attribute with equals delimiter`() {
+        val result = SetFactoidOperation.parseInput("foo.see=bar")
+        assertNotNull(result)
+        assertEquals("foo", result!!.selector)
+        assertEquals(FactoidAttributeType.SEE, result.attribute)
+        assertEquals("bar", result.value)
+    }
+
+    @Test
+    fun `see attribute with is delimiter`() {
+        val result = SetFactoidOperation.parseInput("foo.see is bar")
+        assertNotNull(result)
+        assertEquals("foo", result!!.selector)
+        assertEquals(FactoidAttributeType.SEE, result.attribute)
+        assertEquals("bar", result.value)
+    }
+
+    // -- Set verb parser --
+
+    @Test
+    fun `set verb parses selector and attribute and value`() {
+        val result = SetFactoidVerbOperation.parseSetArgument("spring.text A Java framework")
+        assertNotNull(result)
+        assertEquals("spring", result!!.selector)
+        assertEquals(FactoidAttributeType.TEXT, result.attribute)
+        assertEquals("A Java framework", result.value)
+    }
+
+    @Test
+    fun `set verb parses multi-word selector`() {
+        val result =
+            SetFactoidVerbOperation.parseSetArgument("spring boot.text An opinionated framework")
+        assertNotNull(result)
+        assertEquals("spring boot", result!!.selector)
+        assertEquals(FactoidAttributeType.TEXT, result.attribute)
+        assertEquals("An opinionated framework", result.value)
+    }
+
+    @Test
+    fun `set verb parses see attribute`() {
+        val result = SetFactoidVerbOperation.parseSetArgument("foo.see bar")
+        assertNotNull(result)
+        assertEquals("foo", result!!.selector)
+        assertEquals(FactoidAttributeType.SEE, result.attribute)
+        assertEquals("bar", result.value)
+    }
+
+    @Test
+    fun `set verb without attribute returns null`() {
+        assertNull(SetFactoidVerbOperation.parseSetArgument("foo bar baz"))
+    }
+
+    @Test
+    fun `set verb with blank value returns null`() {
+        assertNull(SetFactoidVerbOperation.parseSetArgument("foo.text "))
+    }
+
+    @Test
+    fun `set verb with blank selector returns null`() {
+        assertNull(SetFactoidVerbOperation.parseSetArgument(".text value"))
+    }
 }
