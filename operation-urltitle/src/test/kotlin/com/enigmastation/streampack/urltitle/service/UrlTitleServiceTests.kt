@@ -97,6 +97,28 @@ class UrlTitleServiceTests {
         assertFalse(service.isIgnoredHost("https://test-host.example.com/page"))
     }
 
+    // -- www normalization --
+
+    @Test
+    fun `www prefix is normalized when adding ignored host`() {
+        service.addIgnoredHost("www.example.org")
+        assertTrue(service.isIgnoredHost("https://example.org/page"))
+        assertTrue(service.isIgnoredHost("https://www.example.org/page"))
+    }
+
+    @Test
+    fun `ignoring bare domain also blocks www variant`() {
+        service.addIgnoredHost("normalize-test.example.com")
+        assertTrue(service.isIgnoredHost("https://www.normalize-test.example.com/page"))
+    }
+
+    @Test
+    fun `delete with www prefix removes normalized entry`() {
+        service.addIgnoredHost("delete-test.example.com")
+        service.deleteIgnoredHost("www.delete-test.example.com")
+        assertFalse(service.isIgnoredHost("https://delete-test.example.com/page"))
+    }
+
     @Test
     fun `filter URLs removes ignored hosts`() {
         val urls =
