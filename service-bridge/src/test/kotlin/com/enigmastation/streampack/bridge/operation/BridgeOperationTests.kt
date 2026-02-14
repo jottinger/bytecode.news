@@ -216,7 +216,7 @@ class BridgeOperationTests {
     }
 
     @Test
-    fun `bridge attribution uses full provenance URI with nick`() {
+    fun `bridge attribution uses minimal protocol and nick format`() {
         val sourceUri =
             Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "#test").encode()
         bridgeService.copy(sourceUri, "irc://othernet/%23other")
@@ -239,8 +239,7 @@ class BridgeOperationTests {
                     .build()
             eventGateway.process(message)
 
-            // Attribution uses human-readable URI (no percent-encoding)
-            assertTrue(captured.any { it.contains("<irc://testnet/#test/dreamreal>") })
+            assertTrue(captured.any { it.contains("<irc:dreamreal>") })
             assertTrue(captured.any { it.contains("hello world") })
         } finally {
             egressChannel.unsubscribe(handler)
@@ -309,6 +308,42 @@ class BridgeOperationTests {
         // Message arriving at B should NOT copy to A
         val targets = bridgeService.getCopyTargets("irc://b/%23two")
         assertTrue(targets.isEmpty())
+    }
+
+    @Test
+    fun `bridge info shows bridge for current channel`() {
+        val sourceUri =
+            Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "#test").encode()
+        bridgeService.copy(sourceUri, "irc://othernet/%23other")
+
+        val result = eventGateway.process(addressedMessage("bridge info", user = regularUser))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload.toString()
+        assertTrue(payload.contains("copy to"))
+        assertTrue(payload.contains("irc://othernet/%23other"))
+    }
+
+    @Test
+    fun `bridge info shows no bridge when channel is not bridged`() {
+        val result = eventGateway.process(addressedMessage("bridge info", user = regularUser))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertTrue(
+            (result as OperationResult.Success).payload.toString().contains("No bridge configured")
+        )
+    }
+
+    @Test
+    fun `bridge info shows bidirectional bridge`() {
+        val sourceUri =
+            Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "#test").encode()
+        bridgeService.copy(sourceUri, "irc://othernet/%23other")
+        bridgeService.copy("irc://othernet/%23other", sourceUri)
+
+        val result = eventGateway.process(addressedMessage("bridge info", user = regularUser))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload.toString()
+        assertTrue(payload.contains("copy to"))
+        assertTrue(payload.contains("copy from"))
     }
 
     @Test
