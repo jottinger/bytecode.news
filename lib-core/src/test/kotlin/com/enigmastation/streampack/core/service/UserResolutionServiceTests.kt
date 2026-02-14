@@ -38,11 +38,16 @@ class UserResolutionServiceTests {
                 user = user,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "dreamreal",
+                externalIdentifier = "~dreamreal@about/java/dreamreal",
             )
         )
 
-        val principal = userResolutionService.resolve(Protocol.IRC, "ircservice", "dreamreal")
+        val principal =
+            userResolutionService.resolve(
+                Protocol.IRC,
+                "ircservice",
+                "~dreamreal@about/java/dreamreal",
+            )
 
         assertNotNull(principal)
         assertEquals("dreamreal", principal!!.username)
@@ -98,7 +103,7 @@ class UserResolutionServiceTests {
                 user = user1,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "alice",
+                externalIdentifier = "~alice@example.com/alice",
             )
         )
         serviceBindingRepository.saveAndFlush(
@@ -106,11 +111,12 @@ class UserResolutionServiceTests {
                 user = user2,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "bob",
+                externalIdentifier = "~bob@example.com/bob",
             )
         )
 
-        val principal = userResolutionService.resolve(Protocol.IRC, "ircservice", "bob")
+        val principal =
+            userResolutionService.resolve(Protocol.IRC, "ircservice", "~bob@example.com/bob")
 
         assertNotNull(principal)
         assertEquals("bob", principal!!.username)
@@ -132,7 +138,7 @@ class UserResolutionServiceTests {
                 user = user,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "dreamreal",
+                externalIdentifier = "~dreamreal@about/java/dreamreal",
             )
         )
         serviceBindingRepository.saveAndFlush(
@@ -144,7 +150,12 @@ class UserResolutionServiceTests {
             )
         )
 
-        val fromIrc = userResolutionService.resolve(Protocol.IRC, "ircservice", "dreamreal")
+        val fromIrc =
+            userResolutionService.resolve(
+                Protocol.IRC,
+                "ircservice",
+                "~dreamreal@about/java/dreamreal",
+            )
         val fromDiscord =
             userResolutionService.resolve(Protocol.DISCORD, "jvm-community", "dreamreal#1234")
 

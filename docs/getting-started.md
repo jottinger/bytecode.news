@@ -168,40 +168,51 @@ link help
 ```
 ```
 Available protocols for identity binding:
-  IRC: link user <username> irc <network> <nick>
+  IRC: link user <username> irc <network> <hostmask>
     Networks: libera
 ```
 
 You can also filter to a specific protocol with `link help <protocol>`.
 
 Here is a concrete example.
-You're on the console, the bot is connected to Libera, and you want the IRC user `random_person` to be recognized as the `admin` account.
+You're on the console, the bot is connected to Libera, and you want the IRC user with hostmask `~random_person@cloak/random_person` to be recognized as the `admin` account.
 First, check what IRC needs:
 
 ```
 link help irc
 ```
 ```
-IRC: link user <username> irc <network> <nick>
+IRC: link user <username> irc <network> <hostmask>
   Networks: libera
 ```
 
-The output tells you the serviceId is a network name (and `libera` is available), and the externalIdentifier is a nick.
+The output tells you the serviceId is a network name (and `libera` is available), and the externalIdentifier is a hostmask in `ident@host` format.
+The hostmask is the ident and cloaked host assigned by NickServ after authentication - you can see it in `/whois` output.
+Using the hostmask instead of the nick prevents identity spoofing, since the cloaked host requires NickServ authentication.
+
 Now link them:
 
 ```
-link user admin irc libera random_person
+link user admin irc libera ~random_person@cloak/random_person
 ```
 
-This creates a service binding so that when `random_person` speaks on the `libera` IRC network, the bot recognizes them as the `admin` user with `SUPER_ADMIN` privileges.
+This creates a service binding so that when a user with hostmask `~random_person@cloak/random_person` speaks on the `libera` IRC network, the bot recognizes them as the `admin` user with `SUPER_ADMIN` privileges.
 
 After this, `random_person` can issue admin commands directly from IRC:
 
 ```
 nevet: irc join libera #kotlin
 nevet: create user charlie charlie@example.com Charlie
-nevet: link user charlie irc libera charlie_irc
+nevet: link user charlie irc libera ~charlie@cloak/charlie
 ```
+
+To remove a protocol binding, use `unlink user`:
+
+```
+unlink user charlie irc libera ~charlie@cloak/charlie
+```
+
+This is useful when a user's hostmask changes or when a binding was created with the wrong identifier.
 
 ## Complete Onboarding Sequence
 
@@ -216,7 +227,7 @@ Here is the full sequence from zero to a working IRC-connected superadmin:
 7. `irc autoconnect libera true` - persist the connection across restarts
 8. `irc autojoin libera #yourchannel true` - persist the channel join across restarts
 9. `link help irc` - confirm the network name and field names for IRC
-10. `link user admin irc libera yournick` - link your IRC nick to the superadmin account
+10. `link user admin irc libera ~yournick@your/cloak` - link your IRC hostmask to the superadmin account
 
 From this point, you can admin the bot over IRC by addressing it with the signal character or its nick.
 

@@ -273,7 +273,7 @@ An RSS subscription stores `irc://libera/%23java` as its destination, and the po
 ### User Resolution
 
 Protocol adapters resolve user identity before building the Provenance.
-An IRC adapter maps the nick `dreamreal` on `libera` to a `UserPrincipal` with `role = SUPER_ADMIN` via the `ServiceBinding` table.
+An IRC adapter maps the hostmask `~dreamreal@about/java/dreamreal` on `libera` to a `UserPrincipal` with `role = SUPER_ADMIN` via the `ServiceBinding` table.
 An HTTP adapter resolves the JWT token to a `UserPrincipal`.
 
 If no binding exists, `user` is null and the effective role is `GUEST`.

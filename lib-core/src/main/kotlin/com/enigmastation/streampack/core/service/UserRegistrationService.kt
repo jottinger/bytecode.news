@@ -94,6 +94,17 @@ class UserRegistrationService(
         return user.toUserPrincipal()
     }
 
+    /** Removes a protocol identity binding */
+    @Transactional
+    fun unlinkProtocol(protocol: Protocol, serviceId: String, externalIdentifier: String) {
+        val binding =
+            serviceBindingRepository.resolve(protocol, serviceId, externalIdentifier)
+                ?: throw IllegalArgumentException(
+                    "No binding found for $protocol/$serviceId/$externalIdentifier"
+                )
+        serviceBindingRepository.delete(binding)
+    }
+
     /** Links an additional protocol identity to an existing user */
     @Transactional
     fun linkProtocol(

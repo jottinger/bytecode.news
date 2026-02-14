@@ -106,7 +106,9 @@ class IrcAdapter(
             try {
                 val channelName = event.channel.name
                 val nick = event.actor.nick
-                val user = userResolutionService.resolve(Protocol.IRC, networkName, nick)
+                val host = event.actor.host
+                val ident = event.actor.userString
+                val user = userResolutionService.resolve(Protocol.IRC, networkName, "$ident@$host")
                 val provenance =
                     Provenance(
                         protocol = Protocol.IRC,
@@ -115,8 +117,6 @@ class IrcAdapter(
                         user = user,
                         metadata = mapOf(Provenance.BOT_NICK to client.nick),
                     )
-                val host = event.actor.host
-                val ident = event.actor.userString
 
                 val strippedText = extractAddressedText(event.message)
                 val isAddressed = strippedText != null
@@ -174,7 +174,9 @@ class IrcAdapter(
         Thread.startVirtualThread {
             try {
                 val nick = event.actor.nick
-                val user = userResolutionService.resolve(Protocol.IRC, networkName, nick)
+                val host = event.actor.host
+                val ident = event.actor.userString
+                val user = userResolutionService.resolve(Protocol.IRC, networkName, "$ident@$host")
                 val provenance =
                     Provenance(
                         protocol = Protocol.IRC,
@@ -183,14 +185,7 @@ class IrcAdapter(
                         user = user,
                         metadata = mapOf(Provenance.BOT_NICK to client.nick),
                     )
-                dispatch(
-                    event.message,
-                    provenance,
-                    addressed = true,
-                    nick,
-                    event.actor.host,
-                    event.actor.userString,
-                )
+                dispatch(event.message, provenance, addressed = true, nick, host, ident)
             } catch (e: Exception) {
                 logger.error("Error processing private message on {}: {}", networkName, e.message)
             }
@@ -206,7 +201,9 @@ class IrcAdapter(
         Thread.startVirtualThread {
             try {
                 val channelName = event.channel.name
-                val user = userResolutionService.resolve(Protocol.IRC, networkName, nick)
+                val host = event.actor.host
+                val ident = event.actor.userString
+                val user = userResolutionService.resolve(Protocol.IRC, networkName, "$ident@$host")
                 val provenance =
                     Provenance(
                         protocol = Protocol.IRC,
@@ -222,8 +219,8 @@ class IrcAdapter(
                         .setHeader(Provenance.ADDRESSED, false)
                         .setHeader(Provenance.IS_ACTION, true)
                         .setHeader("nick", nick)
-                        .setHeader("host", event.actor.host)
-                        .setHeader("ident", event.actor.userString)
+                        .setHeader("host", host)
+                        .setHeader("ident", ident)
                 eventGateway.send(builder.build())
             } catch (e: Exception) {
                 logger.error("Error processing channel action on {}: {}", networkName, e.message)
