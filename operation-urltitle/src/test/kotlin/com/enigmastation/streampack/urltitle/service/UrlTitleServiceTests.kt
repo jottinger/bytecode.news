@@ -69,18 +69,19 @@ class UrlTitleServiceTests {
     }
 
     @Test
-    fun `x_com is ignored by default`() {
-        assertTrue(service.isIgnoredHost("https://x.com/someuser/status/123"))
+    fun `pastebin is ignored by default`() {
+        assertTrue(service.isIgnoredHost("https://pastebin.com/abc123"))
     }
 
     @Test
-    fun `twitter_com is ignored by default`() {
-        assertTrue(service.isIgnoredHost("https://twitter.com/someuser"))
+    fun `twitter and x_com are no longer ignored by default`() {
+        assertFalse(service.isIgnoredHost("https://twitter.com/someuser"))
+        assertFalse(service.isIgnoredHost("https://x.com/someuser/status/123"))
     }
 
     @Test
     fun `subdomain of ignored host is not ignored`() {
-        assertFalse(service.isIgnoredHost("https://foo.x.com/something"))
+        assertFalse(service.isIgnoredHost("https://foo.pastebin.com/something"))
     }
 
     @Test
@@ -122,7 +123,7 @@ class UrlTitleServiceTests {
     @Test
     fun `filter URLs removes ignored hosts`() {
         val urls =
-            listOf("https://twitter.com/foo", "https://x.com/bar", "https://enigmastation.com")
+            listOf("https://pastebin.com/abc", "https://bpa.st/bar", "https://enigmastation.com")
         val filtered = urls.filter { !service.isIgnoredHost(it) }
         assertEquals(1, filtered.size)
         assertEquals("https://enigmastation.com", filtered[0])

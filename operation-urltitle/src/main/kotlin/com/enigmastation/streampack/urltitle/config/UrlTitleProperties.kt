@@ -15,7 +15,7 @@ data class UrlTitleProperties(
             Protocol.MATTERMOST,
         ),
     val defaultIgnoredHosts: List<String> =
-        listOf("twitter.com", "x.com", "bpa.st", "dpaste.com", "pastebin.com", "pastebin.org"),
+        listOf("bpa.st", "dpaste.com", "pastebin.com", "pastebin.org"),
     val similarityThreshold: Double = 0.3,
     val connectTimeoutSeconds: Int = 5,
     val readTimeoutSeconds: Int = 10,
