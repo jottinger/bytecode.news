@@ -87,6 +87,7 @@ class DiscordAdapter(
         }
     }
 
+    // MessageUpdateEvent is intentionally not handled: edits should not cross the bridge
     override fun onMessageReceived(event: MessageReceivedEvent) {
         if (event.author.isBot) return
 

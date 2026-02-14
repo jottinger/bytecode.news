@@ -82,13 +82,6 @@ class IrcAdapter(
         sendMessage(provenance.replyTo, truncateForIrc(text))
     }
 
-    /** Truncates text to fit IRC's message length limits */
-    private fun truncateForIrc(text: String): String {
-        if (text.length <= MAX_IRC_MESSAGE_LENGTH) return text
-        return text.substring(0, MAX_IRC_MESSAGE_LENGTH - TRUNCATION_SUFFIX.length) +
-            TRUNCATION_SUFFIX
-    }
-
     /** Returns channels the client has joined */
     fun getJoinedChannels(): Set<String> = client.channels.map { it.name }.toSet()
 
@@ -208,7 +201,34 @@ class IrcAdapter(
     fun onChannelAction(event: ChannelCtcpEvent) {
         if (!event.message.startsWith("ACTION ")) return
         val action = event.message.removePrefix("ACTION ").removeSuffix("\u0001")
-        dispatchLoggingEvent(event.channel.name, "* ${event.actor.nick} $action")
+        val nick = event.actor.nick
+        if (nick == client.nick) return
+        Thread.startVirtualThread {
+            try {
+                val channelName = event.channel.name
+                val user = userResolutionService.resolve(Protocol.IRC, networkName, nick)
+                val provenance =
+                    Provenance(
+                        protocol = Protocol.IRC,
+                        serviceId = networkName,
+                        replyTo = channelName,
+                        user = user,
+                        metadata = mapOf(Provenance.BOT_NICK to client.nick),
+                    )
+                val payload = "* $nick $action"
+                val builder =
+                    MessageBuilder.withPayload(payload)
+                        .setHeader(Provenance.HEADER, provenance)
+                        .setHeader(Provenance.ADDRESSED, false)
+                        .setHeader(Provenance.IS_ACTION, true)
+                        .setHeader("nick", nick)
+                        .setHeader("host", event.actor.host)
+                        .setHeader("ident", event.actor.userString)
+                eventGateway.send(builder.build())
+            } catch (e: Exception) {
+                logger.error("Error processing channel action on {}: {}", networkName, e.message)
+            }
+        }
     }
 
     @Handler
@@ -254,6 +274,28 @@ class IrcAdapter(
     companion object {
         private const val MAX_IRC_MESSAGE_LENGTH = 400
         private const val TRUNCATION_SUFFIX = " [...more]"
+
+        /** Collapses multiline content to first line and truncates to fit IRC message limits */
+        fun truncateForIrc(text: String): String {
+            val lines = text.split("\n")
+            val firstLine = lines[0]
+            val hasMoreLines = lines.size > 1
+
+            if (hasMoreLines) {
+                val maxFirstLine = MAX_IRC_MESSAGE_LENGTH - TRUNCATION_SUFFIX.length
+                return if (firstLine.length > maxFirstLine) {
+                    firstLine.substring(0, maxFirstLine) + TRUNCATION_SUFFIX
+                } else {
+                    firstLine + TRUNCATION_SUFFIX
+                }
+            }
+
+            if (firstLine.length > MAX_IRC_MESSAGE_LENGTH) {
+                return firstLine.substring(0, MAX_IRC_MESSAGE_LENGTH - TRUNCATION_SUFFIX.length) +
+                    TRUNCATION_SUFFIX
+            }
+            return firstLine
+        }
     }
 
     /** Dispatches a metadata event as a LoggingRequest through ingress for logging only */

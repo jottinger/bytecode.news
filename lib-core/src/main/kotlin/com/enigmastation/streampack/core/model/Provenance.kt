@@ -26,6 +26,7 @@ data class Provenance(
         const val HEADER = "provenance"
         const val BOT_NICK = "botNick"
         const val ADDRESSED = "addressed"
+        const val IS_ACTION = "isAction"
 
         /** Decodes a URI-format address string into a Provenance */
         fun decode(uri: String): Provenance {
