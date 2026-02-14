@@ -29,9 +29,12 @@ class BridgeAdminOperation(private val bridgeService: BridgeService) :
         val tokens = args.split("\\s+".toRegex())
         val subcommand = tokens[0]
 
-        // Provenance discovery is available to all users
+        // Provenance discovery and bridge info are available to all users
         if (subcommand == "provenance") {
             return handleProvenance(provenance)
+        }
+        if (subcommand == "info") {
+            return handleInfo(provenance)
         }
 
         val role = provenance?.user?.role ?: Role.GUEST
@@ -95,6 +98,25 @@ class BridgeAdminOperation(private val bridgeService: BridgeService) :
         return OperationResult.Success("Bridge pairs:\n${lines.joinToString("\n")}")
     }
 
+    private fun handleInfo(provenance: Provenance?): OperationResult {
+        if (provenance == null) {
+            return OperationResult.Error("No provenance available for this channel")
+        }
+        val uri = provenance.encode()
+        val pair =
+            bridgeService.findPairFor(uri)
+                ?: return OperationResult.Success("No bridge configured for this channel")
+
+        val partnerUri = if (pair.firstUri == uri) pair.secondUri else pair.firstUri
+        val directions = mutableListOf<String>()
+        if (pair.firstUri == uri && pair.copyFirstToSecond) directions.add("copy to $partnerUri")
+        if (pair.secondUri == uri && pair.copySecondToFirst) directions.add("copy to $partnerUri")
+        if (pair.firstUri == uri && pair.copySecondToFirst) directions.add("copy from $partnerUri")
+        if (pair.secondUri == uri && pair.copyFirstToSecond) directions.add("copy from $partnerUri")
+
+        return OperationResult.Success("Bridge: ${directions.joinToString(", ")}")
+    }
+
     private fun handleProvenance(provenance: Provenance?): OperationResult {
         if (provenance == null) {
             return OperationResult.Error("No provenance available for this channel")
@@ -106,6 +128,7 @@ class BridgeAdminOperation(private val bridgeService: BridgeService) :
         """
         |Bridge Commands:
         |  bridge provenance                         - Show this channel's provenance URI
+        |  bridge info                               - Show bridge for this channel
         |Bridge Admin Commands (requires ADMIN):
         |  bridge copy <source-uri> <target-uri>     - Copy source content to target
         |  bridge remove <source-uri> <target-uri>   - Remove directional copy

@@ -79,7 +79,14 @@ class IrcAdapter(
     }
 
     override fun sendReply(provenance: Provenance, text: String) {
-        sendMessage(provenance.replyTo, text)
+        sendMessage(provenance.replyTo, truncateForIrc(text))
+    }
+
+    /** Truncates text to fit IRC's message length limits */
+    private fun truncateForIrc(text: String): String {
+        if (text.length <= MAX_IRC_MESSAGE_LENGTH) return text
+        return text.substring(0, MAX_IRC_MESSAGE_LENGTH - TRUNCATION_SUFFIX.length) +
+            TRUNCATION_SUFFIX
     }
 
     /** Returns channels the client has joined */
@@ -242,6 +249,11 @@ class IrcAdapter(
     fun onUserQuit(event: UserQuitEvent) {
         val reason = event.message.let { if (it.isNotEmpty()) " ($it)" else "" }
         dispatchLoggingEvent("*", "* ${event.actor.nick} quit$reason")
+    }
+
+    companion object {
+        private const val MAX_IRC_MESSAGE_LENGTH = 400
+        private const val TRUNCATION_SUFFIX = " [...more]"
     }
 
     /** Dispatches a metadata event as a LoggingRequest through ingress for logging only */
