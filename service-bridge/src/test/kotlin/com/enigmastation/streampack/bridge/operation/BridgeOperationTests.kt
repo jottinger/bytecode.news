@@ -301,6 +301,38 @@ class BridgeOperationTests {
     }
 
     @Test
+    fun `bridge copies action messages with isAction header`() {
+        val sourceUri =
+            Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "#test").encode()
+        bridgeService.copy(sourceUri, "irc://othernet/%23other")
+
+        val captured = mutableListOf<String>()
+        val handler =
+            org.springframework.messaging.MessageHandler { msg ->
+                val result = msg.payload
+                if (result is OperationResult.Success) {
+                    captured.add(result.payload.toString())
+                }
+            }
+        egressChannel.subscribe(handler)
+        try {
+            val message =
+                MessageBuilder.withPayload("* dreamreal waves")
+                    .setHeader(Provenance.HEADER, provenance("#test", "testnet"))
+                    .setHeader(Provenance.ADDRESSED, false)
+                    .setHeader(Provenance.IS_ACTION, true)
+                    .setHeader("nick", "dreamreal")
+                    .build()
+            eventGateway.process(message)
+
+            assertTrue(captured.any { it.contains("<irc:dreamreal>") })
+            assertTrue(captured.any { it.contains("* dreamreal waves") })
+        } finally {
+            egressChannel.unsubscribe(handler)
+        }
+    }
+
+    @Test
     fun `one-way bridge does not copy in reverse direction`() {
         // Copy from A to B only
         bridgeService.copy("irc://a/%23one", "irc://b/%23two")

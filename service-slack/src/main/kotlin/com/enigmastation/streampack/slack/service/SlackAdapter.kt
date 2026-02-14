@@ -196,8 +196,9 @@ class SlackAdapter(
 
             // Skip bot messages to avoid self-loops
             if (event.botId != null) return
-            // Skip message subtypes (edits, deletes, joins, etc.)
-            if (event.subtype != null) return
+            // Skip message subtypes (edits, deletes, joins, etc.) but allow /me actions
+            val isAction = event.subtype == "me_message"
+            if (event.subtype != null && !isAction) return
 
             val slackUserId = event.user ?: return
             val channelId = event.channel ?: return
@@ -221,10 +222,11 @@ class SlackAdapter(
                 )
 
             val nick = resolveDisplayName(slackUserId)
-            val addressedText = if (isDm) rawText else extractAddressedText(rawText)
+            val payload = if (isAction) "* $nick $rawText" else rawText
+            val addressedText = if (isDm) payload else extractAddressedText(payload)
             val isAddressed = isDm || addressedText != null
 
-            dispatch(addressedText ?: rawText, provenance, isAddressed, nick)
+            dispatch(addressedText ?: payload, provenance, isAddressed, nick, isAction)
         } catch (e: Exception) {
             logger.error("Error processing Slack message on '{}': {}", workspaceName, e.message)
         }
@@ -260,12 +262,14 @@ class SlackAdapter(
         provenance: Provenance,
         addressed: Boolean,
         nick: String? = null,
+        isAction: Boolean = false,
     ) {
         val builder =
             MessageBuilder.withPayload(payload as Any)
                 .setHeader(Provenance.HEADER, provenance)
                 .setHeader(Provenance.ADDRESSED, addressed)
         if (nick != null) builder.setHeader("nick", nick)
+        if (isAction) builder.setHeader(Provenance.IS_ACTION, true)
         eventGateway.send(builder.build())
     }
 }
