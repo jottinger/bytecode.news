@@ -1,15 +1,17 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.service
 
+import java.io.InputStream
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.zip.GZIPInputStream
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
-/** Default PageFetcher that retrieves page content over HTTP */
+/** Default PageFetcher that retrieves page content over HTTP, handling gzip responses */
 @Component
 class HttpPageFetcher : PageFetcher {
     private val logger = LoggerFactory.getLogger(HttpPageFetcher::class.java)
@@ -37,17 +39,42 @@ class HttpPageFetcher : PageFetcher {
                         "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                     )
                     .header("Accept-Language", "en-US,en;q=0.5")
+                    .header("Accept-Encoding", "gzip")
                     .GET()
                     .build()
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-            if (response.statusCode() in 200..299) {
-                response.body()
-            } else {
-                logger.debug("HTTP {} fetching {}", response.statusCode(), url)
-                null
+            val response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
+            val finalUri = response.uri()
+
+            if (response.statusCode() !in 200..299) {
+                logger.warn(
+                    "HTTP {} fetching {} (final URI: {})",
+                    response.statusCode(),
+                    url,
+                    finalUri,
+                )
+                return null
             }
+
+            val encoding = response.headers().firstValue("Content-Encoding").orElse("")
+            val inputStream: InputStream =
+                if (encoding.equals("gzip", ignoreCase = true)) {
+                    GZIPInputStream(response.body())
+                } else {
+                    response.body()
+                }
+
+            val body = inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+            logger.debug(
+                "Fetched {} -> {} (status={}, encoding={}, body={} chars)",
+                url,
+                finalUri,
+                response.statusCode(),
+                encoding.ifEmpty { "none" },
+                body.length,
+            )
+            body
         } catch (e: Exception) {
-            logger.debug("Failed to fetch {}: {}", url, e.message)
+            logger.warn("Failed to fetch {}: {}", url, e.message)
             null
         }
     }

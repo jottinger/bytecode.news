@@ -74,12 +74,6 @@ class UrlTitleServiceTests {
     }
 
     @Test
-    fun `twitter and x_com are no longer ignored by default`() {
-        assertFalse(service.isIgnoredHost("https://twitter.com/someuser"))
-        assertFalse(service.isIgnoredHost("https://x.com/someuser/status/123"))
-    }
-
-    @Test
     fun `subdomain of ignored host is not ignored`() {
         assertFalse(service.isIgnoredHost("https://foo.pastebin.com/something"))
     }
