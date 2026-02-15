@@ -182,6 +182,46 @@ override fun canHandle(payload: String, message: Message<*>): Boolean {
 }
 ```
 
+### Redacting Secrets from Logs
+
+All inbound messages are captured to the message log by the `IngressLoggingInterceptor`.
+If your operation accepts secrets via text commands (passwords, tokens, API keys), those secrets will be persisted in plain text unless you declare redaction rules.
+
+Override `redactionRules` to tell the interceptor which token positions contain secrets:
+
+```kotlin
+override val redactionRules = listOf(
+    RedactionRule("irc connect", setOf(5, 6))
+)
+```
+
+This means: when a message starts with `"irc connect"` (case-insensitive), replace tokens at positions 5 and 6 with `[REDACTED]` before logging.
+Token positions are 0-indexed from the full command string split on whitespace.
+
+For `irc connect libera irc.libera.chat nevet myaccount mypassword`:
+- Position 0: `irc`
+- Position 1: `connect`
+- Position 2: `libera`
+- Position 3: `irc.libera.chat`
+- Position 4: `nevet`
+- Position 5: `myaccount` (redacted)
+- Position 6: `mypassword` (redacted)
+
+The logged content becomes: `irc connect libera irc.libera.chat nevet [REDACTED] [REDACTED]`
+
+If the message has fewer tokens than a declared position, that position is silently skipped.
+Operations that do not handle secrets need no changes - the default is an empty rule list.
+
+The redaction function is a pure companion method on `IngressLoggingInterceptor`, so you can unit test your rules directly without a Spring context:
+
+```kotlin
+val result = IngressLoggingInterceptor.redact(
+    "my command visible secret",
+    listOf(RedactionRule("my command", setOf(3)))
+)
+// result: "my command visible [REDACTED]"
+```
+
 ### The handle Method
 
 `handle` contains the business logic.

@@ -4,6 +4,7 @@ package com.enigmastation.streampack.irc.operation
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.model.RedactionRule
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.irc.service.IrcService
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Component
 @Component
 class IrcAdminOperation(private val ircService: IrcService) :
     TypedOperation<String>(String::class) {
+
+    override val redactionRules = listOf(RedactionRule("irc connect", setOf(5, 6)))
 
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         val trimmed = payload.trim()
