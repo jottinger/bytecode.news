@@ -31,6 +31,7 @@
         <romeVersion>2.1.0</romeVersion>
         <jdaVersion>6.3.0</jdaVersion>
         <slackSdkVersion>1.47.0</slackSdkVersion>
+        <githubApiVersion>1.330</githubApiVersion>
     </properties>
 
     <groupId>com.enigmastation</groupId>
@@ -43,6 +44,7 @@
         <module>lib-irc</module>
         <module>lib-test</module>
         <module>lib-slack</module>
+        <module>lib-polling</module>
         <module>operation-calc</module>
         <module>operation-cal</module>
         <module>operation-karma</module>
@@ -60,6 +62,7 @@
         <module>service-discord</module>
         <module>service-blog</module>
         <module>service-irc</module>
+        <module>service-github</module>
         <module>app</module>
     </modules>
 
@@ -73,14 +76,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!--            <dependency>
-                            <groupId>org.junit</groupId>
-                            <artifactId>junit-bom</artifactId>
-                            <version>${junit.jupiter.version}</version> <!- or your preferred version ->
-                            <type>pom</type>
-                            <scope>import</scope>
-                        </dependency>
-                -->
             <dependency>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-stdlib-jdk8</artifactId>
@@ -176,6 +171,11 @@
                 <groupId>com.slack.api</groupId>
                 <artifactId>bolt-jakarta-socket-mode</artifactId>
                 <version>${slackSdkVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.kohsuke</groupId>
+                <artifactId>github-api</artifactId>
+                <version>${githubApiVersion}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
