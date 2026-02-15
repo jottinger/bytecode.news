@@ -32,6 +32,11 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
     }
 
     override fun onSubscribe(identifier: String, destinationUri: String): OperationOutcome {
+        logger.debug(
+            "onSubscribe called: identifier='{}', destination='{}'",
+            identifier,
+            destinationUri,
+        )
         return when (val outcome = subscriptionService.subscribe(identifier, destinationUri)) {
             is GitHubSubscriptionOutcome.Subscribed ->
                 OperationResult.Success("Subscribed to ${outcome.repo.fullName()}")

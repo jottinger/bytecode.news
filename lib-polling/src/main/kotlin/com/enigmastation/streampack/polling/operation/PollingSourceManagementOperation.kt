@@ -40,11 +40,18 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
             lower.startsWith("$prefix subscribe ") ||
                 lower.startsWith("$prefix unsubscribe ") ||
                 lower.startsWith("$prefix remove ")
-        if (!isMutation) return false
+        if (!isMutation) {
+            logger.debug("Payload '{}' is not a {} mutation command", lower, commandPrefix)
+            return false
+        }
 
         val provenance = message.headers[Provenance.HEADER] as? Provenance
         val role = provenance?.user?.role ?: Role.GUEST
-        return role >= Role.ADMIN
+        val allowed = role >= Role.ADMIN
+        if (!allowed) {
+            logger.debug("Mutation '{}' denied for role {} (need ADMIN+)", lower, role)
+        }
+        return allowed
     }
 
     override fun handle(payload: String, message: Message<*>): OperationOutcome {
@@ -112,9 +119,18 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
                 "Usage: $commandPrefix subscribe <identifier> [to <provenance-uri>]"
             )
         }
-        val (identifier, destinationUri) =
-            parseIdentifierAndTarget(remainder, message)
-                ?: return OperationResult.Error("No provenance available for this message")
+        val parsed = parseIdentifierAndTarget(remainder, message)
+        if (parsed == null) {
+            logger.debug("No provenance available for subscribe command")
+            return OperationResult.Error("No provenance available for this message")
+        }
+        val (identifier, destinationUri) = parsed
+        logger.debug(
+            "Dispatching {} subscribe: identifier='{}', destination='{}'",
+            commandPrefix,
+            identifier,
+            destinationUri,
+        )
         return onSubscribe(identifier, destinationUri)
     }
 
