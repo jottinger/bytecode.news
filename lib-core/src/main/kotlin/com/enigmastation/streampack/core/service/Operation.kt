@@ -4,6 +4,7 @@ package com.enigmastation.streampack.core.service
 import com.enigmastation.streampack.core.model.Declined
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.RedactionRule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
@@ -48,6 +49,14 @@ interface Operation {
      */
     val addressed: Boolean
         get() = true
+
+    /**
+     * Redaction rules for text commands that include secrets. The ingress logging interceptor
+     * applies these before persisting messages so that credentials never reach the message log.
+     * Override this in operations that accept secrets via text commands.
+     */
+    val redactionRules: List<RedactionRule>
+        get() = emptyList()
 
     /** Quick pre-flight check: is this operation relevant for this message? */
     fun canHandle(message: Message<*>): Boolean = true
