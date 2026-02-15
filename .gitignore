@@ -39,3 +39,16 @@ build/
 ### Environment ###
 .env
 .env.properties
+
+### Frontend ###
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+### Playwright ###
+.playwright-mcp/
+newspaper-*.png
+current-state.png
+text-size-*.png
+
+CLAUDE.md
