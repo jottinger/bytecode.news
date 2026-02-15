@@ -51,6 +51,12 @@ class FeedManagementOperationTests {
     private fun message(text: String) =
         MessageBuilder.withPayload(text).setHeader(Provenance.HEADER, provenance()).build()
 
+    private fun consoleProvenance() =
+        Provenance(protocol = Protocol.CONSOLE, replyTo = "local", user = adminUser)
+
+    private fun consoleMessage(text: String) =
+        MessageBuilder.withPayload(text).setHeader(Provenance.HEADER, consoleProvenance()).build()
+
     @BeforeEach
     fun setUp() {
         httpServer = HttpServer.create(InetSocketAddress(0), 0)
@@ -244,6 +250,69 @@ class FeedManagementOperationTests {
             Provenance(protocol = Protocol.IRC, serviceId = "libera", replyTo = "#java")
         val msg =
             MessageBuilder.withPayload("feed subscriptions")
+                .setHeader(Provenance.HEADER, guestProvenance)
+                .build()
+
+        val result = eventGateway.process(msg)
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    // --- Explicit target tests ---
+
+    @Test
+    fun `feed subscribe with explicit target from console`() {
+        val feedUrl = addFeed("Console Target", 2)
+        val result =
+            eventGateway.process(consoleMessage("feed subscribe $feedUrl to irc://libera/%23java"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            "Subscribed to \"Console Target\"",
+            (result as OperationResult.Success).payload,
+        )
+    }
+
+    @Test
+    fun `feed subscribe with explicit target is visible via feed subscriptions for`() {
+        val feedUrl = addFeed("Visible Sub", 1)
+        eventGateway.process(consoleMessage("feed subscribe $feedUrl to irc://libera/%23java"))
+        val result =
+            eventGateway.process(consoleMessage("feed subscriptions for irc://libera/%23java"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload.toString()
+        assertTrue(payload.contains("Visible Sub"))
+    }
+
+    @Test
+    fun `feed unsubscribe with explicit target`() {
+        val feedUrl = addFeed("Unsub Target", 1)
+        eventGateway.process(consoleMessage("feed subscribe $feedUrl to irc://libera/%23java"))
+        val result =
+            eventGateway.process(
+                consoleMessage("feed unsubscribe $feedUrl to irc://libera/%23java")
+            )
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            "Unsubscribed from \"Unsub Target\"",
+            (result as OperationResult.Success).payload,
+        )
+    }
+
+    @Test
+    fun `feed subscriptions for with no subscriptions returns appropriate message`() {
+        val result =
+            eventGateway.process(consoleMessage("feed subscriptions for irc://libera/%23empty"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            "No active subscriptions for this channel",
+            (result as OperationResult.Success).payload,
+        )
+    }
+
+    @Test
+    fun `feed subscriptions for is accessible without admin role`() {
+        val guestProvenance = Provenance(protocol = Protocol.CONSOLE, replyTo = "local")
+        val msg =
+            MessageBuilder.withPayload("feed subscriptions for irc://libera/%23java")
                 .setHeader(Provenance.HEADER, guestProvenance)
                 .build()
 

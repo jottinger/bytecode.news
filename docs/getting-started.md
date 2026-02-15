@@ -232,7 +232,7 @@ Here is the full sequence from zero to a working IRC-connected superadmin:
 From this point, you can admin the bot over IRC by addressing it with the signal character or its nick.
 
 11. `feed add https://inside.java` - register an RSS feed
-12. `nevet: feed subscribe https://inside.java` - (from your IRC channel) subscribe the channel to the feed
+12. `feed subscribe https://inside.java to irc://libera/%23yourchannel` - subscribe the IRC channel to the feed (from the console, using explicit target)
 
 ## 10. Set Up RSS Feeds (Console or IRC Commands)
 
@@ -254,16 +254,30 @@ From the channel you want to receive notifications in:
 nevet: feed subscribe https://inside.java
 ```
 
+Or from the console, targeting a specific channel:
+
+```
+feed subscribe https://inside.java to irc://libera/%23java
+```
+
 The feed must already exist (use `feed add` first).
-The subscription target is always the channel where the command is issued.
+Without an explicit target, the subscription goes to the channel where the command is issued.
 
 ### Verify
+
+From the channel:
 
 ```
 nevet: feed subscriptions
 ```
 
-Shows what the current channel is subscribed to.
+Or from the console, for a specific channel:
+
+```
+feed subscriptions for irc://libera/%23java
+```
+
+Shows what the channel is subscribed to.
 
 New entries are polled automatically (default every 5 minutes) and delivered as:
 

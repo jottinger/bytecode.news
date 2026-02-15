@@ -23,7 +23,13 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         val trimmed = payload.trim().lowercase()
         // Read commands are open to everyone
-        if (trimmed == "feed list" || trimmed == "feed subscriptions") return true
+        if (
+            trimmed == "feed list" ||
+                trimmed == "feed subscriptions" ||
+                trimmed.startsWith("feed subscriptions for ")
+        ) {
+            return true
+        }
         // Mutation commands require ADMIN
         val isMutation =
             trimmed.startsWith("feed subscribe ") ||
@@ -41,14 +47,15 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
 
         return when {
             lower == "feed list" -> handleList()
-            lower == "feed subscriptions" -> handleSubscriptions(message)
+            lower == "feed subscriptions" || lower.startsWith("feed subscriptions for ") ->
+                handleSubscriptions(trimmed, message)
             lower.startsWith("feed subscribe ") -> {
-                val url = trimmed.substring("feed subscribe ".length).trim()
-                handleSubscribe(url, message)
+                val remainder = trimmed.substring("feed subscribe ".length).trim()
+                handleSubscribe(remainder, message)
             }
             lower.startsWith("feed unsubscribe ") -> {
-                val url = trimmed.substring("feed unsubscribe ".length).trim()
-                handleUnsubscribe(url, message)
+                val remainder = trimmed.substring("feed unsubscribe ".length).trim()
+                handleUnsubscribe(remainder, message)
             }
             lower.startsWith("feed remove ") -> {
                 val url = trimmed.substring("feed remove ".length).trim()
@@ -71,9 +78,18 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
         return OperationResult.Success(lines)
     }
 
-    private fun handleSubscriptions(message: Message<*>): OperationResult {
+    private fun handleSubscriptions(trimmed: String, message: Message<*>): OperationResult {
+        val lower = trimmed.lowercase()
         val destinationUri =
-            destinationUri(message) ?: return OperationResult.Error("No provenance")
+            if (lower.startsWith("feed subscriptions for ")) {
+                val uri = trimmed.substring("feed subscriptions for ".length).trim()
+                if (uri.isBlank()) {
+                    return OperationResult.Error("Usage: feed subscriptions for <provenance-uri>")
+                }
+                uri
+            } else {
+                destinationUri(message) ?: return OperationResult.Error("No provenance")
+            }
         val subscriptions = feedService.listSubscriptions(destinationUri)
         if (subscriptions.isEmpty()) {
             return OperationResult.Success("No active subscriptions for this channel")
@@ -82,10 +98,12 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
         return OperationResult.Success(lines)
     }
 
-    private fun handleSubscribe(url: String, message: Message<*>): OperationResult {
-        if (url.isBlank()) return OperationResult.Error("Usage: feed subscribe <url>")
-        val destinationUri =
-            destinationUri(message) ?: return OperationResult.Error("No provenance")
+    private fun handleSubscribe(remainder: String, message: Message<*>): OperationResult {
+        if (remainder.isBlank()) {
+            return OperationResult.Error("Usage: feed subscribe <url> [to <provenance-uri>]")
+        }
+        val (url, destinationUri) =
+            parseUrlAndTarget(remainder, message) ?: return OperationResult.Error("No provenance")
         return when (val outcome = feedService.subscribe(url, destinationUri)) {
             is SubscriptionOutcome.Subscribed ->
                 OperationResult.Success("Subscribed to \"${outcome.feed.title}\"")
@@ -98,10 +116,12 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
         }
     }
 
-    private fun handleUnsubscribe(url: String, message: Message<*>): OperationResult {
-        if (url.isBlank()) return OperationResult.Error("Usage: feed unsubscribe <url>")
-        val destinationUri =
-            destinationUri(message) ?: return OperationResult.Error("No provenance")
+    private fun handleUnsubscribe(remainder: String, message: Message<*>): OperationResult {
+        if (remainder.isBlank()) {
+            return OperationResult.Error("Usage: feed unsubscribe <url> [to <provenance-uri>]")
+        }
+        val (url, destinationUri) =
+            parseUrlAndTarget(remainder, message) ?: return OperationResult.Error("No provenance")
         return when (val outcome = feedService.unsubscribe(url, destinationUri)) {
             is SubscriptionOutcome.Unsubscribed ->
                 OperationResult.Success("Unsubscribed from \"${outcome.feed.title}\"")
@@ -127,6 +147,24 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
             is RemoveFeedOutcome.AlreadyInactive ->
                 OperationResult.Success("Feed \"${outcome.feed.title}\" is already inactive")
         }
+    }
+
+    /**
+     * Splits remainder into a feed URL and destination URI. When the remainder contains " to
+     * <uri>", the explicit URI is used as the destination. Otherwise the message provenance is the
+     * destination. Returns null when no destination can be determined.
+     */
+    private fun parseUrlAndTarget(remainder: String, message: Message<*>): Pair<String, String>? {
+        val toIndex = remainder.lowercase().lastIndexOf(" to ")
+        if (toIndex >= 0) {
+            val url = remainder.substring(0, toIndex).trim()
+            val target = remainder.substring(toIndex + " to ".length).trim()
+            if (url.isNotBlank() && target.isNotBlank()) {
+                return url to target
+            }
+        }
+        val destinationUri = destinationUri(message) ?: return null
+        return remainder to destinationUri
     }
 
     /** Encode the message's provenance as a destination URI */

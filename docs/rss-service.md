@@ -64,11 +64,17 @@ All commands require addressing (signal character or bot nick prefix).
 | Command | Effect |
 |---------|--------|
 | `feed subscribe <url>` | Subscribe the current channel to a feed. The feed must already exist (use `feed add` first). |
+| `feed subscribe <url> to <provenance-uri>` | Subscribe an explicit channel to a feed. Use this from the console or to target a different channel. |
 | `feed unsubscribe <url>` | Unsubscribe the current channel from a feed |
+| `feed unsubscribe <url> to <provenance-uri>` | Unsubscribe an explicit channel from a feed |
 | `feed subscriptions` | Show what the current channel is subscribed to |
+| `feed subscriptions for <provenance-uri>` | Show subscriptions for an explicit channel |
 
-For `feed subscribe` and `feed unsubscribe`, the destination is always the channel where the command was issued.
+Without an explicit target, the destination is the channel where the command was issued.
+With `to <provenance-uri>` or `for <provenance-uri>`, you can manage subscriptions for any channel from anywhere - including the console.
 The URL can be the exact feed URL or the site URL if discovery can resolve it to a registered feed.
+
+Provenance URIs follow the standard encoding: `irc://libera/%23java`, `discord://guild/%23channel`, etc.
 
 ### URL resolution
 
@@ -81,27 +87,33 @@ This means if you added a feed via `feed add https://example.com` (which discove
 
 ## Typical Setup Workflow
 
-From the console or an IRC channel:
+### From an IRC channel
+
+When you issue the commands from the channel you want to subscribe:
 
 ```
 > feed add https://blog.jetbrains.com
 Added feed "JetBrains Blog" with 20 entries
 
-> feed add https://inside.java/feed.xml
-Added feed "Inside Java" with 15 entries
-
-> feed list
-JetBrains Blog - https://blog.jetbrains.com/feed/
-Inside Java - https://inside.java/feed.xml
-
 > feed subscribe https://blog.jetbrains.com
 Subscribed to "JetBrains Blog"
 
-> feed subscribe https://inside.java/feed.xml
-Subscribed to "Inside Java"
-
 > feed subscriptions
 JetBrains Blog - https://blog.jetbrains.com/feed/
+```
+
+### From the console
+
+When you want to subscribe an IRC channel from the console, use the explicit target syntax:
+
+```
+> feed add https://inside.java/feed.xml
+Added feed "Inside Java" with 15 entries
+
+> feed subscribe https://inside.java/feed.xml to irc://libera/%23java
+Subscribed to "Inside Java"
+
+> feed subscriptions for irc://libera/%23java
 Inside Java - https://inside.java/feed.xml
 ```
 
