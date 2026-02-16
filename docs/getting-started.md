@@ -64,6 +64,55 @@ To stop the database and delete all data:
 docker compose down -v
 ```
 
+### Docker Profiles
+
+The `docker-compose.yml` includes optional profiles for running the frontend and backend in Docker.
+By default, `docker compose up` starts only PostgreSQL - the same behavior as before.
+
+Profile commands:
+
+```bash
+# PostgreSQL only (default, unchanged)
+docker compose up -d
+
+# PostgreSQL + frontend
+docker compose --profile frontend up -d
+
+# PostgreSQL + backend
+docker compose --profile backend up -d
+
+# All three services
+docker compose --profile frontend --profile backend up -d
+```
+
+**Scenario: Frontend in Docker, backend on host** (live deployment pattern).
+Set `API_URL=http://host.docker.internal:8080` in your `.env` file, then:
+
+```bash
+docker compose --profile frontend up -d
+```
+
+The frontend container reaches the host-running backend via `host.docker.internal`.
+
+**Scenario: Backend in Docker, frontend running locally** (UI development).
+Build the application locally first (the backend Docker image packages a pre-built JAR, not a source build):
+
+```bash
+./mvnw clean install -DskipTests
+docker compose --profile backend up -d
+cd frontend && npm run dev
+```
+
+The local dev server proxies API requests to `http://localhost:8080`, which Docker maps to the backend container.
+
+To build (or rebuild) the Docker images:
+
+```bash
+docker compose --profile frontend --profile backend build
+```
+
+The backend image must be rebuilt after any code change (`./mvnw clean install -DskipTests` first, then `docker compose --profile backend build`).
+
 ## 3. Build the Application
 
 ```bash
