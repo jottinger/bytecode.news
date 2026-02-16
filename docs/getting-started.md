@@ -40,6 +40,7 @@ Additional environment variables you may want to set:
 | `MAIL_HOST` | `localhost` | SMTP server host |
 | `MAIL_PORT` | `25` | SMTP server port |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3003,https://bytecode.news` | Comma-separated CORS allowed origins |
+| `API_URL` | `http://localhost:8080` | Backend API URL for Next.js server-side rewrites (frontend only) |
 | `IRC_SIGNAL` | `!` | Global IRC signal character |
 
 ## 2. Start the Database
