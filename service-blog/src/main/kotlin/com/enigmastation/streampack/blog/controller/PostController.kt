@@ -78,13 +78,13 @@ class PostController(
     )
     @GetMapping("/posts/{year}/{month}/{slug}")
     fun getPost(
-        @PathVariable year: String,
-        @PathVariable month: String,
+        @PathVariable @Schema(minimum = "2007", maximum = "3000") year: Int,
+        @PathVariable @Schema(minimum = "1", maximum = "12") month: Int,
         @PathVariable slug: String,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
-        val payload = FindContentRequest.FindBySlug("$year/$month/$slug")
+        val payload = FindContentRequest.FindBySlug("$year/${"%02d".format(month)}/$slug")
         return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
     }
 

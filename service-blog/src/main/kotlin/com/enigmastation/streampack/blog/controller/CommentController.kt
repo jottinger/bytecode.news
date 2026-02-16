@@ -61,12 +61,14 @@ class CommentController(
     )
     @GetMapping("/posts/{year}/{month}/{slug}/comments")
     fun getComments(
-        @PathVariable year: String,
-        @PathVariable month: String,
+        @PathVariable @Schema(minimum = "2007", maximum = "3000") year: Int,
+        @PathVariable @Schema(minimum = "1", maximum = "12") month: Int,
         @PathVariable slug: String,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
-        val postId = resolvePostId("$year/$month/$slug") ?: return notFound("Post not found")
+        val postId =
+            resolvePostId("$year/${"%02d".format(month)}/$slug")
+                ?: return notFound("Post not found")
         val user = resolveUser(httpRequest)
         val payload = FindCommentsRequest(postId)
         return dispatch(payload, "posts/comments", user) { result -> mapError(result) }
@@ -91,14 +93,16 @@ class CommentController(
     )
     @PostMapping("/posts/{year}/{month}/{slug}/comments")
     fun createComment(
-        @PathVariable year: String,
-        @PathVariable month: String,
+        @PathVariable @Schema(minimum = "2007", maximum = "3000") year: Int,
+        @PathVariable @Schema(minimum = "1", maximum = "12") month: Int,
         @PathVariable slug: String,
         @RequestBody request: CreateCommentHttpRequest,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
-        val postId = resolvePostId("$year/$month/$slug") ?: return notFound("Post not found")
+        val postId =
+            resolvePostId("$year/${"%02d".format(month)}/$slug")
+                ?: return notFound("Post not found")
         val payload =
             CreateCommentRequest(
                 postId = postId,
