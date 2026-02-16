@@ -251,6 +251,6 @@ Steps 7-9 should be sequential (configuration before controllers, controllers be
 ## Out of Scope
 
 - **Anonymous content submission**: CLAUDE.md mentions "Anyone (including anonymous) submits", but `CreateContentOperation` currently requires auth and there is no content submission controller. That is a separate feature.
-- **CORS configuration**: Not configured yet, not needed yet.
+- **CORS configuration**: Configured in `WebSecurityConfiguration` via the `CORS_ORIGINS` env var (comma-separated allowed origins, defaults to `localhost:3000`, `localhost:3003`, `bytecode.news`).
 - **OAuth**: Listed in the roadmap for Phase 2.
 - **Operation-layer auth refactoring**: The operation layer's own auth checks stay exactly as they are. This change only affects the HTTP entry point.

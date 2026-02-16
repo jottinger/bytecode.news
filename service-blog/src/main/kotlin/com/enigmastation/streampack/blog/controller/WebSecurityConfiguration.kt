@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.controller
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -18,13 +19,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
  * When authenticated endpoints arrive later, a JWT filter will be added here.
  */
 @Configuration
-class WebSecurityConfiguration {
+class WebSecurityConfiguration(
+    @Value("\${CORS_ORIGINS:http://localhost:3000,http://localhost:3003,https://bytecode.news}")
+    private val corsOrigins: String
+) {
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val config = CorsConfiguration()
-        config.allowedOrigins =
-            listOf("http://localhost:3000", "http://localhost:3003", "https://bytecode.news")
+        config.allowedOrigins = corsOrigins.split(",").map { it.trim() }
         config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
         config.allowedHeaders = listOf("Authorization", "Content-Type", "Accept")
         config.maxAge = 3600L
