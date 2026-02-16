@@ -39,6 +39,7 @@ Additional environment variables you may want to set:
 | `BASE_URL` | `http://localhost:8080` | Public base URL for the application |
 | `MAIL_HOST` | `localhost` | SMTP server host |
 | `MAIL_PORT` | `25` | SMTP server port |
+| `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3003,https://bytecode.news` | Comma-separated CORS allowed origins |
 | `IRC_SIGNAL` | `!` | Global IRC signal character |
 
 ## 2. Start the Database
