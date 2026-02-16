@@ -115,6 +115,7 @@ class GetFactoidOperation(
                 argument,
                 factoidTextRenderer,
                 streampackProperties.maxHops,
+                factoidService,
             )
         return OperationResult.Success(summary)
     }
@@ -199,19 +200,7 @@ class GetFactoidOperation(
 
     /** Decorates see-also values with ~ prefix for existing factoids */
     private fun renderSeeAlso(selector: String, attribute: FactoidAttribute): String {
-        return attribute.attributeValue!!
-            .split(",")
-            .map { it.trim() }
-            .filterNot { it.equals(selector, ignoreCase = true) }
-            .map {
-                val clean = it.removePrefix("~")
-                if (factoidService.findBySelector(clean).isNotEmpty()) {
-                    "~$clean"
-                } else {
-                    clean
-                }
-            }
-            .joinToString(",")
+        return decorateSeeAlso(selector, attribute.attributeValue!!, factoidService)
     }
 
     companion object {
@@ -253,6 +242,7 @@ fun List<FactoidAttribute>.summarize(
     argument: String,
     textRenderer: FactoidTextRenderer? = null,
     maxHops: Int = 3,
+    factoidService: FactoidService? = null,
 ): String {
     return this.filter { it.attributeType.includeInSummary }
         .sortedBy { it.attributeType.ordinal }
@@ -275,6 +265,8 @@ fun List<FactoidAttribute>.summarize(
                             )
                         textRenderer?.resolveSelections(substituted, maxHops) ?: substituted
                     }
+                    FactoidAttributeType.SEEALSO ->
+                        decorateSeeAlso(selector, attr.attributeValue!!, factoidService)
                     else -> attr.attributeValue
                 }
             val rendered = attr.attributeType.render(selector, value)
@@ -282,6 +274,28 @@ fun List<FactoidAttribute>.summarize(
         }
         .joinToString(" ")
         .compress()
+}
+
+/** Decorates see-also entries with ~ prefix when they are known factoids */
+private fun decorateSeeAlso(
+    selector: String,
+    value: String,
+    factoidService: FactoidService?,
+): String {
+    if (factoidService == null) return value
+    return value
+        .split(",")
+        .map { it.trim() }
+        .filterNot { it.equals(selector, ignoreCase = true) }
+        .map {
+            val clean = it.removePrefix("~")
+            if (factoidService.findBySelector(clean).isNotEmpty()) {
+                "~$clean"
+            } else {
+                clean
+            }
+        }
+        .joinToString(",")
 }
 
 /** Builds a human-readable list of available attribute types */

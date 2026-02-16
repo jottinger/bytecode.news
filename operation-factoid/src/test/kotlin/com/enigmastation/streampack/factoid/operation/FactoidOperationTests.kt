@@ -312,6 +312,16 @@ class FactoidOperationTests {
         assertTrue(payload.contains("python"))
     }
 
+    @Test
+    fun `summary includes tilde-decorated see-also for known factoids`() {
+        eventGateway.process(msg("foo=bar"))
+        eventGateway.process(msg("baz=bletch"))
+        eventGateway.process(msg("foo.seealso=baz,quux"))
+
+        val result = eventGateway.process(msg("foo"))
+        assertSuccess(result, "foo is bar. See also: ~baz and quux")
+    }
+
     // -- SEE redirect --
 
     @Test
