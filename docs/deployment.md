@@ -190,7 +190,11 @@ The next step adds TLS.
 Per-subdomain certificates.
 certbot's nginx plugin reads the server blocks, issues certificates, and modifies the config to add TLS directives and an HTTP -> HTTPS redirect automatically.
 
+The nginx config includes `location /.well-known/acme-challenge/` blocks that serve challenge files from a local directory instead of proxying them to the frontend.
+Create this directory before running certbot:
+
 ```bash
+sudo mkdir -p /var/www/certbot
 sudo certbot --nginx \
   -d bytecode.news \
   -d www.bytecode.news \
