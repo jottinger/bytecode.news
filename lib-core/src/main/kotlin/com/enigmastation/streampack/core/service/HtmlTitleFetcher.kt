@@ -2,19 +2,33 @@
 package com.enigmastation.streampack.core.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
 import java.net.URI
 import java.net.URLEncoder
+import java.util.Optional
+import java.util.concurrent.TimeUnit
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
  * TitleFetcher that extracts titles from HTML. Prefers og:title (designed for link sharing) over
- * the HTML title tag (often contains only site branding without JS rendering).
+ * the HTML title tag (often contains only site branding without JS rendering). Results are cached
+ * to avoid refetching large pages for repeated URLs.
  */
 @Component
 class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
     private val logger = LoggerFactory.getLogger(HtmlTitleFetcher::class.java)
+
+    private val titleCache: LoadingCache<String, Optional<String>> =
+        CacheBuilder.newBuilder()
+            .maximumSize(100)
+            .expireAfterWrite(1, TimeUnit.HOURS)
+            .build(
+                CacheLoader.from { url -> Optional.ofNullable(loadTitle(url!!)) }
+            )
 
     companion object {
         private val YOUTUBE_HOSTS =
@@ -24,6 +38,11 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
     }
 
     override fun fetchTitle(url: String): String? {
+        return titleCache.get(url).orElse(null)
+    }
+
+    /** Resolves the title for a URL, trying YouTube oembed first then HTML scraping */
+    private fun loadTitle(url: String): String? {
         val youtubeTitle = fetchYouTubeTitle(url)
         if (youtubeTitle != null) return youtubeTitle
 
