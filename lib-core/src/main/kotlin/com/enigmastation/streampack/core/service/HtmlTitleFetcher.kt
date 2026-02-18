@@ -1,6 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import java.net.URI
+import java.net.URLEncoder
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -13,7 +16,17 @@ import org.springframework.stereotype.Component
 class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
     private val logger = LoggerFactory.getLogger(HtmlTitleFetcher::class.java)
 
+    companion object {
+        private val YOUTUBE_HOSTS =
+            setOf("youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be")
+
+        private const val YOUTUBE_OEMBED = "https://www.youtube.com/oembed?format=json&url="
+    }
+
     override fun fetchTitle(url: String): String? {
+        val youtubeTitle = fetchYouTubeTitle(url)
+        if (youtubeTitle != null) return youtubeTitle
+
         val body = pageFetcher.fetch(url)
         if (body == null) {
             logger.debug("No body returned for {}", url)
@@ -45,5 +58,33 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
 
         logger.debug("No title found in any source for {}", url)
         return null
+    }
+
+    /** Uses YouTube's oembed API to get the video title without scraping HTML */
+    private fun fetchYouTubeTitle(url: String): String? {
+        val host =
+            try {
+                URI(url).host?.lowercase()
+            } catch (_: Exception) {
+                return null
+            }
+        if (host == null || host !in YOUTUBE_HOSTS) return null
+
+        val oembedUrl = YOUTUBE_OEMBED + URLEncoder.encode(url, Charsets.UTF_8)
+        logger.debug("Fetching YouTube title via oembed for {}", url)
+        val json = pageFetcher.fetch(oembedUrl) ?: return null
+        return try {
+            val title = ObjectMapper().readTree(json).get("title")?.asText()
+            if (title.isNullOrBlank()) {
+                logger.debug("YouTube oembed returned no title for {}", url)
+                null
+            } else {
+                logger.debug("Found YouTube title via oembed for {}: {}", url, title)
+                title
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to parse YouTube oembed response for {}: {}", url, e.message)
+            null
+        }
     }
 }

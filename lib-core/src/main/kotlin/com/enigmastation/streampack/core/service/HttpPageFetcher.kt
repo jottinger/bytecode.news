@@ -20,12 +20,6 @@ class HttpPageFetcher : PageFetcher {
         private const val USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
                 "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-
-        private val YOUTUBE_HOSTS =
-            setOf("youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be")
-
-        private fun isYouTubeHost(host: String?): Boolean =
-            host != null && host.lowercase() in YOUTUBE_HOSTS
     }
 
     override fun fetch(url: String): String? {
@@ -35,10 +29,9 @@ class HttpPageFetcher : PageFetcher {
                     .followRedirects(HttpClient.Redirect.NORMAL)
                     .connectTimeout(Duration.ofSeconds(5))
                     .build()
-            val uri = URI(url)
-            val builder =
+            val request =
                 HttpRequest.newBuilder()
-                    .uri(uri)
+                    .uri(URI(url))
                     .timeout(Duration.ofSeconds(10))
                     .header("User-Agent", USER_AGENT)
                     .header(
@@ -47,13 +40,8 @@ class HttpPageFetcher : PageFetcher {
                     )
                     .header("Accept-Language", "en-US,en;q=0.5")
                     .header("Accept-Encoding", "gzip")
-
-            // YouTube serves a consent interstitial to datacenter IPs without this cookie
-            if (isYouTubeHost(uri.host)) {
-                builder.header("Cookie", "CONSENT=PENDING+999")
-            }
-
-            val request = builder.GET().build()
+                    .GET()
+                    .build()
             val response = client.send(request, HttpResponse.BodyHandlers.ofInputStream())
             val finalUri = response.uri()
 
