@@ -26,6 +26,8 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
         if (ogTitle != null) {
             logger.debug("Found og:title for {}: {}", url, ogTitle)
             return ogTitle
+        } else {
+            logger.debug("No og:title found for {}", url)
         }
 
         val twitterTitle =
