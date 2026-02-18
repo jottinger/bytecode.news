@@ -5,13 +5,16 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.service.HtmlTitleFetcher
 import com.enigmastation.streampack.core.service.TitleFetcher
 import com.enigmastation.streampack.urltitle.service.TestTitleFetcher
 import com.enigmastation.streampack.urltitle.service.TestTitleFetcherConfiguration
+import com.enigmastation.streampack.urltitle.service.UrlTitleService
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
@@ -25,7 +28,9 @@ class UrlTitleSummaryTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var titleFetcher: TitleFetcher
-
+@Autowired lateinit var operation: UrlTitleOperation
+@Autowired lateinit var service: UrlTitleService
+@Autowired lateinit var htmlTitleFetcher: HtmlTitleFetcher
     private val testFetcher: TestTitleFetcher
         get() = titleFetcher as TestTitleFetcher
 
@@ -55,6 +60,25 @@ class UrlTitleSummaryTests {
             "Expected URL in: $payload",
         )
         assertTrue(payload.contains("\"Coroutines | Kotlin\""), "Expected title in: $payload")
+    }
+
+    @Test
+    @EnabledIfSystemProperty(named = "live.tests", matches = "true")
+    fun `live fire youtube test`() {
+        try {
+            service.titleFetcher = htmlTitleFetcher
+            val result = eventGateway.process(message("check https://www.youtube.com/watch?v=jNDWnMfDnuw out"))
+            assertInstanceOf(OperationResult.Success::class.java, result)
+            val payload = (result as OperationResult.Success).payload as String
+            assertTrue(payload.contains("mentioned url:"), "Expected singular 'url' in: $payload")
+            assertTrue(
+                payload.contains("https://www.youtube.com/watch?v=jNDWnMfDnuw"),
+                "Expected URL in: $payload",
+            )
+            assertTrue(payload.contains("\"Top 5 Hollywood"), "Expected title in: $payload")
+        } finally {
+            service.titleFetcher = titleFetcher
+        }
     }
 
     @Test

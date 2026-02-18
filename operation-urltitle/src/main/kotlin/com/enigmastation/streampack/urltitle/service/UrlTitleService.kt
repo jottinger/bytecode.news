@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 class UrlTitleService(
     private val ignoredHostRepository: IgnoredHostRepository,
     private val properties: UrlTitleProperties,
-    private val titleFetcher: TitleFetcher,
+    var titleFetcher: TitleFetcher,
 ) : InitializingBean {
 
     private val logger = LoggerFactory.getLogger(UrlTitleService::class.java)

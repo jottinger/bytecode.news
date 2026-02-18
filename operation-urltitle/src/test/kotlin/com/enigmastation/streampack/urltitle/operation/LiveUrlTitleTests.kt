@@ -3,10 +3,14 @@ package com.enigmastation.streampack.urltitle.operation
 
 import com.enigmastation.streampack.core.service.HtmlTitleFetcher
 import com.enigmastation.streampack.core.service.HttpPageFetcher
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import com.enigmastation.streampack.urltitle.config.UrlTitleProperties
+import com.enigmastation.streampack.urltitle.repository.IgnoredHostRepository
+import com.enigmastation.streampack.urltitle.service.UrlTitleService
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
+import org.mockito.Mockito.mock
+import org.mockito.kotlin.mock
 import org.slf4j.LoggerFactory
 
 /**
@@ -38,6 +42,7 @@ class LiveUrlTitleTests {
         // No assertions - x.com requires API access for reliable title extraction
     }
 
+
     @Test
     fun `fetch title from youtube`() {
         val url = "https://www.youtube.com/watch?v=jNDWnMfDnuw"
@@ -54,6 +59,7 @@ class LiveUrlTitleTests {
         logger.info("Title result: {}", title ?: "null")
         assertNotNull(title, "Expected a title from YouTube but got null")
         assertTrue(title!!.isNotBlank(), "Title from YouTube should not be blank")
+        assertTrue(title.contains("DISASTERS"))
     }
 
     /** Dumps all meta tags from the HTML for diagnostic purposes */

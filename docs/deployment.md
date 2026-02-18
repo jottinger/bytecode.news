@@ -78,7 +78,7 @@ Verify: `curl http://localhost` returns the nginx welcome page.
 ### certbot
 
 ```bash
-sudo apt install -y certbot python3-certbot-nginx
+sudo apt install -y certbot
 ```
 
 Verify: `certbot --version`.
@@ -187,22 +187,33 @@ The next step adds TLS.
 
 ### Option 1: HTTP-01 Challenges (simpler)
 
-Per-subdomain certificates.
-certbot's nginx plugin reads the server blocks, issues certificates, and modifies the config to add TLS directives and an HTTP -> HTTPS redirect automatically.
-
+Per-subdomain certificates using certbot's webroot mode.
 The nginx config includes `location /.well-known/acme-challenge/` blocks that serve challenge files from a local directory instead of proxying them to the frontend.
-Create this directory before running certbot:
+
+Create the webroot directory and issue certificates:
 
 ```bash
 sudo mkdir -p /var/www/certbot
-sudo certbot --nginx \
-  -d bytecode.news \
-  -d www.bytecode.news \
-  -d nextjs.bytecode.news
+sudo certbot certonly --webroot -w /var/www/certbot \
+  -d bytecode.news -d www.bytecode.news \
+  -d nextjs.bytecode.news -d primate.bytecode.news
 ```
 
 Follow the prompts.
-certbot adds `listen 443 ssl`, `ssl_certificate` directives, and a redirect block to the nginx config.
+Certificates are written to `/etc/letsencrypt/live/bytecode.news/`.
+
+After certificates are issued, activate HTTPS in the nginx config:
+
+1. Uncomment the HTTPS server blocks at the bottom of `bytecode.news.conf`
+2. In each HTTP server block, replace the `location /api/` and `location /` blocks with a single redirect:
+   ```nginx
+   return 301 https://$host$request_uri;
+   ```
+   Keep the `location /.well-known/acme-challenge/` block so renewals continue to work.
+3. Test and reload:
+   ```bash
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
 
 Verify auto-renewal:
 
@@ -210,7 +221,7 @@ Verify auto-renewal:
 sudo certbot renew --dry-run
 ```
 
-To add a new subdomain later, re-run certbot with the additional `-d` flag.
+To add a new subdomain later, re-run `certbot certonly --webroot` with the additional `-d` flag, then add an HTTPS server block for it.
 
 ### Option 2: DNS-01 with Cloudflare (wildcard)
 
@@ -236,24 +247,11 @@ sudo certbot certonly --dns-cloudflare \
   -d '*.bytecode.news'
 ```
 
-With this approach, certbot does not modify the nginx config automatically.
-You must manually add TLS directives to each server block:
+After certificates are issued, activate HTTPS in the nginx config using the same steps as Option 1:
 
-```nginx
-listen 443 ssl;
-ssl_certificate /etc/letsencrypt/live/bytecode.news/fullchain.pem;
-ssl_certificate_key /etc/letsencrypt/live/bytecode.news/privkey.pem;
-```
-
-And add an HTTP -> HTTPS redirect block:
-
-```nginx
-server {
-    listen 80;
-    server_name bytecode.news www.bytecode.news nextjs.bytecode.news;
-    return 301 https://$host$request_uri;
-}
-```
+1. Uncomment the HTTPS server blocks at the bottom of `bytecode.news.conf` (they already reference the correct certificate paths)
+2. In each HTTP server block, replace the proxy locations with `return 301 https://$host$request_uri;`
+3. Test and reload: `sudo nginx -t && sudo systemctl reload nginx`
 
 ## 8. Verify the Full Stack
 
@@ -362,7 +360,8 @@ If running the frontend in Docker, systemd management is not needed - Docker's `
 2. Add a `docker-compose.yml` service with a unique port and profile (if using Docker)
 3. Add a server block to the nginx config (copy an existing one, change `server_name` and `proxy_pass` port)
 4. `sudo nginx -t && sudo systemctl reload nginx`
-5. `sudo certbot --nginx -d <subdomain>.bytecode.news`
+5. `sudo certbot certonly --webroot -w /var/www/certbot -d <subdomain>.bytecode.news`
+   Then uncomment the HTTPS server block for the new subdomain and reload nginx.
 6. Add the new origin to `CORS_ORIGINS` in `.env` and restart the backend
 7. Verify: `curl https://<subdomain>.bytecode.news` returns HTML
 8. Verify: browser login works, no CORS errors in console
