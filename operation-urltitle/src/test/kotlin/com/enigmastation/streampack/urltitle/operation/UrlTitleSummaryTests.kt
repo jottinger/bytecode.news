@@ -28,9 +28,9 @@ class UrlTitleSummaryTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var titleFetcher: TitleFetcher
-@Autowired lateinit var operation: UrlTitleOperation
-@Autowired lateinit var service: UrlTitleService
-@Autowired lateinit var htmlTitleFetcher: HtmlTitleFetcher
+    @Autowired lateinit var operation: UrlTitleOperation
+    @Autowired lateinit var service: UrlTitleService
+    @Autowired lateinit var htmlTitleFetcher: HtmlTitleFetcher
     private val testFetcher: TestTitleFetcher
         get() = titleFetcher as TestTitleFetcher
 
@@ -67,7 +67,10 @@ class UrlTitleSummaryTests {
     fun `live fire youtube test`() {
         try {
             service.titleFetcher = htmlTitleFetcher
-            val result = eventGateway.process(message("check https://www.youtube.com/watch?v=jNDWnMfDnuw out"))
+            val result =
+                eventGateway.process(
+                    message("check https://www.youtube.com/watch?v=jNDWnMfDnuw out")
+                )
             assertInstanceOf(OperationResult.Success::class.java, result)
             val payload = (result as OperationResult.Success).payload as String
             assertTrue(payload.contains("mentioned url:"), "Expected singular 'url' in: $payload")

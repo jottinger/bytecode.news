@@ -26,9 +26,7 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
         CacheBuilder.newBuilder()
             .maximumSize(100)
             .expireAfterWrite(1, TimeUnit.HOURS)
-            .build(
-                CacheLoader.from { url -> Optional.ofNullable(loadTitle(url!!)) }
-            )
+            .build(CacheLoader.from { url -> Optional.ofNullable(loadTitle(url!!)) })
 
     companion object {
         private val YOUTUBE_HOSTS =
