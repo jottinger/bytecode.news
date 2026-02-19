@@ -57,6 +57,7 @@
         <module>operation-tell</module>
         <module>operation-weather</module>
         <module>operation-poetry</module>
+        <module>operation-sentiment</module>
         <module>service-factoid</module>
         <module>service-rss</module>
         <module>service-slack</module>
