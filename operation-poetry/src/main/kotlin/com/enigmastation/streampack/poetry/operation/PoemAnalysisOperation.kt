@@ -31,12 +31,16 @@ class PoemAnalysisOperation(private val aiService: AiService) :
     }
 
     override fun handle(payload: PoemAnalysisRequest, message: Message<*>): OperationOutcome? {
-        logger.debug("Analyzing poem text ({} chars)", payload.text.length)
+        logger.info("Analyzing poem text ({} chars)", payload.text.length)
 
         val systemPrompt =
-            "You are a poetry critic. Analyze the following poem. " +
-                "Identify its meter, rhyme scheme, and poetic form. " +
-                "Keep your analysis concise (2-3 sentences)."
+            """
+            You are a poetry critic. Analyze the following poem. 
+            Identify its meter, rhyme scheme, and poetic form. 
+            Keep your analysis concise (2-3 sentences) and under less 
+            than 250 characters.
+            """
+                .trimIndent()
         val analysis = aiService.prompt(systemPrompt, payload.text)
 
         return if (analysis != null) {

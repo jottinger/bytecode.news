@@ -28,11 +28,15 @@ class PoemOperation(private val aiService: AiService) :
     }
 
     override fun handle(payload: PoemRequest, message: Message<*>): OperationOutcome? {
-        logger.debug("Generating poem about '{}' in form '{}'", payload.topic, payload.form)
+        logger.info("Generating poem about '{}' in form '{}'", payload.topic, payload.form)
 
         val systemPrompt =
-            "You are a poet. Write a ${payload.form} about the given topic. " +
-                "Output ONLY the poem text, no title or commentary."
+            """
+            You are a poet. Write a ${payload.form} about the given topic.
+            Output ONLY the poem text, no title or commentary.
+            The poem should be short, fitting in under 200 characters if possible.
+        """
+                .trimIndent()
         val poem = aiService.prompt(systemPrompt, payload.topic)
 
         return if (poem != null) {
