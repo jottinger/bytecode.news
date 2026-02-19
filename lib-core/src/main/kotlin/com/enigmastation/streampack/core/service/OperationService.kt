@@ -49,8 +49,9 @@ class OperationService(
     /** Receives from the ingress channel and returns the result to the gateway's reply channel */
     @ServiceActivator(inputChannel = "ingressChannel")
     fun process(message: Message<*>): OperationResult {
+        val hopCount = message.headers[FanOut.HOP_COUNT_HEADER] as? Int ?: 0
         val result = processChain(message)
-        publishToEgress(result, message)
+        publishToEgress(result, message, hopCount)
         return result
     }
 
@@ -117,8 +118,8 @@ class OperationService(
         return OperationResult.NotHandled
     }
 
-    /** Publishes a terminal result to the egress channel for subscriber delivery */
-    private fun publishToEgress(result: OperationResult, inputMessage: Message<*>) {
+    /** Publishes a terminal result to the egress channel, then re-injects if loopback is set */
+    private fun publishToEgress(result: OperationResult, inputMessage: Message<*>, hopCount: Int) {
         val provenance = inputMessage.headers[Provenance.HEADER] as? Provenance ?: return
         val egressMessage =
             MessageBuilder.withPayload(result as Any)
@@ -128,6 +129,24 @@ class OperationService(
             egressChannel.send(egressMessage)
         } catch (e: Exception) {
             logger.warn("Failed to publish to egress channel: {}", e.message)
+        }
+
+        if (result is OperationResult.Success && result.loopback && hopCount < properties.maxHops) {
+            val loopbackMessage =
+                MessageBuilder.withPayload(result.payload.toString())
+                    .setHeader(Provenance.HEADER, provenance)
+                    .setHeader(Provenance.ADDRESSED, true)
+                    .setHeader(FanOut.HOP_COUNT_HEADER, hopCount + 1)
+                    .build()
+            try {
+                logger.debug(
+                    "Loopback: re-injecting result as addressed message (hop {})",
+                    hopCount + 1,
+                )
+                eventGateway.send(loopbackMessage)
+            } catch (e: Exception) {
+                logger.warn("Failed to re-inject loopback message: {}", e.message)
+            }
         }
     }
 

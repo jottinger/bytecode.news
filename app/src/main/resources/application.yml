@@ -23,6 +23,7 @@ spring:
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:25}
+  ai: {}
   application:
     name: nevet
     version: 3.0
@@ -49,6 +50,9 @@ streampack:
   slack:
     enabled: ${SLACK_ENABLED:false}
     signal-character: ${SLACK_SIGNAL:!}
+  ai:
+    enabled: ${AI_ENABLED:false}
+    api-key: ${ANTHROPIC_API_KEY:}
 springdoc:
   api-docs:
     enabled: true
