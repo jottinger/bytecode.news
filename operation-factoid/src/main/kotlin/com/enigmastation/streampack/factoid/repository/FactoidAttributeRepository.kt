@@ -28,4 +28,20 @@ interface FactoidAttributeRepository : JpaRepository<FactoidAttribute, UUID> {
         """
     )
     fun searchForTerm(@Param("term") term: String): List<String>
+
+    /** Finds factoid selectors that have an exact tag match within comma-delimited TAGS values */
+    @Query(
+        """
+        SELECT DISTINCT f.selector FROM factoids f
+        JOIN factoid_attributes fa ON fa.factoid_id = f.id
+        WHERE fa.attribute_type = 'TAGS'
+          AND LOWER(:tag) = ANY(
+              SELECT TRIM(BOTH FROM LOWER(t))
+              FROM unnest(string_to_array(fa.attribute_value, ',')) AS t
+          )
+        ORDER BY f.selector
+        """,
+        nativeQuery = true,
+    )
+    fun findSelectorsByTag(@Param("tag") tag: String): List<String>
 }

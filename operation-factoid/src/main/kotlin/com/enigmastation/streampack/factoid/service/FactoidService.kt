@@ -169,6 +169,12 @@ class FactoidService(
         return factoidAttributeRepository.searchForTerm("%${term.lowercase()}%")
     }
 
+    /** Finds factoid selectors that have an exact tag match */
+    @Transactional(readOnly = true)
+    fun searchByTag(tag: String): List<String> {
+        return factoidAttributeRepository.findSelectorsByTag(tag)
+    }
+
     /** Paginated listing of all factoids */
     @Transactional(readOnly = true)
     fun findAll(pageable: Pageable): Page<Factoid> {
