@@ -32,6 +32,7 @@
         <jdaVersion>6.3.0</jdaVersion>
         <slackSdkVersion>1.47.0</slackSdkVersion>
         <githubApiVersion>1.330</githubApiVersion>
+        <springAiVersion>2.0.0-M2</springAiVersion>
     </properties>
 
     <groupId>com.enigmastation</groupId>
@@ -45,6 +46,7 @@
         <module>lib-test</module>
         <module>lib-slack</module>
         <module>lib-polling</module>
+        <module>lib-ai</module>
         <module>operation-calc</module>
         <module>operation-cal</module>
         <module>operation-karma</module>
@@ -54,6 +56,7 @@
         <module>operation-dictionary</module>
         <module>operation-tell</module>
         <module>operation-weather</module>
+        <module>operation-poetry</module>
         <module>service-factoid</module>
         <module>service-rss</module>
         <module>service-slack</module>
@@ -176,6 +179,13 @@
                 <groupId>org.kohsuke</groupId>
                 <artifactId>github-api</artifactId>
                 <version>${githubApiVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${springAiVersion}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -445,6 +455,14 @@
         <repository>
             <id>mavenCentral</id>
             <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
         </repository>
     </repositories>
 

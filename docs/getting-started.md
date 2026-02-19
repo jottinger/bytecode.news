@@ -42,6 +42,8 @@ Additional environment variables you may want to set:
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3003,https://bytecode.news` | Comma-separated CORS allowed origins |
 | `API_URL` | `http://localhost:8080` | Backend API URL for Next.js server-side rewrites (frontend only) |
 | `IRC_SIGNAL` | `!` | Global IRC signal character |
+| `AI_ENABLED` | `false` | Enable AI services (poetry operations, etc.) |
+| `ANTHROPIC_API_KEY` | (empty) | Anthropic API key; required when `AI_ENABLED=true` |
 
 ## 2. Start the Database
 

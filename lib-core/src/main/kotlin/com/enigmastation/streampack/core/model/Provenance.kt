@@ -14,6 +14,15 @@ data class Provenance(
     val timestamp: Instant = Instant.now(),
     val metadata: Map<String, Any> = emptyMap(),
 ) {
+    /** Returns a copy with loopback flag set in metadata */
+    fun withLoopback(): Provenance = copy(metadata = metadata + (LOOPBACK_KEY to true))
+
+    /** Checks whether the loopback flag is set in metadata */
+    fun isLoopback(): Boolean = metadata[LOOPBACK_KEY] == true
+
+    /** Returns a copy with loopback flag removed from metadata */
+    fun clearLoopback(): Provenance = copy(metadata = metadata - LOOPBACK_KEY)
+
     /** Encodes this provenance as a URI: protocol://serviceId/address */
     fun encode(): String {
         val scheme = protocol.name.lowercase()
@@ -27,6 +36,7 @@ data class Provenance(
         const val BOT_NICK = "botNick"
         const val ADDRESSED = "addressed"
         const val IS_ACTION = "isAction"
+        const val LOOPBACK_KEY = "loopback"
 
         /** Decodes a URI-format address string into a Provenance */
         fun decode(uri: String): Provenance {
