@@ -126,4 +126,51 @@ class FactoidServiceTests {
         val results = factoidService.searchForTerm("nonexistent")
         assertTrue(results.isEmpty())
     }
+
+    // -- Tag search --
+
+    @Test
+    fun `search by tag returns matching selectors`() {
+        factoidService.save("intellij", FactoidAttributeType.TEXT, "A Java IDE", "user1")
+        factoidService.save("intellij", FactoidAttributeType.TAGS, "ide, jetbrains", "user1")
+        factoidService.save("eclipse", FactoidAttributeType.TEXT, "Another Java IDE", "user1")
+        factoidService.save(
+            "eclipse",
+            FactoidAttributeType.TAGS,
+            "ide, eclipse-foundation",
+            "user1",
+        )
+        factoidService.save("spring", FactoidAttributeType.TEXT, "A Java framework", "user1")
+        factoidService.save("spring", FactoidAttributeType.TAGS, "framework", "user1")
+
+        val results = factoidService.searchByTag("ide")
+        assertEquals(2, results.size)
+        assertTrue(results.contains("eclipse"))
+        assertTrue(results.contains("intellij"))
+    }
+
+    @Test
+    fun `search by tag is case insensitive`() {
+        factoidService.save("intellij", FactoidAttributeType.TEXT, "A Java IDE", "user1")
+        factoidService.save("intellij", FactoidAttributeType.TAGS, "IDE, JetBrains", "user1")
+
+        val results = factoidService.searchByTag("ide")
+        assertEquals(1, results.size)
+        assertTrue(results.contains("intellij"))
+    }
+
+    @Test
+    fun `search by tag does not partial match`() {
+        factoidService.save("obs", FactoidAttributeType.TEXT, "Streaming software", "user1")
+        factoidService.save("obs", FactoidAttributeType.TAGS, "video, streaming", "user1")
+
+        val results = factoidService.searchByTag("ide")
+        assertTrue(results.isEmpty())
+    }
+
+    @Test
+    fun `search by tag returns empty list for no matches`() {
+        val results = factoidService.searchByTag("nonexistent")
+        assertTrue(results.isEmpty())
+    }
 }

@@ -636,6 +636,42 @@ class FactoidOperationTests {
         assertSuccess(result, "temp")
     }
 
+    // -- Tag search --
+
+    @Test
+    fun `tag search returns matching selectors`() {
+        eventGateway.process(msg("intellij=A Java IDE"))
+        eventGateway.process(msg("intellij.tags=ide, jetbrains"))
+        eventGateway.process(msg("eclipse=Another Java IDE"))
+        eventGateway.process(msg("eclipse.tags=ide, eclipse-foundation"))
+        eventGateway.process(msg("spring=A Java framework"))
+        eventGateway.process(msg("spring.tags=framework"))
+
+        val result = eventGateway.process(msg("tag ide"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.contains("~eclipse"))
+        assertTrue(payload.contains("~intellij"))
+        assertTrue(!payload.contains("~spring"))
+    }
+
+    @Test
+    fun `tag search with no results`() {
+        val result = eventGateway.process(msg("tag zzzznonexistent"))
+        assertSuccess(result, "No factoids found with tag 'zzzznonexistent'.")
+    }
+
+    @Test
+    fun `tag search without term is not handled`() {
+        val result = eventGateway.process(msg("tag"))
+        // "tag" alone should not be handled by tag search - it falls through
+        // (it might match a factoid named "tag" or return NotHandled)
+        assertTrue(
+            result !is OperationResult.Success ||
+                !(result.payload as String).startsWith("Factoids tagged")
+        )
+    }
+
     // -- Helper --
 
     private fun assertTrue(condition: Boolean) {
