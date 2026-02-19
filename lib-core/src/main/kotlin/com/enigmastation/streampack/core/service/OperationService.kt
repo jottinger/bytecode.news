@@ -120,7 +120,13 @@ class OperationService(
 
     /** Publishes a terminal result to the egress channel, then re-injects if loopback is set */
     private fun publishToEgress(result: OperationResult, inputMessage: Message<*>, hopCount: Int) {
-        val provenance = inputMessage.headers[Provenance.HEADER] as? Provenance ?: return
+        val inputProvenance = inputMessage.headers[Provenance.HEADER] as? Provenance ?: return
+        val provenance =
+            if (result is OperationResult.Success && result.provenance != null) {
+                result.provenance
+            } else {
+                inputProvenance
+            }
         val egressMessage =
             MessageBuilder.withPayload(result as Any)
                 .setHeader(Provenance.HEADER, provenance)

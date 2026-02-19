@@ -18,7 +18,11 @@ package com.enigmastation.streampack.core.model
  * [FanOut].
  */
 sealed class OperationResult : OperationOutcome {
-    data class Success(val payload: Any, val loopback: Boolean = false) : OperationResult()
+    data class Success(
+        val payload: Any,
+        val loopback: Boolean = false,
+        val provenance: Provenance? = null,
+    ) : OperationResult()
 
     data class Error(val message: String) : OperationResult()
 

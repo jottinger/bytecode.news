@@ -59,6 +59,11 @@
         </dependency>
         <dependency>
             <groupId>com.enigmastation</groupId>
+            <artifactId>operation-sentiment</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
             <artifactId>service-blog</artifactId>
             <version>${project.version}</version>
         </dependency>

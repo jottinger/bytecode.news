@@ -55,6 +55,27 @@ class EgressChannelTests {
                 override fun execute(message: Message<*>): OperationOutcome =
                     OperationResult.Error((message.payload as String).removePrefix("fail ").trim())
             }
+
+        /** Operation that redirects output to a different provenance */
+        @Bean
+        fun redirectOperation() =
+            object : Operation {
+                override val priority = 10
+
+                override fun canHandle(message: Message<*>): Boolean =
+                    (message.payload as? String)?.startsWith("redirect ") == true
+
+                override fun execute(message: Message<*>): OperationOutcome {
+                    val body = (message.payload as String).removePrefix("redirect ").trim()
+                    val targetProvenance =
+                        Provenance(
+                            protocol = Protocol.IRC,
+                            serviceId = "libera",
+                            replyTo = "#redirected",
+                        )
+                    return OperationResult.Success(body, provenance = targetProvenance)
+                }
+            }
     }
 
     /** Test subscriber that captures egress messages matching CONSOLE protocol */
@@ -77,9 +98,30 @@ class EgressChannelTests {
         }
     }
 
+    /** Test subscriber that captures egress messages matching IRC protocol */
+    @Component
+    class IrcTestSubscriber : EgressSubscriber() {
+        val received = CopyOnWriteArrayList<Pair<OperationResult, Provenance>>()
+        var latch = CountDownLatch(1)
+
+        override fun matches(provenance: Provenance): Boolean = provenance.protocol == Protocol.IRC
+
+        override fun deliver(result: OperationResult, provenance: Provenance) {
+            received.add(result to provenance)
+            latch.countDown()
+        }
+
+        fun reset(expectedCount: Int = 1) {
+            received.clear()
+            latch = CountDownLatch(expectedCount)
+        }
+    }
+
     @Autowired lateinit var eventGateway: EventGateway
 
     @Autowired lateinit var consoleSubscriber: ConsoleTestSubscriber
+
+    @Autowired lateinit var ircSubscriber: IrcTestSubscriber
 
     private fun consoleMessage(text: String): Message<String> =
         MessageBuilder.withPayload(text)
@@ -100,6 +142,7 @@ class EgressChannelTests {
     @BeforeEach
     fun setUp() {
         consoleSubscriber.reset()
+        ircSubscriber.reset()
     }
 
     @Test
@@ -185,5 +228,23 @@ class EgressChannelTests {
         val (_, receivedProvenance) = consoleSubscriber.received[0]
         assertEquals("test-svc", receivedProvenance.serviceId)
         assertEquals("test-reply", receivedProvenance.replyTo)
+    }
+
+    @Test
+    fun `provenance override redirects egress to a different destination`() {
+        eventGateway.process(consoleMessage("redirect hello from console"))
+
+        // Console subscriber should NOT receive it -- provenance was overridden to IRC
+        assertEquals(0, consoleSubscriber.received.size)
+
+        // IRC subscriber should receive it with the overridden provenance
+        assertTrue(ircSubscriber.latch.await(2, TimeUnit.SECONDS))
+        assertEquals(1, ircSubscriber.received.size)
+        val (result, provenance) = ircSubscriber.received[0]
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("hello from console", (result as OperationResult.Success).payload)
+        assertEquals(Protocol.IRC, provenance.protocol)
+        assertEquals("libera", provenance.serviceId)
+        assertEquals("#redirected", provenance.replyTo)
     }
 }

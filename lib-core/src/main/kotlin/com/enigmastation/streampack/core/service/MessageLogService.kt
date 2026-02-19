@@ -4,7 +4,9 @@ package com.enigmastation.streampack.core.service
 import com.enigmastation.streampack.core.entity.MessageLog
 import com.enigmastation.streampack.core.model.MessageDirection
 import com.enigmastation.streampack.core.repository.MessageLogRepository
+import java.time.Instant
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 
 /**
@@ -20,6 +22,23 @@ class MessageLogService(private val repository: MessageLogRepository) {
 
     fun logOutbound(provenanceUri: String, sender: String, content: String) {
         log(provenanceUri, MessageDirection.OUTBOUND, sender, content)
+    }
+
+    /** Returns messages for a provenance within a time window, in chronological order */
+    fun findMessages(
+        provenanceUri: String,
+        from: Instant,
+        to: Instant,
+        limit: Int,
+    ): List<MessageLog> {
+        return repository
+            .findByProvenanceUriAndTimestampBetweenOrderByTimestampAsc(
+                provenanceUri,
+                from,
+                to,
+                PageRequest.of(0, limit),
+            )
+            .content
     }
 
     private fun log(
