@@ -113,6 +113,7 @@ class SentimentOperation(
         }
 
         val sourceUri = provenance?.encode()
+        logger.info("Sentiment analysis for {}: {}", payload.targetUri, analysis)
         val isCrossChannel = sourceUri != null && sourceUri != payload.targetUri
         val responseProvenance =
             if (isCrossChannel && provenance != null) {
