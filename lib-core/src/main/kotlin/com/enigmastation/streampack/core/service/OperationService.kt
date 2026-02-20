@@ -33,6 +33,7 @@ class OperationService(
     private val properties: StreampackProperties,
     @Lazy private val eventGateway: EventGateway,
     @Qualifier("egressChannel") private val egressChannel: MessageChannel,
+    private val throttleService: ThrottleService,
 ) {
     private val logger = LoggerFactory.getLogger(OperationService::class.java)
     private val sortedOperations = operations.sortedBy { it.priority }
@@ -77,6 +78,14 @@ class OperationService(
         for (op in sortedOperations) {
             if (op.addressed && !isAddressed) continue
             if (op.canHandle(message)) {
+                if (op.throttlePolicy != null && !tryThrottle(op, message)) {
+                    logger.info(
+                        "Operation {} throttled for message {}",
+                        op::class.simpleName,
+                        message.headers.id,
+                    )
+                    continue
+                }
                 logger.debug(
                     "Operation {} handling message {}",
                     op::class.simpleName,
@@ -154,6 +163,17 @@ class OperationService(
                 logger.warn("Failed to re-inject loopback message: {}", e.message)
             }
         }
+    }
+
+    /**
+     * Checks the token bucket for a throttled operation. Returns true if the request is allowed.
+     */
+    private fun tryThrottle(op: Operation, message: Message<*>): Boolean {
+        val policy = op.throttlePolicy ?: return true
+        val provenance = message.headers[Provenance.HEADER] as? Provenance
+        val provenanceUri = provenance?.encode() ?: "unknown"
+        val key = "${op::class.simpleName}:$provenanceUri"
+        return throttleService.tryAcquire(key, policy)
     }
 
     /** Dispatches each child message with an incremented hop count */

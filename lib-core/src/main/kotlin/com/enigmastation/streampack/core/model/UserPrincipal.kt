@@ -8,5 +8,5 @@ data class UserPrincipal(
     val id: UUID,
     val username: String,
     val displayName: String,
-    val role: Role,
+    val role: Role = Role.GUEST,
 )
