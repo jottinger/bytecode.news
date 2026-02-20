@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.model.Declined
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.RedactionRule
+import com.enigmastation.streampack.core.model.ThrottlePolicy
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
@@ -57,6 +58,14 @@ interface Operation {
      */
     val redactionRules: List<RedactionRule>
         get() = emptyList()
+
+    /**
+     * Optional rate limit for this operation. When set, OperationService checks a token bucket
+     * before calling [execute]. If the bucket is empty, the operation is skipped as if it did not
+     * handle the message. Throttle is keyed per provenance URI.
+     */
+    val throttlePolicy: ThrottlePolicy?
+        get() = null
 
     /** Quick pre-flight check: is this operation relevant for this message? */
     fun canHandle(message: Message<*>): Boolean = true
