@@ -101,7 +101,7 @@ class SentimentOperation(
                 
                 Output ONE IRC LINE <= 200 chars:
                 
-                Sentiment N/±10 | Intensity X | Themes: ... | Summary: ...
+                Sentiment N/10 (use +/- prefix) | Intensity X | Themes: ... | Summary: ...
                 (+ Drivers: A,B only if intensity=high AND multiple users)
             """
                 .trimIndent()
