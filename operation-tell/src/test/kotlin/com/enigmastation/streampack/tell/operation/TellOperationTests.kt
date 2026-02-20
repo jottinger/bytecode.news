@@ -5,8 +5,10 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.tell.model.TellRequest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -19,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional
 class TellOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
+
+    @Autowired lateinit var tellOperation: TellOperation
 
     private fun provenance(
         replyTo: String = "#test",
@@ -40,56 +44,76 @@ class TellOperationTests {
 
     @Test
     fun `tell with name resolves to private message on same protocol`() {
-        val result = eventGateway.process(addressedMessage("tell blue go to heck!"))
+        val result = tellOperation.execute(addressedMessage("tell blue go to heck!"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        val payload = (result as OperationResult.Success).payload.toString()
-        assertEquals("Message delivered to blue", payload)
+        val success = result as OperationResult.Success
+        assertNotNull(success.provenance, "Result should have provenance override")
+        assertEquals("blue", success.provenance!!.replyTo)
+        assertEquals(Protocol.IRC, success.provenance!!.protocol)
+        assertEquals("testnet", success.provenance!!.serviceId)
     }
 
     @Test
     fun `tell with channel resolves to channel on same protocol`() {
-        val result = eventGateway.process(addressedMessage("tell #java hello there"))
+        val result = tellOperation.execute(addressedMessage("tell #java hello there"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        val payload = (result as OperationResult.Success).payload.toString()
-        assertEquals("Message delivered to #java", payload)
+        val success = result as OperationResult.Success
+        assertNotNull(success.provenance)
+        assertEquals("#java", success.provenance!!.replyTo)
     }
 
     @Test
     fun `tell with full URI uses URI directly`() {
         val result =
-            eventGateway.process(addressedMessage("tell irc://othernet/%23java hello from here"))
+            tellOperation.execute(addressedMessage("tell irc://othernet/%23java hello from here"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        val payload = (result as OperationResult.Success).payload.toString()
-        assertTrue(payload.contains("Message delivered to"))
+        val success = result as OperationResult.Success
+        assertNotNull(success.provenance)
+        assertEquals("othernet", success.provenance!!.serviceId)
+        assertTrue(success.provenance!!.replyTo.contains("java"))
     }
 
     @Test
-    fun `tell without message returns not handled`() {
-        val result = eventGateway.process(addressedMessage("tell blue"))
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    fun `tell without message is not handled`() {
+        val result = tellOperation.execute(addressedMessage("tell blue"))
+        assertEquals(null, result)
     }
 
     @Test
-    fun `tell without target returns not handled`() {
-        val result = eventGateway.process(addressedMessage("tell"))
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    fun `tell without target is not handled`() {
+        val result = tellOperation.execute(addressedMessage("tell"))
+        assertEquals(null, result)
     }
 
     @Test
-    fun `non-tell message returns not handled`() {
-        val result = eventGateway.process(addressedMessage("something else"))
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    fun `non-tell message is not handled`() {
+        val result = tellOperation.execute(addressedMessage("something else"))
+        assertEquals(null, result)
     }
 
     @Test
-    fun `tell includes sender attribution`() {
-        // The tell operation publishes to egress with attribution.
-        // We verify it returns success with the expected confirmation.
-        val result = eventGateway.process(addressedMessage("tell blue hey there", nick = "alice"))
+    fun `tell includes sender attribution in payload`() {
+        val result = tellOperation.execute(addressedMessage("tell blue hey there", nick = "alice"))
         assertInstanceOf(OperationResult.Success::class.java, result)
-        assertEquals(
-            "Message delivered to blue",
-            (result as OperationResult.Success).payload.toString(),
-        )
+        val success = result as OperationResult.Success
+        assertEquals("<alice> hey there", success.payload)
+    }
+
+    @Test
+    fun `typed TellRequest bypasses translation`() {
+        val targetProvenance =
+            Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "bob")
+        val typedMessage =
+            MessageBuilder.withPayload(TellRequest(targetProvenance, "hello from typed") as Any)
+                .setHeader(Provenance.HEADER, provenance())
+                .setHeader(Provenance.ADDRESSED, true)
+                .setHeader("nick", "alice")
+                .build()
+
+        val result = tellOperation.execute(typedMessage)
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val success = result as OperationResult.Success
+        assertEquals("<alice> hello from typed", success.payload)
+        assertEquals("bob", success.provenance!!.replyTo)
     }
 }
