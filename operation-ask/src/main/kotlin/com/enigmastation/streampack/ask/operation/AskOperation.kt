@@ -28,8 +28,9 @@ class AskOperation(
     private val aiService: AiService,
     private val messageLogService: MessageLogService,
 ) : TranslatingOperation<AskRequest>(AskRequest::class) {
-
-    override val priority: Int = 80
+    // should be lower than factoid priority, otherwise "!ask why is foo bar" will resolve
+    // to a factoid *setting* operation
+    override val priority: Int = 50
     override val addressed: Boolean = true
     override val throttlePolicy: ThrottlePolicy = ThrottlePolicy(5, Duration.ofHours(1))
 
@@ -97,6 +98,8 @@ class AskOperation(
         return """
             You are a helpful assistant in $channelName.
             Answer the user's question concisely in 1-2 sentences.
+            Be *very* succinct, as the output length is quite constrained.
+            If context confers that extreme feelings are involved, mitigate them.
             Be direct and factual. If you do not know, say so.
             $contextSection
             """
