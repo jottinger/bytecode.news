@@ -107,7 +107,7 @@ class IrcAdapter(
                 val channelName = event.channel.name
                 val nick = event.actor.nick
                 val host = event.actor.host
-                val ident = event.actor.userString
+                val ident = event.actor.userString.removePrefix("~")
                 val user = userResolutionService.resolve(Protocol.IRC, networkName, "$ident@$host")
                 val provenance =
                     Provenance(
@@ -175,7 +175,7 @@ class IrcAdapter(
             try {
                 val nick = event.actor.nick
                 val host = event.actor.host
-                val ident = event.actor.userString
+                val ident = event.actor.userString.removePrefix("~")
                 val user = userResolutionService.resolve(Protocol.IRC, networkName, "$ident@$host")
                 val provenance =
                     Provenance(
@@ -202,7 +202,7 @@ class IrcAdapter(
             try {
                 val channelName = event.channel.name
                 val host = event.actor.host
-                val ident = event.actor.userString
+                val ident = event.actor.userString.removePrefix("~")
                 val user = userResolutionService.resolve(Protocol.IRC, networkName, "$ident@$host")
                 val provenance =
                     Provenance(
