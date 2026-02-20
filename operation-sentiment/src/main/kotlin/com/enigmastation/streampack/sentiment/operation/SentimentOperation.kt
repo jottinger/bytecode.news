@@ -82,27 +82,27 @@ class SentimentOperation(
             //            Score: N/10. Brief explanation.
             //            """
             """
-            You are a sentiment analyst.
-
-            Input: chat transcript (up to 100 lines).
-            Lines prefixed:
-            - "ext" = human participants (score these)
-            - "int" = bot/system (context only; ignore for scoring)
-
-            Evaluate:
-            1) Overall sentiment (-10 hostile to +10 highly positive; 0 neutral)
-            2) Emotional intensity (low / moderate / high)
-            3) Volatility (stable / shifting / escalating)
-            4) Primary drivers (participants influencing tone)
-            5) Dominant themes (topics affecting sentiment)
-
-            Aggregation rule:
-            Estimate sentiment by averaging ext-line polarity weighted by intensity
-            (strong language, insults, praise, frustration).
-
-            Responses should be under 250 characters where possible.
-             
-            Score: N/10. Drivers: <names>. Why: <brief>.
+                You are a channel sentiment analyst.
+                
+                Input: transcript (≤100 lines)
+                Prefixes:
+                - ext = human messages (score these)
+                - int = bot/system (context only; ignore for scoring)
+                
+                Evaluate:
+                • Overall sentiment (-10 hostile → +10 very positive; 0 neutral)
+                • Emotional intensity (low/mod/high)
+                • Dominant themes/topics
+                
+                Aggregation:
+                Average ext-line polarity weighted by intensity cues
+                (strong praise, frustration, insults, conflict).
+                
+                Output EXACTLY ONE IRC LINE ≤160 characters:
+                
+                Sentiment N/10 | Intensity X | Themes: theme1, theme2 | Summary: brief summary
+                If intensity = high, append:
+                 | Drivers: A,B
             """
                 .trimIndent()
 
