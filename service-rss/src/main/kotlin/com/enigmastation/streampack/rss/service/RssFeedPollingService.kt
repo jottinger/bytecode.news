@@ -1,8 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.rss.service
 
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.polling.service.EgressNotifier
 import com.enigmastation.streampack.rss.entity.RssEntry
 import com.enigmastation.streampack.rss.entity.RssFeed
 import com.enigmastation.streampack.rss.repository.RssEntryRepository
@@ -11,9 +10,6 @@ import com.enigmastation.streampack.rss.repository.RssFeedSubscriptionRepository
 import com.rometools.rome.feed.synd.SyndEntry
 import java.time.Instant
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.messaging.MessageChannel
-import org.springframework.messaging.support.MessageBuilder
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,7 +21,7 @@ class RssFeedPollingService(
     private val entryRepository: RssEntryRepository,
     private val subscriptionRepository: RssFeedSubscriptionRepository,
     private val discoveryService: FeedDiscoveryService,
-    @Qualifier("egressChannel") private val egressChannel: MessageChannel,
+    private val egressNotifier: EgressNotifier,
 ) {
     private val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java)
 
@@ -81,7 +77,7 @@ class RssFeedPollingService(
                 val link = entry.link ?: entry.uri ?: ""
                 val message = formatNotification(feed.title, title, link)
                 for (subscription in subscriptions) {
-                    sendNotification(message, subscription.destinationUri)
+                    egressNotifier.send(message, subscription.destinationUri)
                 }
             }
         }
@@ -90,20 +86,6 @@ class RssFeedPollingService(
     /** Format a new-entry notification for delivery */
     private fun formatNotification(feedTitle: String, entryTitle: String, link: String): String =
         "[$feedTitle] $entryTitle - $link"
-
-    /** Send a notification to a single destination via the egress channel */
-    private fun sendNotification(text: String, destinationUri: String) {
-        try {
-            val provenance = Provenance.decode(destinationUri)
-            val egressMessage =
-                MessageBuilder.withPayload(OperationResult.Success(text) as Any)
-                    .setHeader(Provenance.HEADER, provenance)
-                    .build()
-            egressChannel.send(egressMessage)
-        } catch (e: Exception) {
-            logger.warn("Failed to send notification to {}: {}", destinationUri, e.message)
-        }
-    }
 
     private fun toRssEntry(syndEntry: SyndEntry, feed: RssFeed): RssEntry? {
         val guid = syndEntry.uri ?: syndEntry.link ?: return null

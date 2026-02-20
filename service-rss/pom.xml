@@ -23,6 +23,11 @@
             <version>1.0</version>
         </dependency>
         <dependency>
+            <groupId>com.enigmastation</groupId>
+            <artifactId>lib-polling</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.rometools</groupId>
             <artifactId>rome</artifactId>
         </dependency>
