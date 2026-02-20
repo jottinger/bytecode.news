@@ -32,6 +32,7 @@ class SentimentOperation(
 
     override val priority: Int = 40
     override val addressed: Boolean = true
+    override val operationGroup: String = "sentiment"
 
     override fun translate(payload: String, message: Message<*>): SentimentRequest? {
         val trimmed = payload.trim()

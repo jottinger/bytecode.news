@@ -67,6 +67,17 @@ interface Operation {
     val throttlePolicy: ThrottlePolicy?
         get() = null
 
+    /**
+     * Group name for per-provenance enablement control.
+     *
+     * Operations sharing a group are enabled/disabled together. When null (the default), the
+     * operation cannot be disabled -- use this for admin and infrastructure operations that must
+     * always be available. Override with a group name to allow channel-level control via the admin
+     * commands (e.g., "karma", "factoid", "urltitle").
+     */
+    val operationGroup: String?
+        get() = null
+
     /** Quick pre-flight check: is this operation relevant for this message? */
     fun canHandle(message: Message<*>): Boolean = true
 

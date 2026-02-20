@@ -15,8 +15,8 @@ class FeedManagementOperation(private val feedService: RssSubscriptionService) :
     PollingSourceManagementOperation() {
 
     override val commandPrefix: String = "feed"
-
     override val priority: Int = 56
+    override val operationGroup: String = "rss"
 
     override fun onList(): OperationOutcome {
         val feeds = feedService.listFeeds()

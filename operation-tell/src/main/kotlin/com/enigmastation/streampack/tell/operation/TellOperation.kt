@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component
 class TellOperation : TranslatingOperation<TellRequest>(TellRequest::class) {
 
     override val priority: Int = 50
+    override val operationGroup: String = "tell"
 
     override fun translate(payload: String, message: Message<*>): TellRequest? {
         val trimmed = payload.trim()

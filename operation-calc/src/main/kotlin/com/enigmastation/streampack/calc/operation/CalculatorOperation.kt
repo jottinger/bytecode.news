@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component
 class CalculatorOperation(val service: CalculatorService) :
     TypedOperation<String>((String::class)) {
 
+    override val operationGroup: String = "calc"
+
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         return payload.trim().startsWith("calc ")
     }

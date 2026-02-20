@@ -34,6 +34,7 @@ class OperationService(
     @Lazy private val eventGateway: EventGateway,
     @Qualifier("egressChannel") private val egressChannel: MessageChannel,
     private val throttleService: ThrottleService,
+    private val operationConfigService: OperationConfigService,
 ) {
     private val logger = LoggerFactory.getLogger(OperationService::class.java)
     private val sortedOperations = operations.sortedBy { it.priority }
@@ -45,7 +46,9 @@ class OperationService(
      * messages. If no non-addressed operation claims interest, the message is dropped silently.
      */
     fun hasUnaddressedInterest(message: Message<*>): Boolean =
-        sortedOperations.any { !it.addressed && it.canHandle(message) }
+        sortedOperations.any {
+            !it.addressed && isGroupEnabled(it, message) && it.canHandle(message)
+        }
 
     /** Receives from the ingress channel and returns the result to the gateway's reply channel */
     @ServiceActivator(inputChannel = "ingressChannel")
@@ -77,6 +80,7 @@ class OperationService(
 
         for (op in sortedOperations) {
             if (op.addressed && !isAddressed) continue
+            if (!isGroupEnabled(op, message)) continue
             if (op.canHandle(message)) {
                 if (op.throttlePolicy != null && !tryThrottle(op, message)) {
                     logger.info(
@@ -163,6 +167,14 @@ class OperationService(
                 logger.warn("Failed to re-inject loopback message: {}", e.message)
             }
         }
+    }
+
+    /** Returns true if the operation's group is enabled for the message's provenance */
+    private fun isGroupEnabled(op: Operation, message: Message<*>): Boolean {
+        val group = op.operationGroup ?: return true
+        val provenance = message.headers[Provenance.HEADER] as? Provenance
+        val provenanceUri = provenance?.encode() ?: ""
+        return operationConfigService.isOperationEnabled(provenanceUri, group)
     }
 
     /**

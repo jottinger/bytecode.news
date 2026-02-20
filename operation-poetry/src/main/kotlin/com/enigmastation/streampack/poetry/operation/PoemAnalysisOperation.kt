@@ -21,6 +21,7 @@ class PoemAnalysisOperation(private val aiService: AiService) :
 
     override val priority: Int = 20
     override val addressed: Boolean = true
+    override val operationGroup: String = "poetry"
 
     override fun translate(payload: String, message: Message<*>): PoemAnalysisRequest? {
         val trimmed = payload.trim()

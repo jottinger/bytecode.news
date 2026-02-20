@@ -19,9 +19,8 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
     TranslatingOperation<AddRepoRequest>(AddRepoRequest::class) {
 
     override val priority: Int = 55
-
     override val addressed: Boolean = true
-
+    override val operationGroup: String = "github"
     override val redactionRules = listOf(RedactionRule("github add", setOf(3)))
 
     override fun translate(payload: String, message: Message<*>): AddRepoRequest? {

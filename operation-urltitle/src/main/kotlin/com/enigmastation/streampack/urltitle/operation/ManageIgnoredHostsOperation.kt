@@ -16,8 +16,8 @@ class ManageIgnoredHostsOperation(private val urlTitleService: UrlTitleService) 
     TypedOperation<String>(String::class) {
 
     override val priority: Int = 50
-
     override val addressed: Boolean = true
+    override val operationGroup: String = "urltitle"
 
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         return payload.compress().lowercase().startsWith("url ignore ")

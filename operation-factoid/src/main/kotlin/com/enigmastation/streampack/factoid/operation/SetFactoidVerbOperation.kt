@@ -19,6 +19,7 @@ class SetFactoidVerbOperation(private val factoidService: FactoidService) :
 
     override val priority: Int = 70
     override val addressed: Boolean = true
+    override val operationGroup: String = "factoid"
 
     override fun translate(payload: String, message: Message<*>): FactoidVerbSetRequest? {
         val compressed = payload.compress()

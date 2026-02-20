@@ -16,8 +16,8 @@ class GetKarmaOperation(private val karmaService: KarmaService) :
     TranslatingOperation<KarmaQueryRequest>(KarmaQueryRequest::class) {
 
     override val priority: Int = 50
-
     override val addressed: Boolean = true
+    override val operationGroup: String = "karma"
 
     override fun translate(payload: String, message: Message<*>): KarmaQueryRequest? {
         val trimmed = payload.trim()

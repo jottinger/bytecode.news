@@ -15,6 +15,7 @@ class WeatherOperation(private val weatherService: WeatherService) :
     TranslatingOperation<WeatherRequest>(WeatherRequest::class) {
 
     override val addressed: Boolean = true
+    override val operationGroup: String = "weather"
 
     override fun translate(payload: String, message: Message<*>): WeatherRequest? {
         val trimmed = payload.trim()

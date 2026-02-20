@@ -18,6 +18,7 @@ class SearchFactoidOperation(private val factoidService: FactoidService) :
 
     override val priority: Int = 65
     override val addressed: Boolean = true
+    override val operationGroup: String = "factoid"
 
     override fun translate(payload: String, message: Message<*>): FactoidSearchRequest? {
         val compressed = payload.compress()

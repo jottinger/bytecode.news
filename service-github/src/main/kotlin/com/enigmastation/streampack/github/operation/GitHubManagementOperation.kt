@@ -15,8 +15,8 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
     PollingSourceManagementOperation() {
 
     override val commandPrefix: String = "github"
-
     override val priority: Int = 56
+    override val operationGroup: String = "github"
 
     override fun onList(): OperationOutcome {
         val repos = subscriptionService.listRepos()
