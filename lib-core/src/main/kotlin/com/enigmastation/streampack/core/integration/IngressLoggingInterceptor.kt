@@ -21,7 +21,11 @@ class IngressLoggingInterceptor(
 
     override fun preSend(message: Message<*>, channel: MessageChannel): Message<*> {
         val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return message
-        val sender = provenance.user?.username ?: message.headers["nick"] as? String ?: "unknown"
+        val sender =
+            message.headers["nick"] as? String
+                ?: provenance.user?.displayName
+                ?: provenance.user?.username
+                ?: "unknown"
         val content = redact(message.payload.toString(), redactionRules)
         messageLogService.logInbound(provenance.encode(), sender, content)
         return message

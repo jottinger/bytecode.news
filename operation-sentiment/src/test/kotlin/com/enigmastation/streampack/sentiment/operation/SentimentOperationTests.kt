@@ -79,6 +79,7 @@ class SentimentOperationTests {
             .setHeader(Provenance.HEADER, provenance(user))
             .setHeader(Provenance.ADDRESSED, true)
             .setHeader(Provenance.BOT_NICK, "nevet")
+            .setHeader("nick", "adminnick")
             .build()
 
     @BeforeEach
@@ -163,7 +164,7 @@ class SentimentOperationTests {
         val success = result as OperationResult.Success
         assertNotNull(success.provenance, "Cross-channel result should have provenance override")
         assertTrue(
-            success.provenance!!.replyTo == "admin",
+            success.provenance!!.replyTo == "adminnick",
             "Cross-channel result should be directed to the requesting user",
         )
     }

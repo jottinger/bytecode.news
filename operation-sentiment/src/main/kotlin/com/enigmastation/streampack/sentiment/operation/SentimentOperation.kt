@@ -66,18 +66,43 @@ class SentimentOperation(
         logger.info("Analyzing sentiment for {} ({} messages)", payload.targetUri, messages.size)
 
         val systemPrompt =
+            //            """
+            //            You are a conversation sentiment analyst. Analyze the following chat
+            // transcript.
+            //            Lines prefixed with "ext" are from external participants (humans).
+            //            Lines prefixed with "int" are from the bot - include them for context but
+            // do NOT
+            //            factor the bot's messages into the sentiment score.
+            //
+            //            Score the overall sentiment from -10 (extremely negative/hostile) to +10
+            //            (extremely positive/enthusiastic). Note which participants drive the score
+            //            most and why.
+            //
+            //            Keep your response concise - under 300 characters. Format:
+            //            Score: N/10. Brief explanation.
+            //            """
             """
-            You are a conversation sentiment analyst. Analyze the following chat transcript.
-            Lines prefixed with "ext" are from external participants (humans).
-            Lines prefixed with "int" are from the bot - include them for context but do NOT
-            factor the bot's messages into the sentiment score.
+            You are a sentiment analyst.
 
-            Score the overall sentiment from -10 (extremely negative/hostile) to +10
-            (extremely positive/enthusiastic). Note which participants drive the score
-            most and why.
+            Input: chat transcript (up to 100 lines).
+            Lines prefixed:
+            - "ext" = human participants (score these)
+            - "int" = bot/system (context only; ignore for scoring)
 
-            Keep your response concise - under 300 characters. Format:
-            Score: N/10. Brief explanation.
+            Evaluate:
+            1) Overall sentiment (-10 hostile to +10 highly positive; 0 neutral)
+            2) Emotional intensity (low / moderate / high)
+            3) Volatility (stable / shifting / escalating)
+            4) Primary drivers (participants influencing tone)
+            5) Dominant themes (topics affecting sentiment)
+
+            Aggregation rule:
+            Estimate sentiment by averaging ext-line polarity weighted by intensity
+            (strong language, insults, praise, frustration).
+
+            Responses should be under 250 characters where possible.
+             
+            Score: N/10. Drivers: <names>. Why: <brief>.
             """
                 .trimIndent()
 
@@ -95,7 +120,11 @@ class SentimentOperation(
                     protocol = provenance.protocol,
                     serviceId = provenance.serviceId,
                     user = provenance.user,
-                    replyTo = provenance.user?.username ?: provenance.replyTo,
+                    replyTo =
+                        message.headers["nick"] as? String
+                            ?: provenance.user?.displayName
+                            ?: provenance.user?.username
+                            ?: provenance.replyTo,
                 )
             } else {
                 null
