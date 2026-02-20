@@ -1,8 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.urltitle.operation
 
-import com.enigmastation.streampack.core.extensions.joinToStringWithAnd
-import com.enigmastation.streampack.core.extensions.pluralize
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
@@ -44,9 +42,12 @@ class UrlTitleOperation(
 
         if (titles.isEmpty()) return null
 
-        val formatted = titles.map { (url, title) -> "$url (\"$title\")" }
         val response =
-            "${message.headers["nick"]} mentioned ${"url".pluralize(formatted)}: ${formatted.joinToStringWithAnd()}"
+            if (titles.size == 1) {
+                titles.first().second
+            } else {
+                titles.joinToString(" || ") { (url, title) -> """$url "$title"""" }
+            }
         return OperationResult.Success(response)
     }
 }
