@@ -172,21 +172,20 @@ Send a private message to someone on the same IRC network:
 
 ```
 !tell blue meeting in 5 minutes
-Message delivered to blue
 ```
+
+The recipient sees: `<alice> meeting in 5 minutes`
 
 Send a message to another IRC channel:
 
 ```
 !tell #metal new album dropped
-Message delivered to #metal
 ```
 
 Send a cross-protocol message from IRC to Discord:
 
 ```
 !tell discord://123456/%23general server maintenance tonight
-Message delivered to #general
 ```
 
 ## Database Schema
@@ -247,9 +246,14 @@ User types "!tell discord://123456/#general hello" in irc://libera/#java
   -> IrcAdapter strips signal character, dispatches "tell discord://123456/#general hello"
   -> TellOperation:
        1. Parses target URI and message
-       2. Publishes "<alice> hello" to egress with target provenance
-       3. Returns Success("Message delivered to #general") to sender
+       2. Returns Success("<alice> hello", provenance = discord://123456/#general)
+  -> publishToEgress sees the provenance override:
+       Delivers the result to discord://123456/#general instead of irc://libera/#java
 ```
+
+Tell uses provenance override (not FanOut) because it produces a single result destined for a single target.
+FanOut would re-enter the operation chain, treating the message as new input for other operations to process - not what tell wants.
+Provenance override routes the result through the standard egress path, just to a different destination.
 
 ### ProtocolAdapter interface
 

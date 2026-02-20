@@ -6,10 +6,7 @@ import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.tell.model.TellRequest
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.messaging.Message
-import org.springframework.messaging.MessageChannel
-import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
 /**
@@ -19,10 +16,11 @@ import org.springframework.stereotype.Component
  * - Just a name ("blue") resolves to a private message on the same protocol/service
  * - A channel name ("#java") resolves to a channel on the same protocol/service
  * - A full URI ("irc://othernet/#java") uses the URI as-is
+ *
+ * Uses provenance override on the result so delivery flows through the standard egress path.
  */
 @Component
-class TellOperation(@Qualifier("egressChannel") private val egressChannel: MessageChannel) :
-    TranslatingOperation<TellRequest>(TellRequest::class) {
+class TellOperation : TranslatingOperation<TellRequest>(TellRequest::class) {
 
     override val priority: Int = 50
 
@@ -49,24 +47,7 @@ class TellOperation(@Qualifier("egressChannel") private val egressChannel: Messa
             message.headers["nick"] as? String ?: sourceProvenance?.user?.username ?: "someone"
 
         val attributed = "<$senderNick> ${payload.message}"
-        val egressMessage =
-            MessageBuilder.withPayload(OperationResult.Success(attributed) as Any)
-                .setHeader(Provenance.HEADER, payload.targetProvenance)
-                .build()
-        try {
-            egressChannel.send(egressMessage)
-        } catch (e: Exception) {
-            logger.warn(
-                "Failed to deliver tell message to {}: {}",
-                payload.targetProvenance.encode(),
-                e.message,
-            )
-            return OperationResult.Error(
-                "Failed to deliver message to ${payload.targetProvenance.replyTo}"
-            )
-        }
-
-        return OperationResult.Success("Message delivered to ${payload.targetProvenance.replyTo}")
+        return OperationResult.Success(attributed, provenance = payload.targetProvenance)
     }
 
     /**

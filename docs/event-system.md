@@ -355,6 +355,89 @@ No additional configuration is needed.
 
 To exclude an operation module from a deployment, simply remove its dependency from the app POM.
 
+## Advanced Result Patterns
+
+Beyond the basic `Success`/`Error`/`NotHandled` flow, the event system supports three mechanisms for operations that need more than simple request/response.
+
+### Provenance Override
+
+By default, `publishToEgress` routes the result back to wherever the message came from - the provenance on the input message.
+Sometimes an operation needs to send its result somewhere else entirely.
+
+`OperationResult.Success` has an optional `provenance` field.
+When set, `publishToEgress` uses the override provenance instead of the input message's provenance:
+
+```kotlin
+// Deliver this result to a different destination
+return OperationResult.Success(
+    payload = "<alice> hello",
+    provenance = Provenance(protocol = Protocol.IRC, serviceId = "libera", replyTo = "blue"),
+)
+```
+
+The result flows through the standard egress path - logging, transformation, and protocol delivery all work normally.
+The only difference is *where* the result goes.
+
+**Use provenance override when:**
+- An operation needs to deliver its result to a different channel or user than where the command was issued
+- Examples: `tell` (delivers a message to another user), `sentiment` (responds via DM for cross-channel queries)
+
+**Do not use provenance override when:**
+- The result should go back to the sender (the default, no override needed)
+- You need to send multiple results to multiple destinations (use FanOut instead)
+
+### FanOut
+
+FanOut lets an operation produce multiple independently-addressed messages that each run through the full operation chain.
+This is for spawning new work, not for delivering results directly.
+
+```kotlin
+return FanOut(listOf(childMessage1, childMessage2))
+```
+
+Each child message is dispatched through `eventGateway.process()` with an incremented hop count.
+The original caller receives `Success("Dispatched N messages")`.
+
+FanOut is *not* a multi-destination delivery mechanism.
+It re-enters the operation chain, meaning each child message is processed as a new input - other operations will handle it, not egress subscribers.
+
+**Use FanOut when:**
+- An operation needs to trigger other operations with new messages
+- The bridge copy operation uses this pattern to inject attributed messages into the chain for each bridge target
+
+**Do not use FanOut when:**
+- You want to send a result to a specific destination (use provenance override instead)
+- You want to send the same result to multiple destinations (not currently supported as a single operation result; use direct egress writes or multiple operations)
+
+### Loopback
+
+Loopback re-injects the result payload as a new addressed message after the original result has been delivered to egress.
+The result reaches the sender normally, *and then* the payload goes back through the operation chain as new input.
+
+```kotlin
+return OperationResult.Success("a poem: roses are red/violets are blue", loopback = true)
+```
+
+The loopback message carries the same provenance as the original, with `addressed = true` and an incremented hop count.
+The `maxHops` property (default 3) prevents infinite loops.
+
+**Use loopback when:**
+- An operation produces output that another operation should process
+- Example: the poem generator emits a poem, which the poem analysis operation should evaluate
+
+**Do not use loopback when:**
+- You need the result to go to a different destination (use provenance override)
+- You need to trigger multiple independent operations (use FanOut)
+
+### Choosing the right mechanism
+
+| Need | Mechanism |
+|------|-----------|
+| Send result back to sender | Default (no flags) |
+| Send result to a different destination | Provenance override |
+| Send result to sender, then feed it back through the chain | Loopback |
+| Spawn multiple new messages for other operations to process | FanOut |
+
 ## Choosing Between Operation and TypedOperation
 
 Use **`TypedOperation<T>`** when:
