@@ -22,7 +22,7 @@ class EmailService(private val mailSender: JavaMailSender, properties: Streampac
         message.setTo(to)
         message.subject = "Verify your email address"
         message.text =
-            "Welcome to jvm.news!\n\n" +
+            "Welcome to bytecode.news!\n\n" +
                 "Please verify your email address by visiting:\n$link\n\n" +
                 "This link will expire in 24 hours."
         logger.info("Sending verification email to {}", to)

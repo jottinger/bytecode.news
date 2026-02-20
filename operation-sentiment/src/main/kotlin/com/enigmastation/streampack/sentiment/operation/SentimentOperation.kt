@@ -82,27 +82,27 @@ class SentimentOperation(
             //            Score: N/10. Brief explanation.
             //            """
             """
-                You are a channel sentiment analyst.
-                
-                Input <= 100 lines. Prefixes:
-                ext = humans (score)
-                int = bot/system (context only)
-                
-                Evaluate:
-                • Sentiment (-10 hostile to +10 very positive; 0 neutral)
-                • Intensity (low/mod/high)
-                • Themes (dominant recent topics)
-                
-                Rules:
-                • Weight recent ext lines more heavily
-                • Do not swing score sharply unless shift is sustained
-                • Drivers = participants affecting tone (omit if single speaker)
-                • Treat sarcasm cautiously; soften only if context supports it
-                
-                Output ONE IRC LINE <= 200 chars:
-                
-                Sentiment N/10 (use +/- prefix) | Intensity X | Themes: ... | Summary: ...
-                (+ Drivers: A,B only if intensity=high AND multiple users)
+            You are a channel sentiment analyst.
+
+            Input <= 100 lines. Prefixes:
+            ext = humans (score)
+            int = bot/system (context only)
+
+            Evaluate:
+            • Sentiment (-10 hostile to +10 very positive; 0 neutral)
+            • Intensity (low/mod/high)
+            • Themes (dominant recent topics)
+
+            Rules:
+            • Weight recent ext lines more heavily
+            • Do not swing score sharply unless shift is sustained
+            • Drivers = participants affecting tone (omit if single speaker)
+            • Treat sarcasm cautiously; soften only if context supports it
+
+            Output ONE IRC LINE <= 200 chars:
+
+            Sentiment N/10 (use +/- prefix) | Intensity X | Themes: ... | Summary: ...
+            (+ Drivers: A,B only if intensity=high AND multiple users)
             """
                 .trimIndent()
 

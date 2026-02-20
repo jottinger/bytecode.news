@@ -34,6 +34,8 @@ streampack:
     secret: ${JWT_SECRET:change-me-in-production}
   console:
     enabled: ${CONSOLE_ENABLED:false}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
   irc:
     enabled: ${IRC_ENABLED:false}
   karma:

@@ -89,6 +89,11 @@
         </dependency>
         <dependency>
             <groupId>com.enigmastation</groupId>
+            <artifactId>service-mail</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
             <artifactId>lib-irc</artifactId>
             <version>${project.version}</version>
         </dependency>

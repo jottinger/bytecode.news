@@ -64,6 +64,7 @@
         <module>service-slack</module>
         <module>service-bridge</module>
         <module>service-console</module>
+        <module>service-mail</module>
         <module>service-discord</module>
         <module>service-blog</module>
         <module>service-irc</module>
