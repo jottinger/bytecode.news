@@ -14,6 +14,15 @@ class HtmlTitleFetcherTests {
             }
         )
 
+    /** Map-based fetcher: returns the value whose key is a substring of the requested URL */
+    private fun fetcherWith(responses: Map<String, String?>) =
+        HtmlTitleFetcher(
+            object : PageFetcher {
+                override fun fetch(url: String): String? =
+                    responses.entries.firstOrNull { url.contains(it.key) }?.value
+            }
+        )
+
     @Test
     fun `extracts title tag`() {
         val html = "<html><head><title>Hello World</title></head><body></body></html>"
@@ -78,5 +87,36 @@ class HtmlTitleFetcherTests {
     @Test
     fun `returns null when page fetch fails`() {
         assertNull(fetcherWith(null).fetchTitle("http://example.com"))
+    }
+
+    @Test
+    fun `youtube oembed includes channel name`() {
+        val oembedJson =
+            """{"title": "Top 5 Hollywood DISASTERS of 2025", "author_name": "Nerdrotic"}"""
+        val fetcher = fetcherWith(mapOf("youtube.com/oembed" to oembedJson))
+        assertEquals(
+            "YouTube: Top 5 Hollywood DISASTERS of 2025 | Nerdrotic",
+            fetcher.fetchTitle("https://www.youtube.com/watch?v=abc"),
+        )
+    }
+
+    @Test
+    fun `youtube oembed falls back when author_name is missing`() {
+        val oembedJson = """{"title": "Some Video Title"}"""
+        val fetcher = fetcherWith(mapOf("youtube.com/oembed" to oembedJson))
+        assertEquals(
+            "YouTube: Some Video Title",
+            fetcher.fetchTitle("https://www.youtube.com/watch?v=abc"),
+        )
+    }
+
+    @Test
+    fun `youtube oembed falls back when author_name is blank`() {
+        val oembedJson = """{"title": "Some Video Title", "author_name": "  "}"""
+        val fetcher = fetcherWith(mapOf("youtube.com/oembed" to oembedJson))
+        assertEquals(
+            "YouTube: Some Video Title",
+            fetcher.fetchTitle("https://www.youtube.com/watch?v=abc"),
+        )
     }
 }

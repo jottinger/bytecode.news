@@ -10,6 +10,7 @@ import com.enigmastation.streampack.core.service.TitleFetcher
 import com.enigmastation.streampack.urltitle.service.TestTitleFetcher
 import com.enigmastation.streampack.urltitle.service.TestTitleFetcherConfiguration
 import com.enigmastation.streampack.urltitle.service.UrlTitleService
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -49,17 +50,12 @@ class UrlTitleSummaryTests {
             .build()
 
     @Test
-    fun `single URL produces summary with url singular`() {
+    fun `single URL produces title only`() {
         testFetcher.setTitle("https://kotlinlang.org/docs/coroutines", "Coroutines | Kotlin")
         val result = eventGateway.process(message("check https://kotlinlang.org/docs/coroutines"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("mentioned url:"), "Expected singular 'url' in: $payload")
-        assertTrue(
-            payload.contains("https://kotlinlang.org/docs/coroutines"),
-            "Expected URL in: $payload",
-        )
-        assertTrue(payload.contains("\"Coroutines | Kotlin\""), "Expected title in: $payload")
+        assertEquals("Coroutines | Kotlin", payload)
     }
 
     @Test
@@ -73,19 +69,16 @@ class UrlTitleSummaryTests {
                 )
             assertInstanceOf(OperationResult.Success::class.java, result)
             val payload = (result as OperationResult.Success).payload as String
-            assertTrue(payload.contains("mentioned url:"), "Expected singular 'url' in: $payload")
-            assertTrue(
-                payload.contains("https://www.youtube.com/watch?v=jNDWnMfDnuw"),
-                "Expected URL in: $payload",
-            )
-            assertTrue(payload.contains("\"Top 5 Hollywood"), "Expected title in: $payload")
+            assertTrue(payload.startsWith("YouTube:"), "Expected YouTube prefix in: $payload")
+            assertTrue(payload.contains("Top 5 Hollywood"), "Expected title in: $payload")
+            assertTrue(payload.contains("|"), "Expected channel separator in: $payload")
         } finally {
             service.titleFetcher = titleFetcher
         }
     }
 
     @Test
-    fun `multiple distinct URLs produces summary with urls plural`() {
+    fun `multiple distinct URLs produces anchored pairs with separator`() {
         testFetcher.setTitle("https://abc.example.com/page1", "Totally Unrelated Title")
         testFetcher.setTitle("https://xyz.example.com/page2", "Another Unrelated Title")
         val result =
@@ -94,12 +87,19 @@ class UrlTitleSummaryTests {
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("mentioned urls:"), "Expected plural 'urls' in: $payload")
-        assertTrue(payload.contains("and"), "Expected 'and' joining in: $payload")
+        assertTrue(payload.contains(" || "), "Expected || separator in: $payload")
+        assertTrue(
+            payload.contains("""https://abc.example.com/page1 "Totally Unrelated Title""""),
+            "Expected first URL-title pair in: $payload",
+        )
+        assertTrue(
+            payload.contains("""https://xyz.example.com/page2 "Another Unrelated Title""""),
+            "Expected second URL-title pair in: $payload",
+        )
     }
 
     @Test
-    fun `duplicate URLs are deduplicated in summary`() {
+    fun `duplicate URLs are deduplicated to single title`() {
         testFetcher.setTitle("https://kotlinlang.org/docs/coroutines", "Coroutines | Kotlin")
         val result =
             eventGateway.process(
@@ -109,27 +109,23 @@ class UrlTitleSummaryTests {
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        // Should appear exactly once since duplicates are removed
-        assertTrue(payload.contains("mentioned url:"), "Expected singular 'url' in: $payload")
-        val occurrences = payload.split("https://kotlinlang.org/docs/coroutines").size - 1
-        assertTrue(
-            occurrences == 1,
-            "Expected URL to appear once in summary but found $occurrences times in: $payload",
-        )
+        // Deduplication produces one URL, so single-URL format (title only)
+        assertEquals("Coroutines | Kotlin", payload)
     }
 
     @Test
-    fun `summary includes nick from message`() {
+    fun `output does not include nick or mentioned prefix`() {
         testFetcher.setTitle("https://kotlinlang.org/docs/coroutines", "Coroutines | Kotlin")
         val result =
             eventGateway.process(message("https://kotlinlang.org/docs/coroutines", nick = "alice"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.startsWith("alice mentioned"), "Expected nick prefix in: $payload")
+        assertTrue(!payload.contains("alice"), "Nick should not appear in: $payload")
+        assertTrue(!payload.contains("mentioned"), "mentioned should not appear in: $payload")
     }
 
     @Test
-    fun `URLs with no fetchable title are excluded from summary`() {
+    fun `URLs with no fetchable title are excluded`() {
         testFetcher.setTitle("https://abc.example.com/page1", "Totally Unrelated Title")
         // second URL has no title registered in the test fetcher
         val result =
@@ -138,10 +134,7 @@ class UrlTitleSummaryTests {
             )
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("mentioned url:"), "Expected singular 'url' in: $payload")
-        assertTrue(
-            !payload.contains("nope.example.com"),
-            "URL with no title should be excluded from: $payload",
-        )
+        // Only one title resolves, so single-URL format (title only)
+        assertEquals("Totally Unrelated Title", payload)
     }
 }
