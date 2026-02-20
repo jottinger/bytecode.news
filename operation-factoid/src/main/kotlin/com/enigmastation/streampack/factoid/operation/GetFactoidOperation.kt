@@ -28,6 +28,7 @@ class GetFactoidOperation(
 
     override val priority: Int = 90
     override val addressed: Boolean = true
+    override val operationGroup: String = "factoid"
 
     override fun translate(payload: String, message: Message<*>): FactoidQueryRequest? {
         return parseQuery(payload)

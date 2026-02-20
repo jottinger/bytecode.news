@@ -32,6 +32,7 @@ class AskOperation(
     // to a factoid *setting* operation
     override val priority: Int = 50
     override val addressed: Boolean = true
+    override val operationGroup: String = "ask"
     override val throttlePolicy: ThrottlePolicy = ThrottlePolicy(5, Duration.ofHours(1))
 
     override fun translate(payload: String, message: Message<*>): AskRequest? {

@@ -25,8 +25,8 @@ class DictionaryOperation(
 ) : TranslatingOperation<DictionaryRequest>(DictionaryRequest::class) {
 
     override val priority: Int = 95
-
     override val addressed: Boolean = true
+    override val operationGroup: String = "dictionary"
 
     private val pattern = Regex("^define\\s+(.+)$", RegexOption.IGNORE_CASE)
 

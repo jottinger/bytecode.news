@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component
 class TodayOperation(private val calendarService: CalendarService) :
     TypedOperation<String>(String::class) {
 
+    override val operationGroup: String = "cal"
+
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         val trimmed = payload.trim()
         return trimmed == "today" || trimmed.startsWith("today ")

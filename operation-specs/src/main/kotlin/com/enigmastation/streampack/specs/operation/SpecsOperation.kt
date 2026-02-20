@@ -26,8 +26,8 @@ class SpecsOperation(
 ) : TranslatingOperation<SpecRequest>(SpecRequest::class) {
 
     override val priority: Int = 95
-
     override val addressed: Boolean = true
+    override val operationGroup: String = "specs"
 
     private val specPattern = Regex("^(rfc|jep|jsr|pep)\\s*(\\d+)$", RegexOption.IGNORE_CASE)
 

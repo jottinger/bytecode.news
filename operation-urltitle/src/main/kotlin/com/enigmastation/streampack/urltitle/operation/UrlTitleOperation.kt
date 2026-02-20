@@ -18,8 +18,8 @@ class UrlTitleOperation(
 ) : TypedOperation<String>(String::class) {
 
     override val priority: Int = 91
-
     override val addressed: Boolean = false
+    override val operationGroup: String = "urltitle"
 
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return false

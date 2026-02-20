@@ -19,8 +19,8 @@ class SetKarmaOperation(
 ) : TypedOperation<String>(String::class) {
 
     override val priority: Int = 40
-
     override val addressed: Boolean = false
+    override val operationGroup: String = "karma"
 
     override fun canHandle(payload: String, message: Message<*>): Boolean {
         val fixed = payload.fixArrows()

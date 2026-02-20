@@ -18,8 +18,8 @@ class AddFeedOperation(private val feedService: RssSubscriptionService) :
     TranslatingOperation<AddFeedRequest>(AddFeedRequest::class) {
 
     override val priority: Int = 55
-
     override val addressed: Boolean = true
+    override val operationGroup: String = "rss"
 
     override fun translate(payload: String, message: Message<*>): AddFeedRequest? {
         val trimmed = payload.trim()

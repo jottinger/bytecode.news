@@ -16,8 +16,8 @@ class KarmaRankingOperation(private val karmaService: KarmaService) :
     TranslatingOperation<KarmaRankingRequest>(KarmaRankingRequest::class) {
 
     override val priority: Int = 50
-
     override val addressed: Boolean = true
+    override val operationGroup: String = "karma"
 
     override fun translate(payload: String, message: Message<*>): KarmaRankingRequest? {
         val tokens = payload.trim().split("\\s+".toRegex())
