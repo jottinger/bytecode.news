@@ -83,7 +83,14 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         val botTake = 4 - playerTake
         val afterBot = afterPlayer - botTake
 
-        val reaction = REACTIONS.random()
+        var reaction = REACTIONS.random()
+        reaction =
+            if (reaction.startsWith("--DERIVED--")) {
+                val otherChoice = listOf(1, 2, 3).filter({ it != playerTake }).random()
+                "I see you picked $playerTake. I'd expected you to pick $otherChoice."
+            } else {
+                reaction
+            }
         val consideration = CONSIDERATIONS.random()
 
         if (afterBot <= 1) {
@@ -115,14 +122,15 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             listOf(
                 "Excellent choice!",
                 "Interesting move.",
-                "Bold strategy!",
+                "interesting.",
+                "A bold strategy, Cotton!",
                 "Hmm, curious.",
                 "A fine selection.",
                 "Oh, I was hoping you'd do that.",
                 "How very predictable.",
                 "Noted.",
                 "You play with conviction.",
-                "A classic opener.",
+                "A classic move.",
                 "Ah, just as I expected.",
                 "I see what you're doing there.",
                 "That was... certainly a move.",
@@ -133,6 +141,9 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
                 "The plot thickens.",
                 "A calculated risk.",
                 "Now things get interesting.",
+                "Still using the Fischbacher strategy?",
+                "We might as well be playing rock, paper, scissors!",
+                "--DERIVED--",
             )
 
         val CONSIDERATIONS =
@@ -142,7 +153,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
                 "After much deliberation",
                 "Decisively",
                 "With great confidence",
-                "Having consulted my vast intellect",
+                "I am very, very smart",
                 "With a knowing smile",
                 "After a moment's pause",
                 "With surgical precision",
@@ -152,32 +163,32 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
                 "As if this were already decided",
                 "Savoring the moment",
                 "Without a hint of doubt",
-                "With the certainty of mathematics",
+                "I am inevitable",
                 "Casually",
                 "Methodically",
                 "With the patience of stone",
                 "After pretending to think about it",
+                "With great fury",
             )
-
         val VICTORY_LINES =
             listOf(
-                "That leaves you with the last match -- I win! Better luck next time.",
+                "That leaves you with the last match - I win! Better luck next time.",
                 "And that means the last match is yours. Victory is mine!",
                 "You are left with one match. I claim victory!",
                 "One match remains, and it has your name on it. Well played, though.",
                 "The final match awaits you. I believe that makes me the winner.",
                 "And so the last match falls to you. A noble effort.",
                 "I hate to be the bearer of bad news, but... actually, no I don't. I win!",
-                "The math was never in your favor. The last match is yours.",
+                "The odds were never in your favor. The last match is yours.",
             )
 
         val CONCEDE_LINES =
             listOf(
-                "You concede! The matches scatter to the wind.",
-                "A graceful surrender. The board is cleared.",
+                "You concede! The matches fade away, like tears in rain. Except they're matches.",
+                "A graceful surrender, I see. The board is cleared.",
                 "Conceded! Perhaps next time.",
                 "A wise retreat. The matches are put away.",
-                "You live to play another day.",
+                "You live to play another day. This time.",
                 "The matches breathe a sigh of relief.",
             )
     }

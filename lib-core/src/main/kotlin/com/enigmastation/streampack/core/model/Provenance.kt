@@ -37,6 +37,7 @@ data class Provenance(
         const val ADDRESSED = "addressed"
         const val IS_ACTION = "isAction"
         const val LOOPBACK_KEY = "loopback"
+        const val BRIDGED = "streampack_bridged"
 
         /** Decodes a URI-format address string into a Provenance */
         fun decode(uri: String): Provenance {

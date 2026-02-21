@@ -3,6 +3,7 @@ package com.enigmastation.streampack.polling.service
 
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.service.TransformerChainService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.messaging.MessageChannel
@@ -11,15 +12,20 @@ import org.springframework.stereotype.Component
 
 /** Sends notifications to the egress channel with decoded provenance addressing */
 @Component
-class EgressNotifier(@Qualifier("egressChannel") private val egressChannel: MessageChannel) {
+class EgressNotifier(
+    @Qualifier("egressChannel") private val egressChannel: MessageChannel,
+    private val transformerChain: TransformerChainService,
+) {
     private val logger = LoggerFactory.getLogger(EgressNotifier::class.java)
 
     /** Send a text notification to a destination identified by its provenance URI */
     fun send(text: String, destinationUri: String) {
         try {
             val provenance = Provenance.decode(destinationUri)
+            val raw = OperationResult.Success(text)
+            val transformed = transformerChain.apply(raw, provenance)
             val message =
-                MessageBuilder.withPayload(OperationResult.Success(text) as Any)
+                MessageBuilder.withPayload(transformed as Any)
                     .setHeader(Provenance.HEADER, provenance)
                     .build()
             egressChannel.send(message)

@@ -30,7 +30,7 @@ class BridgeCopyOperation(
         val nick = message.headers["nick"] as? String ?: "unknown"
 
         // Skip already-bridged messages to prevent re-copy loops
-        if (provenance.metadata.containsKey(BRIDGED_KEY)) return null
+        if (provenance.metadata.containsKey(Provenance.BRIDGED)) return null
 
         val targets = bridgeService.getCopyTargets(provenance.encode())
         if (targets.isEmpty()) return null
@@ -46,7 +46,7 @@ class BridgeCopyOperation(
                     .setHeader(
                         Provenance.HEADER,
                         targetProvenance.copy(
-                            metadata = targetProvenance.metadata + (BRIDGED_KEY to true)
+                            metadata = targetProvenance.metadata + (Provenance.BRIDGED to true)
                         ),
                     )
                     .build()
@@ -62,9 +62,6 @@ class BridgeCopyOperation(
     }
 
     companion object {
-        /** Metadata key marking a message as already bridged to prevent re-copy loops */
-        const val BRIDGED_KEY = "streampack_bridged"
-
         /** Header containing display-resolved text for bridging (e.g. Discord mentions resolved) */
         const val DISPLAY_TEXT_HEADER = "displayText"
     }
