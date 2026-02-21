@@ -28,6 +28,7 @@ abstract class TranslatingOperation<T : Any>(private val payloadType: KClass<T>)
     @Suppress("UNCHECKED_CAST") open fun canHandle(payload: T, message: Message<*>): Boolean = true
 
     final override fun canHandle(message: Message<*>): Boolean {
+        @Suppress("UNCHECKED_CAST")
         val resolved =
             when (val p = message.payload) {
                 is String -> translate(p, message) ?: return false

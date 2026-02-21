@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.operation
 
+import com.enigmastation.streampack.core.integration.EgressTransformer
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component
 class ChannelConfigOperation(
     private val configService: OperationConfigService,
     @Lazy private val operations: List<Operation>,
+    @Lazy private val transformers: List<EgressTransformer>,
 ) : TypedOperation<String>(String::class) {
 
     override fun canHandle(payload: String, message: Message<*>): Boolean {
@@ -153,7 +155,9 @@ class ChannelConfigOperation(
         OperationResult.Error("Cannot determine target provenance. Use 'for <pattern>' to specify.")
 
     private fun knownGroups(): List<String> =
-        operations.mapNotNull { it.operationGroup }.distinct().sorted()
+        (operations.mapNotNull { it.operationGroup } + transformers.map { it.transformerGroup })
+            .distinct()
+            .sorted()
 
     private fun isKnownGroup(group: String): Boolean = group in knownGroups()
 

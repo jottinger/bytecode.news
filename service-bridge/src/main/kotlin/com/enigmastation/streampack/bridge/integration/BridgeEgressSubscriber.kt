@@ -1,7 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.bridge.integration
 
-import com.enigmastation.streampack.bridge.operation.BridgeCopyOperation
 import com.enigmastation.streampack.bridge.service.BridgeService
 import com.enigmastation.streampack.core.integration.EgressSubscriber
 import com.enigmastation.streampack.core.model.OperationResult
@@ -25,7 +24,7 @@ class BridgeEgressSubscriber(
     private val logger = LoggerFactory.getLogger(BridgeEgressSubscriber::class.java)
 
     override fun matches(provenance: Provenance): Boolean {
-        if (provenance.metadata.containsKey(BridgeCopyOperation.BRIDGED_KEY)) return false
+        if (provenance.metadata.containsKey(Provenance.BRIDGED)) return false
         return bridgeService.hasCopyTargets(provenance.encode())
     }
 
@@ -41,7 +40,7 @@ class BridgeEgressSubscriber(
             val targetProvenance = Provenance.decode(targetUri)
             val bridgedProvenance =
                 targetProvenance.copy(
-                    metadata = targetProvenance.metadata + (BridgeCopyOperation.BRIDGED_KEY to true)
+                    metadata = targetProvenance.metadata + (Provenance.BRIDGED to true)
                 )
             val egressMessage =
                 MessageBuilder.withPayload(OperationResult.Success(text) as Any)

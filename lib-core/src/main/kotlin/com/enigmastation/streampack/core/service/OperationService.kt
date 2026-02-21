@@ -35,6 +35,7 @@ class OperationService(
     @Qualifier("egressChannel") private val egressChannel: MessageChannel,
     private val throttleService: ThrottleService,
     private val operationConfigService: OperationConfigService,
+    private val transformerChain: TransformerChainService,
 ) {
     private val logger = LoggerFactory.getLogger(OperationService::class.java)
     private val sortedOperations = operations.sortedBy { it.priority }
@@ -54,9 +55,12 @@ class OperationService(
     @ServiceActivator(inputChannel = "ingressChannel")
     fun process(message: Message<*>): OperationResult {
         val hopCount = message.headers[FanOut.HOP_COUNT_HEADER] as? Int ?: 0
+        val provenance = message.headers[Provenance.HEADER] as? Provenance
         val result = processChain(message)
-        publishToEgress(result, message, hopCount)
-        return result
+        val transformed =
+            if (provenance != null) transformerChain.apply(result, provenance) else result
+        publishToEgress(transformed, message, hopCount)
+        return transformed
     }
 
     /** Runs the message through the operation chain and returns the result */

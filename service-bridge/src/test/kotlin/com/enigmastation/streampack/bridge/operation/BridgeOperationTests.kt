@@ -290,7 +290,7 @@ class BridgeOperationTests {
                 .setHeader(
                     Provenance.HEADER,
                     provenance("#test", "testnet")
-                        .copy(metadata = mapOf(BridgeCopyOperation.BRIDGED_KEY to true)),
+                        .copy(metadata = mapOf(Provenance.BRIDGED to true)),
                 )
                 .setHeader(Provenance.ADDRESSED, false)
                 .setHeader("nick", "testuser")
