@@ -33,11 +33,11 @@ class TagSearchOperation(private val factoidService: FactoidService) :
         return if (selectors.isEmpty()) {
             OperationResult.Success("No factoids found with tag '${payload.tag}'.")
         } else {
-            val tildeSelectors = selectors.map { "~$it" }
-            val joined = tildeSelectors.joinToStringWithAnd()
+            val refSelectors = selectors.map { "{{ref:$it}}" }
+            val joined = refSelectors.joinToStringWithAnd()
             val display =
                 if (joined.length > 200) {
-                    selectors.take(10).map { "~$it" }.joinToStringWithAnd()
+                    selectors.take(10).map { "{{ref:$it}}" }.joinToStringWithAnd()
                 } else {
                     joined
                 }

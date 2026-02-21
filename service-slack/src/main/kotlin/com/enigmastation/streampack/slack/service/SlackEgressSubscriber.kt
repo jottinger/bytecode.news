@@ -25,6 +25,11 @@ class SlackEgressSubscriber(
 
     override fun matches(provenance: Provenance): Boolean = provenance.protocol == Protocol.SLACK
 
+    override fun resolveSignalCharacter(provenance: Provenance): String {
+        val workspaceName = provenance.serviceId ?: return ""
+        return connectionManager.getAdapter(workspaceName)?.signalCharacter ?: ""
+    }
+
     override fun deliver(result: OperationResult, provenance: Provenance) {
         val workspaceName = provenance.serviceId
         if (workspaceName == null) {

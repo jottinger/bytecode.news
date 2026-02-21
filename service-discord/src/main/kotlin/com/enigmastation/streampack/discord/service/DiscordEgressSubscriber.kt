@@ -22,6 +22,9 @@ class DiscordEgressSubscriber(
 
     override fun matches(provenance: Provenance): Boolean = provenance.protocol == Protocol.DISCORD
 
+    override fun resolveSignalCharacter(provenance: Provenance): String =
+        discordAdapter.signalCharacter
+
     override fun deliver(result: OperationResult, provenance: Provenance) {
         val isMuted = channelControlService.getOptions(provenance.encode())?.automute ?: false
         if (isMuted) {

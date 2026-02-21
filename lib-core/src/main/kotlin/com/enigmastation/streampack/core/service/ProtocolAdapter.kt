@@ -14,6 +14,10 @@ interface ProtocolAdapter {
     val protocol: Protocol
     val serviceName: String
 
+    /** The character prefix that triggers addressed commands on this adapter (e.g., "!" on IRC) */
+    val signalCharacter: String
+        get() = ""
+
     /**
      * Returns true if the given text would be re-ingested as an addressed command by this adapter.
      * Egress subscribers check this before sending to prevent command loops (e.g., a factoid whose

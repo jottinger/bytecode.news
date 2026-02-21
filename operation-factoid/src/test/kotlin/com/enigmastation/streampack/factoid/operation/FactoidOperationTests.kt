@@ -308,7 +308,7 @@ class FactoidOperationTests {
         val result = eventGateway.process(msg("java.seealso"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("~kotlin"))
+        assertTrue(payload.contains("{{ref:kotlin}}"))
         assertTrue(payload.contains("python"))
     }
 
@@ -319,7 +319,7 @@ class FactoidOperationTests {
         eventGateway.process(msg("foo.seealso=baz,quux"))
 
         val result = eventGateway.process(msg("foo"))
-        assertSuccess(result, "foo is bar. See also: ~baz and quux")
+        assertSuccess(result, "foo is bar. See also: {{ref:baz}} and quux")
     }
 
     // -- SEE redirect --
@@ -650,9 +650,9 @@ class FactoidOperationTests {
         val result = eventGateway.process(msg("tag ide"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("~eclipse"))
-        assertTrue(payload.contains("~intellij"))
-        assertTrue(!payload.contains("~spring"))
+        assertTrue(payload.contains("{{ref:eclipse}}"))
+        assertTrue(payload.contains("{{ref:intellij}}"))
+        assertTrue(!payload.contains("{{ref:spring}}"))
     }
 
     @Test

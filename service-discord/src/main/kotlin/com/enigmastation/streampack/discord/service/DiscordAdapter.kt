@@ -34,6 +34,8 @@ class DiscordAdapter(
 ) : ListenerAdapter(), InitializingBean, DisposableBean, ProtocolAdapter {
     override val protocol: Protocol = Protocol.DISCORD
     override val serviceName: String = "discord"
+    override val signalCharacter: String
+        get() = properties.signalCharacter
 
     private val logger = LoggerFactory.getLogger(DiscordAdapter::class.java)
     private lateinit var jda: JDA

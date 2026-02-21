@@ -33,11 +33,11 @@ class SearchFactoidOperation(private val factoidService: FactoidService) :
         return if (factoids.isEmpty()) {
             OperationResult.Success("No factoids found searching for '${payload.term}'.")
         } else {
-            val tildeFactoids = factoids.map { "~$it" }
-            val joined = tildeFactoids.joinToStringWithAnd()
+            val refFactoids = factoids.map { "{{ref:$it}}" }
+            val joined = refFactoids.joinToStringWithAnd()
             val display =
                 if (joined.length > 200) {
-                    factoids.take(10).map { "~$it" }.joinToStringWithAnd()
+                    factoids.take(10).map { "{{ref:$it}}" }.joinToStringWithAnd()
                 } else {
                     joined
                 }

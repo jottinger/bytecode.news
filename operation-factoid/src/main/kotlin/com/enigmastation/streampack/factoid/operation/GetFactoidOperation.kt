@@ -277,7 +277,7 @@ fun List<FactoidAttribute>.summarize(
         .compress()
 }
 
-/** Decorates see-also entries with ~ prefix when they are known factoids */
+/** Decorates see-also entries with reference tokens when they are known factoids */
 private fun decorateSeeAlso(
     selector: String,
     value: String,
@@ -291,7 +291,7 @@ private fun decorateSeeAlso(
         .map {
             val clean = it.removePrefix("~")
             if (factoidService.findBySelector(clean).isNotEmpty()) {
-                "~$clean"
+                "{{ref:$clean}}"
             } else {
                 clean
             }
