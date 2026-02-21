@@ -25,6 +25,11 @@ class IrcEgressSubscriber(
 
     override fun matches(provenance: Provenance): Boolean = provenance.protocol == Protocol.IRC
 
+    override fun resolveSignalCharacter(provenance: Provenance): String {
+        val networkName = provenance.serviceId ?: return ""
+        return connectionManager.getAdapter(networkName)?.signalCharacter ?: ""
+    }
+
     override fun deliver(result: OperationResult, provenance: Provenance) {
         val networkName = provenance.serviceId
         if (networkName == null) {

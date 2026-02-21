@@ -15,6 +15,10 @@ import org.springframework.messaging.MessageHandler
  *
  * The subscriber is intentionally thin -- it filters and dispatches. All routing decisions (muting,
  * channel selection, network lookup) belong in the service, not here.
+ *
+ * Reference tokens (`{{ref:name}}`) in operation output are rendered to protocol-specific form
+ * before delivery. Override [resolveSignalCharacter] to provide the signal prefix for your
+ * protocol.
  */
 abstract class EgressSubscriber : MessageHandler {
 
@@ -24,11 +28,32 @@ abstract class EgressSubscriber : MessageHandler {
     /** Handle a matched operation result. Called only when [matches] returned true. */
     abstract fun deliver(result: OperationResult, provenance: Provenance)
 
+    /** Override to provide the signal character for this provenance's protocol/service */
+    protected open fun resolveSignalCharacter(provenance: Provenance): String = ""
+
     final override fun handleMessage(message: Message<*>) {
         val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return
         val result = message.payload as? OperationResult ?: return
         if (matches(provenance)) {
-            deliver(result, provenance)
+            deliver(renderReferenceTokens(result, provenance), provenance)
         }
+    }
+
+    /** Replaces {{ref:name}} tokens with signal-prefixed names for the target protocol */
+    private fun renderReferenceTokens(
+        result: OperationResult,
+        provenance: Provenance,
+    ): OperationResult {
+        if (result !is OperationResult.Success) return result
+        val text = result.payload.toString()
+        if (!text.contains(REF_TOKEN_PREFIX)) return result
+        val signal = resolveSignalCharacter(provenance)
+        val rendered = text.replace(REF_TOKEN_REGEX) { match -> "$signal${match.groupValues[1]}" }
+        return if (rendered == text) result else result.copy(payload = rendered)
+    }
+
+    companion object {
+        const val REF_TOKEN_PREFIX = "{{ref:"
+        private val REF_TOKEN_REGEX = Regex("\\{\\{ref:([^}]+)}}")
     }
 }

@@ -24,7 +24,7 @@ class SlackAdapter(
     val workspaceName: String,
     private val botToken: String,
     private val appToken: String,
-    private val signalCharacter: String,
+    override val signalCharacter: String,
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,

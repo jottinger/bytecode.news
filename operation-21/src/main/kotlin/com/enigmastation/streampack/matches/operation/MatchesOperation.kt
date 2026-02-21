@@ -33,7 +33,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             command == "concede" -> concede(provenanceUri)
             else ->
                 OperationResult.Error(
-                    "Unknown command. Usage: 21 matches | 21 take <1-3> | 21 concede"
+                    "Unknown command. Usage: {{ref:21 matches}} | {{ref:21 take <1-3>}} | {{ref:21 concede}}"
                 )
         }
     }
@@ -44,14 +44,14 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             val remaining = (existing["remaining"] as Number).toInt()
             return OperationResult.Error(
                 "A game is already in progress with $remaining matches remaining. " +
-                    "Use '21 concede' to give up, or '21 take <1-3>' to continue."
+                    "Use '{{ref:21 concede}}' to give up, or '{{ref:21 take <1-3>}}' to continue."
             )
         }
         stateService.setState(provenanceUri, STATE_KEY, mapOf("remaining" to INITIAL_MATCHES))
         return OperationResult.Success(
             "A new game of 21 Matches begins! There are $INITIAL_MATCHES matches on the table. " +
                 "Take 1, 2, or 3 matches each turn. Whoever is forced to take the last match loses. " +
-                "Use '21 take <1-3>' to play."
+                "Use '{{ref:21 take <1-3>}}' to play."
         )
     }
 
@@ -59,7 +59,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         val state = stateService.getState(provenanceUri, STATE_KEY)
         if (state == null) {
             return OperationResult.Error(
-                "No game in progress. Use '21 matches' to start a new game."
+                "No game in progress. Use '{{ref:21 matches}}' to start a new game."
             )
         }
 
@@ -67,7 +67,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         val playerTake =
             input.trim().toIntOrNull()
                 ?: return OperationResult.Error(
-                    "Please specify a number between 1 and 3. Usage: 21 take <1-3>"
+                    "Please specify a number between 1 and 3. Usage: {{ref:21 take <1-3>}}"
                 )
 
         if (playerTake < 1 || playerTake > 3) {

@@ -37,7 +37,7 @@ class IrcAdapter(
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
     private val client: Client,
-    private val signalCharacter: String,
+    override val signalCharacter: String,
 ) : ProtocolAdapter {
     override val protocol: Protocol = Protocol.IRC
     override val serviceName: String = networkName
