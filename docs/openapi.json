@@ -1,27 +1,1055 @@
 {
-  "openapi" : "3.1.0",
+  "components" : {
+    "schemas" : {
+      "ApproveContentHttpRequest" : {
+        "properties" : {
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "publishedAt" ],
+        "type" : "object"
+      },
+      "CategorySummary" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "parentName" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "name", "slug" ],
+        "type" : "object"
+      },
+      "ChangePasswordRequest" : {
+        "properties" : {
+          "newPassword" : {
+            "type" : "string"
+          },
+          "oldPassword" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "newPassword", "oldPassword" ],
+        "type" : "object"
+      },
+      "CommentDetail" : {
+        "properties" : {
+          "authorDisplayName" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "postId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "renderedHtml" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "authorDisplayName", "createdAt", "id", "postId", "renderedHtml" ],
+        "type" : "object"
+      },
+      "CommentNode" : {
+        "properties" : {
+          "authorDisplayName" : {
+            "type" : "string"
+          },
+          "authorId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "children" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CommentNode"
+            },
+            "type" : "array"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "deleted" : {
+            "type" : "boolean"
+          },
+          "editable" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "renderedHtml" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "authorDisplayName", "children", "createdAt", "deleted", "editable", "id", "renderedHtml", "updatedAt" ],
+        "type" : "object"
+      },
+      "CommentThreadResponse" : {
+        "properties" : {
+          "comments" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CommentNode"
+            },
+            "type" : "array"
+          },
+          "postId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "totalActiveCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "comments", "postId", "totalActiveCount" ],
+        "type" : "object"
+      },
+      "ContentDetail" : {
+        "properties" : {
+          "authorDisplayName" : {
+            "type" : "string"
+          },
+          "authorId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "categories" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "commentCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "excerpt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "renderedHtml" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "DRAFT", "APPROVED" ],
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "authorDisplayName", "categories", "commentCount", "createdAt", "id", "renderedHtml", "slug", "status", "tags", "title", "updatedAt" ],
+        "type" : "object"
+      },
+      "ContentListResponse" : {
+        "properties" : {
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "posts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ContentSummary"
+            },
+            "type" : "array"
+          },
+          "totalCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "page", "posts", "totalCount", "totalPages" ],
+        "type" : "object"
+      },
+      "ContentOperationConfirmation" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "message" ],
+        "type" : "object"
+      },
+      "ContentSummary" : {
+        "properties" : {
+          "authorDisplayName" : {
+            "type" : "string"
+          },
+          "categories" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "excerpt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "authorDisplayName", "categories", "id", "slug", "tags", "title" ],
+        "type" : "object"
+      },
+      "CreateCategoryRequest" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "parentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ],
+        "type" : "object"
+      },
+      "CreateCategoryResponse" : {
+        "properties" : {
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "parentName" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "name", "slug" ],
+        "type" : "object"
+      },
+      "CreateCommentHttpRequest" : {
+        "properties" : {
+          "markdownSource" : {
+            "type" : "string"
+          },
+          "parentCommentId" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        },
+        "required" : [ "markdownSource" ],
+        "type" : "object"
+      },
+      "CreateContentHttpRequest" : {
+        "properties" : {
+          "categoryIds" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "markdownSource" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "markdownSource", "title" ],
+        "type" : "object"
+      },
+      "CreateContentResponse" : {
+        "properties" : {
+          "authorDisplayName" : {
+            "type" : "string"
+          },
+          "authorId" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "categories" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "excerpt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "DRAFT", "APPROVED" ],
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "authorDisplayName", "authorId", "categories", "createdAt", "id", "slug", "status", "tags", "title" ],
+        "type" : "object"
+      },
+      "DeleteAccountRequest" : {
+        "properties" : {
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "EditCommentHttpRequest" : {
+        "properties" : {
+          "markdownSource" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "markdownSource" ],
+        "type" : "object"
+      },
+      "EditContentHttpRequest" : {
+        "properties" : {
+          "categoryIds" : {
+            "items" : {
+              "format" : "uuid",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "markdownSource" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "FactoidAttributeResponse" : {
+        "properties" : {
+          "rendered" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "rendered", "type" ],
+        "type" : "object"
+      },
+      "FactoidDetailResponse" : {
+        "properties" : {
+          "attributes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/FactoidAttributeResponse"
+            },
+            "type" : "array"
+          },
+          "locked" : {
+            "type" : "boolean"
+          },
+          "selector" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "updatedBy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "attributes", "locked", "selector", "updatedAt" ],
+        "type" : "object"
+      },
+      "FactoidSummaryResponse" : {
+        "properties" : {
+          "locked" : {
+            "type" : "boolean"
+          },
+          "selector" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "updatedBy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "locked", "selector", "updatedAt" ],
+        "type" : "object"
+      },
+      "ForgotPasswordRequest" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "email" ],
+        "type" : "object"
+      },
+      "LoginRequest" : {
+        "properties" : {
+          "password" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "password", "username" ],
+        "type" : "object"
+      },
+      "LoginResponse" : {
+        "properties" : {
+          "principal" : {
+            "$ref" : "#/components/schemas/UserPrincipal"
+          },
+          "token" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "principal", "token" ],
+        "type" : "object"
+      },
+      "PageFactoidSummaryResponse" : {
+        "properties" : {
+          "content" : {
+            "items" : {
+              "$ref" : "#/components/schemas/FactoidSummaryResponse"
+            },
+            "type" : "array"
+          },
+          "empty" : {
+            "type" : "boolean"
+          },
+          "first" : {
+            "type" : "boolean"
+          },
+          "last" : {
+            "type" : "boolean"
+          },
+          "number" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "numberOfElements" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "pageable" : {
+            "$ref" : "#/components/schemas/PageableObject"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/SortObject"
+          },
+          "totalElements" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "PageableObject" : {
+        "properties" : {
+          "offset" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "pageNumber" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "pageSize" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "paged" : {
+            "type" : "boolean"
+          },
+          "sort" : {
+            "$ref" : "#/components/schemas/SortObject"
+          },
+          "unpaged" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "PasswordResetResponse" : {
+        "properties" : {
+          "temporaryPassword" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "temporaryPassword", "username" ],
+        "type" : "object"
+      },
+      "ProblemDetail" : {
+        "properties" : {
+          "detail" : {
+            "type" : "string"
+          },
+          "instance" : {
+            "format" : "uri",
+            "type" : "string"
+          },
+          "properties" : {
+            "additionalProperties" : { },
+            "type" : "object"
+          },
+          "status" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "format" : "uri",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "RegistrationRequest" : {
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "displayName", "email", "password", "username" ],
+        "type" : "object"
+      },
+      "ResetPasswordRequest" : {
+        "properties" : {
+          "newPassword" : {
+            "type" : "string"
+          },
+          "token" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "newPassword", "token" ],
+        "type" : "object"
+      },
+      "RoleUpdateRequest" : {
+        "properties" : {
+          "newRole" : {
+            "enum" : [ "GUEST", "USER", "ADMIN", "SUPER_ADMIN" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "newRole" ],
+        "type" : "object"
+      },
+      "SortObject" : {
+        "properties" : {
+          "empty" : {
+            "type" : "boolean"
+          },
+          "sorted" : {
+            "type" : "boolean"
+          },
+          "unsorted" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "TokenRefreshRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "token" ],
+        "type" : "object"
+      },
+      "UserPrincipal" : {
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "uuid",
+            "type" : "string"
+          },
+          "role" : {
+            "enum" : [ "GUEST", "USER", "ADMIN", "SUPER_ADMIN" ],
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "displayName", "id", "role", "username" ],
+        "type" : "object"
+      },
+      "VerifyEmailRequest" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "token" ],
+        "type" : "object"
+      }
+    },
+    "securitySchemes" : {
+      "bearerAuth" : {
+        "bearerFormat" : "JWT",
+        "scheme" : "bearer",
+        "type" : "http"
+      }
+    }
+  },
   "info" : {
-    "title" : "jvm.news API",
     "description" : "Content hub and knowledge management for the JVM ecosystem",
+    "title" : "jvm.news API",
     "version" : "0.1.0"
   },
-  "servers" : [ {
-    "url" : "http://localhost:8080",
-    "description" : "Local development server"
-  } ],
+  "openapi" : "3.1.0",
   "paths" : {
-    "/posts/{id}" : {
-      "put" : {
-        "tags" : [ "Posts" ],
-        "summary" : "Edit a post",
-        "operationId" : "editPost",
+    "/admin/categories" : {
+      "post" : {
+        "operationId" : "createCategory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateCategoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreateCategoryResponse"
+                }
+              }
+            },
+            "description" : "Category created"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Create a new category",
+        "tags" : [ "Admin - Category Management" ]
+      }
+    },
+    "/admin/categories/{id}" : {
+      "delete" : {
+        "operationId" : "deleteCategory",
         "parameters" : [ {
-          "name" : "id",
           "in" : "path",
+          "name" : "id",
           "required" : true,
           "schema" : {
-            "type" : "string",
-            "format" : "uuid"
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
+                }
+              }
+            },
+            "description" : "Category deleted"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Category not found"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Soft-delete a category",
+        "tags" : [ "Admin - Category Management" ]
+      }
+    },
+    "/admin/comments/{id}" : {
+      "delete" : {
+        "operationId" : "deleteComment",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "hard",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
+                }
+              }
+            },
+            "description" : "Comment deleted"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Comment not found"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Delete a comment (soft by default, hard with ?hard=true)",
+        "tags" : [ "Admin - Comment Management" ]
+      }
+    },
+    "/admin/posts/pending" : {
+      "get" : {
+        "operationId" : "listPending",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentListResponse"
+                }
+              }
+            },
+            "description" : "Paginated list of draft posts"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "List pending draft posts for review",
+        "tags" : [ "Admin - Post Management" ]
+      }
+    },
+    "/admin/posts/{id}" : {
+      "delete" : {
+        "operationId" : "deletePost",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "hard",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
+                }
+              }
+            },
+            "description" : "Post deleted"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Admin access required"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post not found"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Delete a post (soft by default, hard with ?hard=true)",
+        "tags" : [ "Admin - Post Management" ]
+      },
+      "put" : {
+        "operationId" : "editPost_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
           }
         } ],
         "requestBody" : {
@@ -36,70 +1064,70 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Post updated",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
-            }
+            },
+            "description" : "Post updated"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "Not authorized to edit this post",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Admin access required"
           },
           "404" : {
-            "description" : "Post not found",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Admin edit a post",
+        "tags" : [ "Admin - Post Management" ]
       }
     },
-    "/comments/{id}" : {
+    "/admin/posts/{id}/approve" : {
       "put" : {
-        "tags" : [ "Comments" ],
-        "summary" : "Edit a comment within the edit window",
-        "operationId" : "editComment",
+        "operationId" : "approvePost",
         "parameters" : [ {
-          "name" : "id",
           "in" : "path",
+          "name" : "id",
           "required" : true,
           "schema" : {
-            "type" : "string",
-            "format" : "uuid"
+            "format" : "uuid",
+            "type" : "string"
           }
         } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/EditCommentHttpRequest"
+                "$ref" : "#/components/schemas/ApproveContentHttpRequest"
               }
             }
           },
@@ -107,111 +1135,119 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Comment updated",
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CommentDetail"
+                  "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
-            }
+            },
+            "description" : "Post approved"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "Not authorized or edit window expired",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Admin access required"
           },
           "404" : {
-            "description" : "Comment not found",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Approve a draft post and set publication date",
+        "tags" : [ "Admin - Post Management" ]
       }
     },
-    "/auth/password" : {
-      "put" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Change password for the authenticated user",
-        "operationId" : "changePassword",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ChangePasswordRequest"
-              }
-            }
-          },
-          "required" : true
-        },
+    "/admin/users/{username}/reset-password" : {
+      "post" : {
+        "operationId" : "resetPassword_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "200" : {
-            "description" : "Password changed",
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "type" : "string"
+                  "$ref" : "#/components/schemas/PasswordResetResponse"
                 }
               }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
+            },
+            "description" : "Password reset with temporary password"
           },
           "400" : {
-            "description" : "Invalid password data",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid request"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Insufficient privileges"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Reset a user's password and generate a temporary one",
+        "tags" : [ "Admin - User Management" ]
       }
     },
     "/admin/users/{username}/role" : {
       "put" : {
-        "tags" : [ "Admin - User Management" ],
-        "summary" : "Change a user's role",
         "operationId" : "changeRole",
         "parameters" : [ {
-          "name" : "username",
           "in" : "path",
+          "name" : "username",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -229,63 +1265,737 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Role updated",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/UserPrincipal"
                 }
               }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Insufficient privileges",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
+            },
+            "description" : "Role updated"
           },
           "400" : {
-            "description" : "Invalid request",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Invalid request"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Insufficient privileges"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
+        } ],
+        "summary" : "Change a user's role",
+        "tags" : [ "Admin - User Management" ]
       }
     },
-    "/admin/posts/{id}" : {
+    "/auth/account" : {
+      "delete" : {
+        "operationId" : "deleteAccount",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeleteAccountRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "Account deleted"
+          },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid request"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Insufficient privileges"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Soft-delete the authenticated user's account",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/forgot-password" : {
+      "post" : {
+        "operationId" : "forgotPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "Reset email sent if account exists"
+          },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid request"
+          }
+        },
+        "summary" : "Request a password reset email",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/login" : {
+      "post" : {
+        "operationId" : "login",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description" : "Login successful"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid credentials"
+          }
+        },
+        "summary" : "Authenticate with username and password",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/logout" : {
+      "post" : {
+        "operationId" : "logout",
+        "responses" : {
+          "204" : {
+            "description" : "Logged out"
+          }
+        },
+        "summary" : "Log out the current session",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/password" : {
       "put" : {
-        "tags" : [ "Admin - Post Management" ],
-        "summary" : "Admin edit a post",
-        "operationId" : "editPost_1",
+        "operationId" : "changePassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "Password changed"
+          },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid password data"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Change password for the authenticated user",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/refresh" : {
+      "post" : {
+        "operationId" : "refresh",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TokenRefreshRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description" : "Token refreshed"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid or expired refresh token"
+          }
+        },
+        "summary" : "Refresh an expired JWT token",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/register" : {
+      "post" : {
+        "operationId" : "register",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegistrationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserPrincipal"
+                }
+              }
+            },
+            "description" : "Registration successful"
+          },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid registration data"
+          },
+          "409" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Username already taken"
+          }
+        },
+        "summary" : "Register a new user account",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/reset-password" : {
+      "post" : {
+        "operationId" : "resetPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "Password reset successful"
+          },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid or expired reset token"
+          }
+        },
+        "summary" : "Reset password using a reset token",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/verify" : {
+      "post" : {
+        "operationId" : "verify",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "Email verified"
+          },
+          "400" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Invalid or expired verification token"
+          }
+        },
+        "summary" : "Verify email address with token",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/blog/rss.xml" : {
+      "get" : {
+        "operationId" : "rssFeed",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "rss-feed-controller" ]
+      }
+    },
+    "/categories" : {
+      "get" : {
+        "operationId" : "listCategories",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategorySummary"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "List of active categories"
+          }
+        },
+        "summary" : "List active categories",
+        "tags" : [ "Categories" ]
+      }
+    },
+    "/comments/{id}" : {
+      "put" : {
+        "operationId" : "editComment",
         "parameters" : [ {
-          "name" : "id",
           "in" : "path",
+          "name" : "id",
           "required" : true,
           "schema" : {
-            "type" : "string",
-            "format" : "uuid"
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EditCommentHttpRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentDetail"
+                }
+              }
+            },
+            "description" : "Comment updated"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          },
+          "403" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authorized or edit window expired"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Comment not found"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Edit a comment within the edit window",
+        "tags" : [ "Comments" ]
+      }
+    },
+    "/factoids" : {
+      "get" : {
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PageFactoidSummaryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "factoid-controller" ]
+      }
+    },
+    "/factoids/{selector}" : {
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "selector",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FactoidDetailResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "factoid-controller" ]
+      }
+    },
+    "/posts" : {
+      "get" : {
+        "operationId" : "listPosts",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentListResponse"
+                }
+              }
+            },
+            "description" : "Paginated list of published posts"
+          }
+        },
+        "summary" : "List published posts",
+        "tags" : [ "Posts" ]
+      },
+      "post" : {
+        "operationId" : "createPost",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateContentHttpRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CreateContentResponse"
+                }
+              }
+            },
+            "description" : "Post created"
+          },
+          "401" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Not authenticated"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Create a new blog post draft",
+        "tags" : [ "Posts" ]
+      }
+    },
+    "/posts/search" : {
+      "get" : {
+        "operationId" : "searchPosts",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "q",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentListResponse"
+                }
+              }
+            },
+            "description" : "Search results"
+          }
+        },
+        "summary" : "Search published posts",
+        "tags" : [ "Posts" ]
+      }
+    },
+    "/posts/{id}" : {
+      "put" : {
+        "operationId" : "editPost",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
           }
         } ],
         "requestBody" : {
@@ -300,295 +2010,79 @@
         },
         "responses" : {
           "200" : {
-            "description" : "Post updated",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
-            }
+            },
+            "description" : "Post updated"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "403" : {
-            "description" : "Admin access required",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authorized to edit this post"
           },
           "404" : {
-            "description" : "Post not found",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
-      },
-      "delete" : {
-        "tags" : [ "Admin - Post Management" ],
-        "summary" : "Delete a post (soft by default, hard with ?hard=true)",
-        "operationId" : "deletePost",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        }, {
-          "name" : "hard",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
         } ],
-        "responses" : {
-          "200" : {
-            "description" : "Post deleted",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Admin access required",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Post not found",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
+        "summary" : "Edit a post",
+        "tags" : [ "Posts" ]
       }
     },
-    "/admin/posts/{id}/approve" : {
-      "put" : {
-        "tags" : [ "Admin - Post Management" ],
-        "summary" : "Approve a draft post and set publication date",
-        "operationId" : "approvePost",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ApproveContentHttpRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Post approved",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Admin access required",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Post not found",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
-      }
-    },
-    "/posts" : {
+    "/posts/{year}/{month}/{slug}" : {
       "get" : {
-        "tags" : [ "Posts" ],
-        "summary" : "List published posts",
-        "operationId" : "listPosts",
+        "operationId" : "getPost",
         "parameters" : [ {
-          "name" : "page",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "name" : "size",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 20
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Paginated list of published posts",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "tags" : [ "Posts" ],
-        "summary" : "Create a new blog post draft",
-        "operationId" : "createPost",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateContentHttpRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "description" : "Post created",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/CreateContentResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
-      }
-    },
-    "/posts/{year}/{month}/{slug}/comments" : {
-      "get" : {
-        "tags" : [ "Comments" ],
-        "summary" : "Get threaded comments for a post",
-        "operationId" : "getComments",
-        "parameters" : [ {
+          "in" : "path",
           "name" : "year",
-          "in" : "path",
           "required" : true,
           "schema" : {
-            "type" : "integer",
             "format" : "int32",
             "maximum" : 3000,
-            "minimum" : 2007
+            "minimum" : 2007,
+            "type" : "integer"
           }
         }, {
-          "name" : "month",
           "in" : "path",
+          "name" : "month",
           "required" : true,
           "schema" : {
-            "type" : "integer",
             "format" : "int32",
             "maximum" : 12,
-            "minimum" : 1
+            "minimum" : 1,
+            "type" : "integer"
           }
         }, {
-          "name" : "slug",
           "in" : "path",
+          "name" : "slug",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -596,54 +2090,111 @@
         } ],
         "responses" : {
           "200" : {
-            "description" : "Comment thread",
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CommentThreadResponse"
+                  "$ref" : "#/components/schemas/ContentDetail"
                 }
               }
-            }
+            },
+            "description" : "Post detail"
           },
           "404" : {
-            "description" : "Post not found",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post not found"
           }
-        }
-      },
-      "post" : {
-        "tags" : [ "Comments" ],
-        "summary" : "Add a comment to a post",
-        "operationId" : "createComment",
+        },
+        "summary" : "Get a published post by slug",
+        "tags" : [ "Posts" ]
+      }
+    },
+    "/posts/{year}/{month}/{slug}/comments" : {
+      "get" : {
+        "operationId" : "getComments",
         "parameters" : [ {
-          "name" : "year",
           "in" : "path",
+          "name" : "year",
           "required" : true,
           "schema" : {
-            "type" : "integer",
             "format" : "int32",
             "maximum" : 3000,
-            "minimum" : 2007
+            "minimum" : 2007,
+            "type" : "integer"
           }
         }, {
-          "name" : "month",
           "in" : "path",
+          "name" : "month",
           "required" : true,
           "schema" : {
-            "type" : "integer",
             "format" : "int32",
             "maximum" : 12,
-            "minimum" : 1
+            "minimum" : 1,
+            "type" : "integer"
           }
         }, {
-          "name" : "slug",
           "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CommentThreadResponse"
+                }
+              }
+            },
+            "description" : "Comment thread"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post not found"
+          }
+        },
+        "summary" : "Get threaded comments for a post",
+        "tags" : [ "Comments" ]
+      },
+      "post" : {
+        "operationId" : "createComment",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "maximum" : 3000,
+            "minimum" : 2007,
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "month",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "maximum" : 12,
+            "minimum" : 1,
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "slug",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -661,1597 +2212,46 @@
         },
         "responses" : {
           "201" : {
-            "description" : "Comment created",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CommentDetail"
                 }
               }
-            }
+            },
+            "description" : "Comment created"
           },
           "401" : {
-            "description" : "Not authenticated",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Not authenticated"
           },
           "404" : {
-            "description" : "Post or parent comment not found",
             "content" : {
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
-            }
+            },
+            "description" : "Post or parent comment not found"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
-        } ]
-      }
-    },
-    "/auth/verify" : {
-      "post" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Verify email address with token",
-        "operationId" : "verify",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/VerifyEmailRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Email verified",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid or expired verification token",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/reset-password" : {
-      "post" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Reset password using a reset token",
-        "operationId" : "resetPassword",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ResetPasswordRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Password reset successful",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid or expired reset token",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/register" : {
-      "post" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Register a new user account",
-        "operationId" : "register",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/RegistrationRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Registration successful",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserPrincipal"
-                }
-              }
-            }
-          },
-          "409" : {
-            "description" : "Username already taken",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid registration data",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/refresh" : {
-      "post" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Refresh an expired JWT token",
-        "operationId" : "refresh",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/TokenRefreshRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Token refreshed",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/LoginResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Invalid or expired refresh token",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/logout" : {
-      "post" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Log out the current session",
-        "operationId" : "logout",
-        "responses" : {
-          "204" : {
-            "description" : "Logged out"
-          }
-        }
-      }
-    },
-    "/auth/login" : {
-      "post" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Authenticate with username and password",
-        "operationId" : "login",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/LoginRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Login successful",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/LoginResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Invalid credentials",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/forgot-password" : {
-      "post" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Request a password reset email",
-        "operationId" : "forgotPassword",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ForgotPasswordRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Reset email sent if account exists",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid request",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/users/{username}/reset-password" : {
-      "post" : {
-        "tags" : [ "Admin - User Management" ],
-        "summary" : "Reset a user's password and generate a temporary one",
-        "operationId" : "resetPassword_1",
-        "parameters" : [ {
-          "name" : "username",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
         } ],
-        "responses" : {
-          "200" : {
-            "description" : "Password reset with temporary password",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PasswordResetResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Insufficient privileges",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid request",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
-      }
-    },
-    "/admin/categories" : {
-      "post" : {
-        "tags" : [ "Admin - Category Management" ],
-        "summary" : "Create a new category",
-        "operationId" : "createCategory",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateCategoryRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "description" : "Category created",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/CreateCategoryResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Admin access required",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
-      }
-    },
-    "/posts/{year}/{month}/{slug}" : {
-      "get" : {
-        "tags" : [ "Posts" ],
-        "summary" : "Get a published post by slug",
-        "operationId" : "getPost",
-        "parameters" : [ {
-          "name" : "year",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "maximum" : 3000,
-            "minimum" : 2007
-          }
-        }, {
-          "name" : "month",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "maximum" : 12,
-            "minimum" : 1
-          }
-        }, {
-          "name" : "slug",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Post detail",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Post not found",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/posts/search" : {
-      "get" : {
-        "tags" : [ "Posts" ],
-        "summary" : "Search published posts",
-        "operationId" : "searchPosts",
-        "parameters" : [ {
-          "name" : "q",
-          "in" : "query",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "page",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "name" : "size",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 20
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Search results",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/factoids" : {
-      "get" : {
-        "tags" : [ "factoid-controller" ],
-        "operationId" : "list",
-        "parameters" : [ {
-          "name" : "q",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "page",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "name" : "size",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 20
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PageFactoidSummaryResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/factoids/{selector}" : {
-      "get" : {
-        "tags" : [ "factoid-controller" ],
-        "operationId" : "get",
-        "parameters" : [ {
-          "name" : "selector",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/FactoidDetailResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/categories" : {
-      "get" : {
-        "tags" : [ "Categories" ],
-        "summary" : "List active categories",
-        "operationId" : "listCategories",
-        "responses" : {
-          "200" : {
-            "description" : "List of active categories",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/CategorySummary"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/blog/rss.xml" : {
-      "get" : {
-        "tags" : [ "rss-feed-controller" ],
-        "operationId" : "rssFeed",
-        "responses" : {
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/admin/posts/pending" : {
-      "get" : {
-        "tags" : [ "Admin - Post Management" ],
-        "summary" : "List pending draft posts for review",
-        "operationId" : "listPending",
-        "parameters" : [ {
-          "name" : "page",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 0
-          }
-        }, {
-          "name" : "size",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32",
-            "default" : 20
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Paginated list of draft posts",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Admin access required",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
-      }
-    },
-    "/auth/account" : {
-      "delete" : {
-        "tags" : [ "Authentication" ],
-        "summary" : "Soft-delete the authenticated user's account",
-        "operationId" : "deleteAccount",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DeleteAccountRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "description" : "Account deleted",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Insufficient privileges",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Invalid request",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
-      }
-    },
-    "/admin/comments/{id}" : {
-      "delete" : {
-        "tags" : [ "Admin - Comment Management" ],
-        "summary" : "Delete a comment (soft by default, hard with ?hard=true)",
-        "operationId" : "deleteComment",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        }, {
-          "name" : "hard",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Comment deleted",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Admin access required",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Comment not found",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
-      }
-    },
-    "/admin/categories/{id}" : {
-      "delete" : {
-        "tags" : [ "Admin - Category Management" ],
-        "summary" : "Soft-delete a category",
-        "operationId" : "deleteCategory",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Category deleted",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
-                }
-              }
-            }
-          },
-          "401" : {
-            "description" : "Not authenticated",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "403" : {
-            "description" : "Admin access required",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          },
-          "404" : {
-            "description" : "Category not found",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ]
+        "summary" : "Add a comment to a post",
+        "tags" : [ "Comments" ]
       }
     }
   },
-  "components" : {
-    "schemas" : {
-      "EditContentHttpRequest" : {
-        "type" : "object",
-        "properties" : {
-          "title" : {
-            "type" : "string"
-          },
-          "markdownSource" : {
-            "type" : "string"
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "categoryIds" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "format" : "uuid"
-            }
-          }
-        }
-      },
-      "ContentDetail" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "slug" : {
-            "type" : "string"
-          },
-          "renderedHtml" : {
-            "type" : "string"
-          },
-          "excerpt" : {
-            "type" : "string"
-          },
-          "authorId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "authorDisplayName" : {
-            "type" : "string"
-          },
-          "status" : {
-            "type" : "string",
-            "enum" : [ "DRAFT", "APPROVED" ]
-          },
-          "publishedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "updatedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "commentCount" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "categories" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        },
-        "required" : [ "authorDisplayName", "categories", "commentCount", "createdAt", "id", "renderedHtml", "slug", "status", "tags", "title", "updatedAt" ]
-      },
-      "ProblemDetail" : {
-        "type" : "object",
-        "properties" : {
-          "type" : {
-            "type" : "string",
-            "format" : "uri"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "status" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "detail" : {
-            "type" : "string"
-          },
-          "instance" : {
-            "type" : "string",
-            "format" : "uri"
-          },
-          "properties" : {
-            "type" : "object",
-            "additionalProperties" : { }
-          }
-        }
-      },
-      "EditCommentHttpRequest" : {
-        "type" : "object",
-        "properties" : {
-          "markdownSource" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "markdownSource" ]
-      },
-      "CommentDetail" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "postId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "authorDisplayName" : {
-            "type" : "string"
-          },
-          "renderedHtml" : {
-            "type" : "string"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        },
-        "required" : [ "authorDisplayName", "createdAt", "id", "postId", "renderedHtml" ]
-      },
-      "ChangePasswordRequest" : {
-        "type" : "object",
-        "properties" : {
-          "oldPassword" : {
-            "type" : "string"
-          },
-          "newPassword" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "newPassword", "oldPassword" ]
-      },
-      "RoleUpdateRequest" : {
-        "type" : "object",
-        "properties" : {
-          "newRole" : {
-            "type" : "string",
-            "enum" : [ "GUEST", "USER", "ADMIN", "SUPER_ADMIN" ]
-          }
-        },
-        "required" : [ "newRole" ]
-      },
-      "UserPrincipal" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "username" : {
-            "type" : "string"
-          },
-          "displayName" : {
-            "type" : "string"
-          },
-          "role" : {
-            "type" : "string",
-            "enum" : [ "GUEST", "USER", "ADMIN", "SUPER_ADMIN" ]
-          }
-        },
-        "required" : [ "displayName", "id", "role", "username" ]
-      },
-      "ApproveContentHttpRequest" : {
-        "type" : "object",
-        "properties" : {
-          "publishedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        },
-        "required" : [ "publishedAt" ]
-      },
-      "CreateContentHttpRequest" : {
-        "type" : "object",
-        "properties" : {
-          "title" : {
-            "type" : "string"
-          },
-          "markdownSource" : {
-            "type" : "string"
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "categoryIds" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "format" : "uuid"
-            }
-          }
-        },
-        "required" : [ "markdownSource", "title" ]
-      },
-      "CreateContentResponse" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "slug" : {
-            "type" : "string"
-          },
-          "excerpt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "type" : "string",
-            "enum" : [ "DRAFT", "APPROVED" ]
-          },
-          "authorId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "authorDisplayName" : {
-            "type" : "string"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "categories" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        },
-        "required" : [ "authorDisplayName", "authorId", "categories", "createdAt", "id", "slug", "status", "tags", "title" ]
-      },
-      "CreateCommentHttpRequest" : {
-        "type" : "object",
-        "properties" : {
-          "parentCommentId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "markdownSource" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "markdownSource" ]
-      },
-      "VerifyEmailRequest" : {
-        "type" : "object",
-        "properties" : {
-          "token" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "token" ]
-      },
-      "ResetPasswordRequest" : {
-        "type" : "object",
-        "properties" : {
-          "token" : {
-            "type" : "string"
-          },
-          "newPassword" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "newPassword", "token" ]
-      },
-      "RegistrationRequest" : {
-        "type" : "object",
-        "properties" : {
-          "username" : {
-            "type" : "string"
-          },
-          "email" : {
-            "type" : "string"
-          },
-          "displayName" : {
-            "type" : "string"
-          },
-          "password" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "displayName", "email", "password", "username" ]
-      },
-      "TokenRefreshRequest" : {
-        "type" : "object",
-        "properties" : {
-          "token" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "token" ]
-      },
-      "LoginResponse" : {
-        "type" : "object",
-        "properties" : {
-          "token" : {
-            "type" : "string"
-          },
-          "principal" : {
-            "$ref" : "#/components/schemas/UserPrincipal"
-          }
-        },
-        "required" : [ "principal", "token" ]
-      },
-      "LoginRequest" : {
-        "type" : "object",
-        "properties" : {
-          "username" : {
-            "type" : "string"
-          },
-          "password" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "password", "username" ]
-      },
-      "ForgotPasswordRequest" : {
-        "type" : "object",
-        "properties" : {
-          "email" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "email" ]
-      },
-      "PasswordResetResponse" : {
-        "type" : "object",
-        "properties" : {
-          "username" : {
-            "type" : "string"
-          },
-          "temporaryPassword" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "temporaryPassword", "username" ]
-      },
-      "CreateCategoryRequest" : {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "type" : "string"
-          },
-          "parentId" : {
-            "type" : "string",
-            "format" : "uuid"
-          }
-        },
-        "required" : [ "name" ]
-      },
-      "CreateCategoryResponse" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "slug" : {
-            "type" : "string"
-          },
-          "parentName" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "id", "name", "slug" ]
-      },
-      "ContentListResponse" : {
-        "type" : "object",
-        "properties" : {
-          "posts" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ContentSummary"
-            }
-          },
-          "page" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "totalPages" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "totalCount" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        },
-        "required" : [ "page", "posts", "totalCount", "totalPages" ]
-      },
-      "ContentSummary" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "title" : {
-            "type" : "string"
-          },
-          "slug" : {
-            "type" : "string"
-          },
-          "excerpt" : {
-            "type" : "string"
-          },
-          "authorDisplayName" : {
-            "type" : "string"
-          },
-          "publishedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "tags" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "categories" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        },
-        "required" : [ "authorDisplayName", "categories", "id", "slug", "tags", "title" ]
-      },
-      "CommentNode" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "authorId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "authorDisplayName" : {
-            "type" : "string"
-          },
-          "renderedHtml" : {
-            "type" : "string"
-          },
-          "createdAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "updatedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "deleted" : {
-            "type" : "boolean"
-          },
-          "editable" : {
-            "type" : "boolean"
-          },
-          "children" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CommentNode"
-            }
-          }
-        },
-        "required" : [ "authorDisplayName", "children", "createdAt", "deleted", "editable", "id", "renderedHtml", "updatedAt" ]
-      },
-      "CommentThreadResponse" : {
-        "type" : "object",
-        "properties" : {
-          "postId" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "comments" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CommentNode"
-            }
-          },
-          "totalActiveCount" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        },
-        "required" : [ "comments", "postId", "totalActiveCount" ]
-      },
-      "FactoidSummaryResponse" : {
-        "type" : "object",
-        "properties" : {
-          "selector" : {
-            "type" : "string"
-          },
-          "locked" : {
-            "type" : "boolean"
-          },
-          "updatedBy" : {
-            "type" : "string"
-          },
-          "updatedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          }
-        },
-        "required" : [ "locked", "selector", "updatedAt" ]
-      },
-      "PageFactoidSummaryResponse" : {
-        "type" : "object",
-        "properties" : {
-          "totalPages" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "totalElements" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "numberOfElements" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "first" : {
-            "type" : "boolean"
-          },
-          "last" : {
-            "type" : "boolean"
-          },
-          "sort" : {
-            "$ref" : "#/components/schemas/SortObject"
-          },
-          "pageable" : {
-            "$ref" : "#/components/schemas/PageableObject"
-          },
-          "size" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "content" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/FactoidSummaryResponse"
-            }
-          },
-          "number" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "empty" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "PageableObject" : {
-        "type" : "object",
-        "properties" : {
-          "sort" : {
-            "$ref" : "#/components/schemas/SortObject"
-          },
-          "paged" : {
-            "type" : "boolean"
-          },
-          "pageNumber" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "pageSize" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "unpaged" : {
-            "type" : "boolean"
-          },
-          "offset" : {
-            "type" : "integer",
-            "format" : "int64"
-          }
-        }
-      },
-      "SortObject" : {
-        "type" : "object",
-        "properties" : {
-          "sorted" : {
-            "type" : "boolean"
-          },
-          "unsorted" : {
-            "type" : "boolean"
-          },
-          "empty" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "FactoidAttributeResponse" : {
-        "type" : "object",
-        "properties" : {
-          "type" : {
-            "type" : "string"
-          },
-          "value" : {
-            "type" : "string"
-          },
-          "rendered" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "rendered", "type" ]
-      },
-      "FactoidDetailResponse" : {
-        "type" : "object",
-        "properties" : {
-          "selector" : {
-            "type" : "string"
-          },
-          "locked" : {
-            "type" : "boolean"
-          },
-          "updatedBy" : {
-            "type" : "string"
-          },
-          "updatedAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "attributes" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/FactoidAttributeResponse"
-            }
-          }
-        },
-        "required" : [ "attributes", "locked", "selector", "updatedAt" ]
-      },
-      "CategorySummary" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "slug" : {
-            "type" : "string"
-          },
-          "parentName" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "id", "name", "slug" ]
-      },
-      "DeleteAccountRequest" : {
-        "type" : "object",
-        "properties" : {
-          "username" : {
-            "type" : "string"
-          }
-        }
-      },
-      "ContentOperationConfirmation" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "message" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "id", "message" ]
-      }
-    },
-    "securitySchemes" : {
-      "bearerAuth" : {
-        "type" : "http",
-        "scheme" : "bearer",
-        "bearerFormat" : "JWT"
-      }
-    }
-  }
+  "servers" : [ {
+    "description" : "Local development server",
+    "url" : "http://localhost:8080"
+  } ]
 }

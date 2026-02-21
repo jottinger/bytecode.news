@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ArrayNode
@@ -46,8 +47,24 @@ class OpenApiGeneratorTest {
         servers.add(server)
         root.set<ArrayNode>("servers", servers)
 
+        sortKeys(root)
+
         val docsDir = Path.of("../docs")
         docsDir.toFile().mkdirs()
         docsDir.resolve("openapi.json").toFile().writeText(mapper.writeValueAsString(root))
+    }
+
+    /** Recursively sorts all object keys alphabetically for deterministic output */
+    private fun sortKeys(node: JsonNode) {
+        when (node) {
+            is ObjectNode -> {
+                node.fields().forEach { (_, value) -> sortKeys(value) }
+                val sorted = node.fieldNames().asSequence().sorted().toList()
+                val entries = sorted.map { it to node.get(it) }
+                node.removeAll()
+                entries.forEach { (key, value) -> node.set<JsonNode>(key, value) }
+            }
+            is ArrayNode -> node.forEach { sortKeys(it) }
+        }
     }
 }
