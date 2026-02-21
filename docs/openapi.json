@@ -2090,20 +2090,6 @@
             "type" : "integer",
             "format" : "int64"
           },
-          "size" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "content" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/FactoidSummaryResponse"
-            }
-          },
-          "number" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
           "numberOfElements" : {
             "type" : "integer",
             "format" : "int32"
@@ -2120,6 +2106,20 @@
           "pageable" : {
             "$ref" : "#/components/schemas/PageableObject"
           },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "content" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FactoidSummaryResponse"
+            }
+          },
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "empty" : {
             "type" : "boolean"
           }
@@ -2128,10 +2128,6 @@
       "PageableObject" : {
         "type" : "object",
         "properties" : {
-          "offset" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
           "sort" : {
             "$ref" : "#/components/schemas/SortObject"
           },
@@ -2148,19 +2144,23 @@
           },
           "unpaged" : {
             "type" : "boolean"
+          },
+          "offset" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
       "SortObject" : {
         "type" : "object",
         "properties" : {
-          "empty" : {
-            "type" : "boolean"
-          },
           "sorted" : {
             "type" : "boolean"
           },
           "unsorted" : {
+            "type" : "boolean"
+          },
+          "empty" : {
             "type" : "boolean"
           }
         }
