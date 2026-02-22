@@ -60,6 +60,7 @@
         <module>operation-sentiment</module>
         <module>operation-ask</module>
         <module>operation-21</module>
+        <module>operation-hangman</module>
         <module>service-factoid</module>
         <module>service-rss</module>
         <module>service-slack</module>
