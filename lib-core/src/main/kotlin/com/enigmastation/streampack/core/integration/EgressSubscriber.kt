@@ -44,12 +44,21 @@ abstract class EgressSubscriber : MessageHandler {
         result: OperationResult,
         provenance: Provenance,
     ): OperationResult {
-        if (result !is OperationResult.Success) return result
-        val text = result.payload.toString()
+        val text =
+            when (result) {
+                is OperationResult.Success -> result.payload.toString()
+                is OperationResult.Error -> result.message
+                is OperationResult.NotHandled -> return result
+            }
         if (!text.contains(REF_TOKEN_PREFIX)) return result
         val signal = resolveSignalCharacter(provenance)
         val rendered = text.replace(REF_TOKEN_REGEX) { match -> "$signal${match.groupValues[1]}" }
-        return if (rendered == text) result else result.copy(payload = rendered)
+        if (rendered == text) return result
+        return when (result) {
+            is OperationResult.Success -> result.copy(payload = rendered)
+            is OperationResult.Error -> result.copy(message = rendered)
+            is OperationResult.NotHandled -> result
+        }
     }
 
     companion object {
