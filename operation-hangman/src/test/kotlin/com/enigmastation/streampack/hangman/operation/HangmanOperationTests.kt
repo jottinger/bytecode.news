@@ -8,6 +8,7 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.hangman.model.HangmanGameState
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -98,7 +99,7 @@ class HangmanOperationTests {
 
     @Test
     fun `correct solve wins the game`() {
-        val state = HangmanGameState(word = "apple")
+        val state = HangmanGameState(word = "apple", guessedLetters = setOf('a', 'p'))
         stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
 
         val result = eventGateway.process(hangmanMessage("hangman solve apple"))
@@ -109,6 +110,31 @@ class HangmanOperationTests {
 
         val cleared = stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
         assertNull(cleared)
+    }
+
+    @Test
+    fun `solve with zero guesses gets suspicious reaction`() {
+        val state = HangmanGameState(word = "apple")
+        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+
+        val result = eventGateway.process(hangmanMessage("hangman solve apple"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        // Should NOT contain the normal "You got it" - should be a playful suspicion
+        assertFalse(payload.startsWith("You got it"))
+        assertTrue(payload.contains("apple"))
+    }
+
+    @Test
+    fun `solve with one guess gets congratulatory reaction`() {
+        val state = HangmanGameState(word = "apple", guessedLetters = setOf('a'))
+        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+
+        val result = eventGateway.process(hangmanMessage("hangman solve apple"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertFalse(payload.startsWith("You got it"))
+        assertTrue(payload.contains("apple"))
     }
 
     @Test

@@ -136,8 +136,9 @@ class HangmanOperation(
 
         if (guess.lowercase() == state.word) {
             stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
+            val reaction = solveReaction(state.guessedLetters.size)
             return OperationResult.Success(
-                "You got it! The word was '${state.word}'. Use '{{ref:hangman}}' to play again."
+                "$reaction The word was '${state.word}'. Use '{{ref:hangman}}' to play again."
             )
         }
 
@@ -169,6 +170,13 @@ class HangmanOperation(
         )
     }
 
+    private fun solveReaction(lettersGuessed: Int): String =
+        when (lettersGuessed) {
+            0 -> ZERO_GUESS_REACTIONS.random()
+            1 -> ONE_GUESS_REACTIONS.random()
+            else -> "You got it!"
+        }
+
     private fun formatState(state: HangmanGameState): String {
         val guessed =
             if (state.guessedLetters.isNotEmpty()) {
@@ -182,4 +190,29 @@ class HangmanOperation(
 
     private fun formatGuessed(state: HangmanGameState): String =
         state.guessedLetters.sorted().joinToString(", ")
+
+    companion object {
+        val ZERO_GUESS_REACTIONS =
+            listOf(
+                "Wait, what... how? That's amazing! ... or suspicious.",
+                "Wait, you got it without guessing a single letter? I'm not saying you cheated, but if I had eyebrows...",
+                "Zero letters guessed and you nailed it? That's either genius or espionage.",
+                "Impressive! Or suspicious. Let's go with impressively suspicious.",
+                "You solved it cold? I'll just be over here checking the server logs.",
+                "No guesses and a perfect solve? I want to believe.",
+                "Either you're psychic or you've been scanning a database.",
+                "Solved with no letters? You're putting a hangman out of business, mate.",
+            )
+
+        val ONE_GUESS_REACTIONS =
+            listOf(
+                "Nicely done! A single guess and you sussed it!",
+                "One letter and you cracked it? That's genuinely impressive!",
+                "Solved on a single guess? Well played, well played indeed.",
+                "One letter was all you needed? I bow to thee, sirrah.",
+                "A single letter and you saw the whole word? Nicely done!",
+                "One guess to solve it - you make this look easy.",
+                "You only needed one letter? You might want to play the lottery more.",
+            )
+    }
 }
