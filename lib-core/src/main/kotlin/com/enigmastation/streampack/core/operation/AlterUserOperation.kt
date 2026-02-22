@@ -1,18 +1,23 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.operation
 
+import com.enigmastation.streampack.core.extensions.compress
 import com.enigmastation.streampack.core.model.AlterUserRequest
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.repository.UserRepository
-import com.enigmastation.streampack.core.service.TypedOperation
+import com.enigmastation.streampack.core.service.TranslatingOperation
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
 /**
- * Modifies a user's fields. Replaces ChangeRoleOperation with richer authorization.
+ * Modifies a user's fields. Supports both typed requests (REST) and text commands (IRC/console).
+ *
+ * Text syntax: `alter user <username> <field> <value>`
+ *
+ * Fields: role, email, displayname, username
  *
  * Authorization hierarchy:
  * - ADMIN: can modify users with role < ADMIN, can set role to values < ADMIN
@@ -21,9 +26,37 @@ import org.springframework.stereotype.Component
  */
 @Component
 class AlterUserOperation(private val userRepository: UserRepository) :
-    TypedOperation<AlterUserRequest>(AlterUserRequest::class) {
+    TranslatingOperation<AlterUserRequest>(AlterUserRequest::class) {
 
     override val priority = 50
+
+    override fun translate(payload: String, message: Message<*>): AlterUserRequest? {
+        val text = payload.compress()
+        if (!text.lowercase().startsWith("alter user ")) return null
+        val parts =
+            text.removePrefix("alter user ").removePrefix("Alter user ").split(" ", limit = 3)
+        if (parts.size < 3) return null
+
+        val username = parts[0]
+        val field = parts[1].lowercase()
+        val value = parts[2]
+
+        return when (field) {
+            "role" -> {
+                val role =
+                    try {
+                        Role.valueOf(value.uppercase().replace("-", "_"))
+                    } catch (_: IllegalArgumentException) {
+                        return null
+                    }
+                AlterUserRequest(username = username, role = role)
+            }
+            "email" -> AlterUserRequest(username = username, email = value)
+            "displayname" -> AlterUserRequest(username = username, displayName = value)
+            "username" -> AlterUserRequest(username = username, newUsername = value)
+            else -> null
+        }
+    }
 
     override fun handle(payload: AlterUserRequest, message: Message<*>): OperationOutcome {
         val provenance =
