@@ -79,6 +79,20 @@ class AlterUserOperationTests {
             )
             .build()
 
+    private fun textMessage(text: String, asUser: UserPrincipal?) =
+        MessageBuilder.withPayload(text)
+            .setHeader(
+                Provenance.HEADER,
+                Provenance(
+                    protocol = Protocol.CONSOLE,
+                    serviceId = "",
+                    replyTo = "local",
+                    user = asUser,
+                ),
+            )
+            .setHeader(Provenance.ADDRESSED, true)
+            .build()
+
     @Test
     fun `super admin can change user role`() {
         val request = AlterUserRequest(username = "regularuser", role = Role.ADMIN)
@@ -192,5 +206,84 @@ class AlterUserOperationTests {
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Username already exists", (result as OperationResult.Error).message)
+    }
+
+    // -- Text translation path --
+
+    @Test
+    fun `text command changes role`() {
+        val result =
+            eventGateway.process(textMessage("alter user regularuser role admin", superAdmin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals(Role.ADMIN, principal.role)
+    }
+
+    @Test
+    fun `text command changes email`() {
+        val result =
+            eventGateway.process(
+                textMessage("alter user regularuser email new@example.com", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
+    fun `text command changes displayname`() {
+        val result =
+            eventGateway.process(
+                textMessage("alter user regularuser displayname New Display Name", superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals("New Display Name", principal.displayName)
+    }
+
+    @Test
+    fun `text command changes username`() {
+        val result =
+            eventGateway.process(textMessage("alter user regularuser username newname", superAdmin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals("newname", principal.username)
+    }
+
+    @Test
+    fun `text command with invalid role is not handled`() {
+        val result =
+            eventGateway.process(textMessage("alter user regularuser role bogus", superAdmin))
+
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `text command with unknown field is not handled`() {
+        val result =
+            eventGateway.process(textMessage("alter user regularuser phone 555-1234", superAdmin))
+
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `text command enforces authorization`() {
+        val result =
+            eventGateway.process(textMessage("alter user adminuser role user", regularUser))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Insufficient privileges", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `text command with hyphenated role works`() {
+        val result =
+            eventGateway.process(textMessage("alter user regularuser role super-admin", superAdmin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val principal = (result as OperationResult.Success).payload as UserPrincipal
+        assertEquals(Role.SUPER_ADMIN, principal.role)
     }
 }
