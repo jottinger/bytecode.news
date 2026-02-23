@@ -232,6 +232,23 @@ class HangmanOperationTests {
     }
 
     @Test
+    fun `non-ASCII letter guess is rejected`() {
+        val state = HangmanGameState(word = "apple")
+        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+
+        // Hebrew alef should not be accepted as a valid guess
+        val result = eventGateway.process(hangmanMessage("hangman \u05D0"))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        val message = (result as OperationResult.Error).message
+        assertTrue(message.contains("Unknown hangman command"))
+
+        // Game state should be untouched (no life lost)
+        val after = stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
+        assertNotNull(after)
+        assertEquals(6, (after!!["livesRemaining"] as Number).toInt())
+    }
+
+    @Test
     fun `incorrect solve on last life ends game`() {
         val state = HangmanGameState(word = "apple", livesRemaining = 1)
         stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
