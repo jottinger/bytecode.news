@@ -394,4 +394,36 @@ class BridgeOperationTests {
         val uri = (result as OperationResult.Success).payload.toString()
         assertTrue(uri.startsWith("irc://"))
     }
+
+    @Test
+    fun `bridge copies reaction-format action messages`() {
+        val sourceUri =
+            Provenance(protocol = Protocol.IRC, serviceId = "testnet", replyTo = "#test").encode()
+        bridgeService.copy(sourceUri, "irc://othernet/%23other")
+
+        val captured = mutableListOf<String>()
+        val handler =
+            org.springframework.messaging.MessageHandler { msg ->
+                val result = msg.payload
+                if (result is OperationResult.Success) {
+                    captured.add(result.payload.toString())
+                }
+            }
+        egressChannel.subscribe(handler)
+        try {
+            val message =
+                MessageBuilder.withPayload("* alice reacted with :thumbsup:")
+                    .setHeader(Provenance.HEADER, provenance("#test", "testnet"))
+                    .setHeader(Provenance.ADDRESSED, false)
+                    .setHeader(Provenance.IS_ACTION, true)
+                    .setHeader("nick", "alice")
+                    .build()
+            eventGateway.process(message)
+
+            assertTrue(captured.any { it.contains("<irc:alice>") })
+            assertTrue(captured.any { it.contains("* alice reacted with :thumbsup:") })
+        } finally {
+            egressChannel.unsubscribe(handler)
+        }
+    }
 }

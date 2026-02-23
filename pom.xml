@@ -20,7 +20,7 @@
         <logbackVersion>1.5.27</logbackVersion>
         <testcontainersVersion>2.0.3</testcontainersVersion>
         <springdocVersion>3.0.1</springdocVersion>
-        <surefireVersion>3.5.4</surefireVersion>
+        <surefireVersion>3.5.5</surefireVersion>
         <spotlessVersion>3.2.1</spotlessVersion>
         <jacocoVersion>0.8.14</jacocoVersion>
         <jjwtVersion>0.12.6</jjwtVersion>
@@ -436,7 +436,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.6.2</version>
                 <executions>
                     <execution>
                         <id>enforce-maven</id>

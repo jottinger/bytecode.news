@@ -12,7 +12,9 @@ import com.slack.api.bolt.AppConfig
 import com.slack.api.bolt.jakarta_socket_mode.SocketModeApp
 import com.slack.api.methods.MethodsClient
 import com.slack.api.model.event.MessageEvent
+import com.slack.api.model.event.ReactionAddedEvent
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.support.MessageBuilder
 
@@ -37,6 +39,9 @@ class SlackAdapter(
     private var botUserId: String? = null
     private val displayNameCache = ConcurrentHashMap<String, String>()
 
+    /** Tracks the last message per channel for reaction filtering */
+    internal val lastMessageByChannel = ConcurrentHashMap<String, LastSlackMessage>()
+
     /** Creates the Bolt app, registers event handlers, and starts the Socket Mode connection */
     fun connect() {
         val config = AppConfig.builder().singleTeamBotToken(botToken).build()
@@ -45,6 +50,12 @@ class SlackAdapter(
         boltApp.event(MessageEvent::class.java) { payload, ctx ->
             val event = payload.event
             Thread.startVirtualThread { handleMessage(event) }
+            ctx.ack()
+        }
+
+        boltApp.event(ReactionAddedEvent::class.java) { payload, ctx ->
+            val event = payload.event
+            Thread.startVirtualThread { handleReaction(event) }
             ctx.ack()
         }
 
@@ -227,9 +238,51 @@ class SlackAdapter(
             val isAddressed = isDm || addressedText != null
 
             dispatch(addressedText ?: payload, provenance, isAddressed, nick, isAction)
+
+            // Track last message for reaction relay filtering (guild channels only)
+            if (!isDm) {
+                lastMessageByChannel[channelId] = LastSlackMessage(event.ts, AtomicInteger(0))
+            }
         } catch (e: Exception) {
             logger.error("Error processing Slack message on '{}': {}", workspaceName, e.message)
         }
+    }
+
+    /** Processes an incoming Slack reaction event */
+    private fun handleReaction(event: ReactionAddedEvent) {
+        try {
+            val item = event.item ?: return
+            if (item.type != "message") return
+
+            val channelId = item.channel ?: return
+            val messageTs = item.ts ?: return
+            val slackUserId = event.user ?: return
+
+            if (!shouldRelayReaction(channelId, messageTs)) return
+
+            val nick = resolveDisplayName(slackUserId)
+            val emojiName = event.reaction ?: return
+
+            val provenance =
+                Provenance(
+                    protocol = Protocol.SLACK,
+                    serviceId = workspaceName,
+                    replyTo = channelId,
+                    metadata = buildMap { botUserId?.let { put(Provenance.BOT_NICK, it) } },
+                )
+
+            val payload = "* $nick reacted with :$emojiName:"
+            dispatch(payload, provenance, addressed = false, nick = nick, isAction = true)
+        } catch (e: Exception) {
+            logger.error("Error processing Slack reaction on '{}': {}", workspaceName, e.message)
+        }
+    }
+
+    /** Returns true if a reaction on this message in this channel should be relayed */
+    internal fun shouldRelayReaction(channelKey: String, messageTs: String): Boolean {
+        val tracked = lastMessageByChannel[channelKey] ?: return false
+        if (tracked.messageTs != messageTs) return false
+        return tracked.reactionCount.incrementAndGet() <= MAX_REACTIONS_PER_MESSAGE
     }
 
     /**
@@ -272,4 +325,14 @@ class SlackAdapter(
         if (isAction) builder.setHeader(Provenance.IS_ACTION, true)
         eventGateway.send(builder.build())
     }
+
+    companion object {
+        const val MAX_REACTIONS_PER_MESSAGE = 5
+    }
 }
+
+/** Tracks the last message in a channel for reaction relay filtering */
+internal class LastSlackMessage(
+    val messageTs: String,
+    val reactionCount: AtomicInteger = AtomicInteger(0),
+)
