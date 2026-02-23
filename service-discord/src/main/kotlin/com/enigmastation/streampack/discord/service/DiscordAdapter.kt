@@ -8,9 +8,12 @@ import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.discord.config.DiscordProperties
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent
@@ -40,6 +43,9 @@ class DiscordAdapter(
     private val logger = LoggerFactory.getLogger(DiscordAdapter::class.java)
     private lateinit var jda: JDA
 
+    /** Tracks the last message per channel for reaction filtering */
+    internal val lastMessageByChannel = ConcurrentHashMap<String, LastMessage>()
+
     override fun afterPropertiesSet() {
         if (properties.token.isBlank()) {
             logger.error("Discord token is blank, cannot connect")
@@ -48,7 +54,7 @@ class DiscordAdapter(
         logger.info("Connecting to Discord")
         jda =
             JDABuilder.createDefault(properties.token)
-                .enableIntents(GatewayIntent.MESSAGE_CONTENT)
+                .enableIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGE_REACTIONS)
                 .addEventListeners(this)
                 .build()
         jda.awaitReady()
@@ -127,6 +133,9 @@ class DiscordAdapter(
             val addressedText = extractAddressedText(rawText, event)
             val isAddressed = addressedText != null
             dispatch(addressedText ?: rawText, provenance, isAddressed, nick, displayText)
+
+            // Track last message for reaction relay filtering
+            lastMessageByChannel[event.channel.id] = LastMessage(event.messageId, AtomicInteger(0))
         } else {
             // Direct message
             val user = userResolutionService.resolve(Protocol.DISCORD, "", event.author.id)
@@ -141,6 +150,48 @@ class DiscordAdapter(
             val displayText = event.message.contentDisplay
             dispatch(rawText, provenance, addressed = true, event.author.effectiveName, displayText)
         }
+    }
+
+    override fun onMessageReactionAdd(event: MessageReactionAddEvent) {
+        if (!event.isFromGuild) return
+        if (event.userId == event.jda.selfUser.id) return
+        if (event.user?.isBot == true) return
+
+        Thread.startVirtualThread {
+            try {
+                handleReaction(event)
+            } catch (e: Exception) {
+                logger.error("Error processing Discord reaction: {}", e.message)
+            }
+        }
+    }
+
+    private fun handleReaction(event: MessageReactionAddEvent) {
+        val channelKey = event.channel.id
+        if (!shouldRelayReaction(channelKey, event.messageId)) return
+
+        val guild = event.guild
+        val channelName = "#${event.channel.name}"
+        val nick = event.member?.effectiveName ?: event.user?.effectiveName ?: "unknown"
+        val emojiName = event.emoji.name
+        val provenance =
+            Provenance(
+                protocol = Protocol.DISCORD,
+                serviceId = guild.id,
+                replyTo = channelName,
+                metadata =
+                    mapOf(Provenance.BOT_NICK to event.jda.selfUser.name, "guildName" to guild.name),
+            )
+
+        val payload = "* $nick reacted with :$emojiName:"
+        dispatch(payload, provenance, addressed = false, nick = nick, isAction = true)
+    }
+
+    /** Returns true if a reaction on this message in this channel should be relayed */
+    internal fun shouldRelayReaction(channelKey: String, messageId: String): Boolean {
+        val tracked = lastMessageByChannel[channelKey] ?: return false
+        if (tracked.messageId != messageId) return false
+        return tracked.reactionCount.incrementAndGet() <= MAX_REACTIONS_PER_MESSAGE
     }
 
     /** Detects whether a message is addressed to the bot via signal character or @mention */
@@ -170,6 +221,7 @@ class DiscordAdapter(
         addressed: Boolean,
         nick: String? = null,
         displayText: String? = null,
+        isAction: Boolean = false,
     ) {
         val builder =
             MessageBuilder.withPayload(payload as Any)
@@ -177,6 +229,7 @@ class DiscordAdapter(
                 .setHeader(Provenance.ADDRESSED, addressed)
         if (nick != null) builder.setHeader("nick", nick)
         if (displayText != null) builder.setHeader("displayText", displayText)
+        if (isAction) builder.setHeader(Provenance.IS_ACTION, true)
         eventGateway.send(builder.build())
     }
 
@@ -231,4 +284,14 @@ class DiscordAdapter(
         }
         jda.openPrivateChannelById(userId).queue { channel -> channel.sendMessage(text).queue() }
     }
+
+    companion object {
+        const val MAX_REACTIONS_PER_MESSAGE = 5
+    }
 }
+
+/** Tracks the last message in a channel for reaction relay filtering */
+internal class LastMessage(
+    val messageId: String,
+    val reactionCount: AtomicInteger = AtomicInteger(0),
+)
