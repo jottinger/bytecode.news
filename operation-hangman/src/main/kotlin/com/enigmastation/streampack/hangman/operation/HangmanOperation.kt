@@ -43,7 +43,7 @@ class HangmanOperation(
                 solve(provenanceUri, args.substringAfter("solve ").trim())
             args.lowercase().startsWith("block ") -> null
             args.lowercase().startsWith("unblock ") -> null
-            args.length == 1 && args[0].isLetter() ->
+            args.length == 1 && (args[0] in 'a'..'z' || args[0] in 'A'..'Z') ->
                 guessLetter(provenanceUri, args[0].lowercaseChar())
             else ->
                 OperationResult.Error(
