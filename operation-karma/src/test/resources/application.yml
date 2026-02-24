@@ -3,6 +3,8 @@ spring:
     allow-bean-definition-overriding: true
   datasource:
     url: jdbc:tc:postgresql:17://nevet
+    hikari:
+      maximum-pool-size: 2
   jpa:
     hibernate:
       ddl-auto: validate
@@ -20,13 +22,6 @@ streampack:
   karma:
     immune-subjects:
       - immune_bot
-
-jakarta:
-  persistence:
-    jdbc:
-      url: jdbc:tc:postgresql:17://nevet
-hibernate:
-  dialect: org.hibernate.dialect.PostgreSQLDialect
 
 springdoc:
   api-docs:

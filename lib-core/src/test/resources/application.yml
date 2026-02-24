@@ -1,6 +1,8 @@
 spring:
   datasource:
     url: jdbc:tc:postgresql:17://nevet
+    hikari:
+      maximum-pool-size: 2
   jpa:
     hibernate:
       ddl-auto: validate
@@ -18,10 +20,3 @@ spring:
 
 streampack:
   base-url: http://localhost:8080
-
-jakarta:
-  persistence:
-    jdbc:
-      url: jdbc:tc:postgresql:17://nevet
-hibernate:
-  dialect: org.hibernate.dialect.PostgreSQLDialect

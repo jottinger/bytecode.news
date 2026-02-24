@@ -30,4 +30,15 @@ class EventChannelConfiguration {
     fun egressChannel(): PublishSubscribeChannel {
         return PublishSubscribeChannel()
     }
+
+    /**
+     * Tick channel for 1-second heartbeat pulses. TickListener beans subscribe to this channel to
+     * implement timed behavior (polling intervals, countdowns, delayed delivery). Payload is an
+     * Instant representing when the tick was emitted.
+     */
+    @Bean
+    @ConditionalOnMissingBean(name = ["tickChannel"])
+    fun tickChannel(): PublishSubscribeChannel {
+        return PublishSubscribeChannel()
+    }
 }

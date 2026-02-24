@@ -7,6 +7,8 @@ spring:
     allow-bean-definition-overriding: true
   datasource:
     url: jdbc:tc:postgresql:17://nevet
+    hikari:
+      maximum-pool-size: 2
   jpa:
     hibernate:
       ddl-auto: validate
@@ -24,13 +26,6 @@ streampack:
   ai:
     enabled: true
     api-key: ${ANTHROPIC_API_KEY:}
-
-jakarta:
-  persistence:
-    jdbc:
-      url: jdbc:tc:postgresql:17://nevet
-hibernate:
-  dialect: org.hibernate.dialect.PostgreSQLDialect
 
 springdoc:
   api-docs:
