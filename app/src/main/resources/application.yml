@@ -55,6 +55,17 @@ streampack:
   ai:
     enabled: ${AI_ENABLED:false}
     api-key: ${ANTHROPIC_API_KEY:}
+management:
+  info:
+    git:
+      mode: full
+    build:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: info,health
+
 springdoc:
   api-docs:
     enabled: true
