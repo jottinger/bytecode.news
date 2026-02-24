@@ -7,23 +7,23 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.hangman.model.HangmanGameState
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertInstanceOf
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
 
 @SpringBootTest
 class HangmanOperationTests {
+    val logger = LoggerFactory.getLogger(HangmanOperationTests::class.java)
 
-    @Autowired lateinit var eventGateway: EventGateway
-    @Autowired lateinit var stateService: ProvenanceStateService
+    @Autowired
+    lateinit var eventGateway: EventGateway
+
+    @Autowired
+    lateinit var stateService: ProvenanceStateService
 
     private val provenance =
         Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
@@ -240,7 +240,8 @@ class HangmanOperationTests {
         val result = eventGateway.process(hangmanMessage("hangman \u05D0"))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val message = (result as OperationResult.Error).message
-        assertTrue(message.contains("Unknown hangman command"))
+        logger.info(message)
+        assertTrue(message.contains("English alphabet!"))
 
         // Game state should be untouched (no life lost)
         val after = stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)

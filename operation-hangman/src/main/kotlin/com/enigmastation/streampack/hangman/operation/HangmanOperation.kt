@@ -47,6 +47,8 @@ class HangmanOperation(
             args.length == 1 && (args[0] in 'a'..'z' || args[0] in 'A'..'Z') ->
                 guessLetter(provenanceUri, args[0].lowercaseChar())
 
+            args.length == 1 ->
+                OperationResult.Error("All the letters I use are in the English alphabet!")
             else ->
                 OperationResult.Error(
                     "Unknown hangman command. Use '{{ref:hangman}}' to start, " +
