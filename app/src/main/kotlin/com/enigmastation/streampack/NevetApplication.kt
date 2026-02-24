@@ -1,8 +1,11 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack
 
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan
@@ -20,6 +23,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 class NevetApplication(
     @Autowired(required = false) private val gitProperties: GitProperties?,
     @Autowired(required = false) private val buildProperties: BuildProperties?,
+    @Value("\${spring.application.name:}") private val applicationName: String,
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -28,7 +32,7 @@ class NevetApplication(
     fun logVersionOnStartup() {
         val parts = mutableListOf<String>()
 
-        val name = buildProperties?.name ?: "Nevet"
+        val name = applicationName.ifBlank { buildProperties?.name ?: "streampack" }
         val version = buildProperties?.version
         parts.add(if (version != null) "$name $version" else name)
 
@@ -40,7 +44,18 @@ class NevetApplication(
             parts.add("development build")
         }
 
+        val buildTime = buildProperties?.time ?: gitProperties?.commitTime
+        if (buildTime != null) {
+            val formatted = BUILD_TIME_FORMAT.format(buildTime)
+            parts.add("Built $formatted")
+        }
+
         logger.info("Started: {}", parts.joinToString(" | "))
+    }
+
+    companion object {
+        private val BUILD_TIME_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.systemDefault())
     }
 }
 

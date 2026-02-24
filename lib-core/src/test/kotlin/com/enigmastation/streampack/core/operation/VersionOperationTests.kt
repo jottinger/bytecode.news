@@ -90,8 +90,8 @@ class VersionOperationTests {
 
     @Test
     fun `graceful degradation when no build metadata is available`() {
-        val operation = VersionOperation(null, null)
+        val operation = VersionOperation(null, null, "")
         val versionString = operation.buildVersionString()
-        assertEquals("Nevet | development build", versionString)
+        assertEquals("streampack | development build", versionString)
     }
 }

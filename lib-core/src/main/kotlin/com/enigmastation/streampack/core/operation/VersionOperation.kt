@@ -4,7 +4,10 @@ package com.enigmastation.streampack.core.operation
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.service.TypedOperation
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.info.BuildProperties
 import org.springframework.boot.info.GitProperties
 import org.springframework.messaging.Message
@@ -15,6 +18,7 @@ import org.springframework.stereotype.Component
 class VersionOperation(
     @Autowired(required = false) private val gitProperties: GitProperties?,
     @Autowired(required = false) private val buildProperties: BuildProperties?,
+    @Value("\${spring.application.name:}") private val applicationName: String,
 ) : TypedOperation<String>(String::class) {
 
     override val operationGroup: String = "version"
@@ -31,7 +35,7 @@ class VersionOperation(
     fun buildVersionString(): String {
         val parts = mutableListOf<String>()
 
-        val name = buildProperties?.name ?: "Nevet"
+        val name = applicationName.ifBlank { buildProperties?.name ?: "streampack" }
         val version = buildProperties?.version
         parts.add(if (version != null) "$name $version" else name)
 
@@ -43,7 +47,8 @@ class VersionOperation(
 
         val buildTime = buildProperties?.time ?: gitProperties?.commitTime
         if (buildTime != null) {
-            parts.add("Built $buildTime")
+            val formatted = BUILD_TIME_FORMAT.format(buildTime)
+            parts.add("Built $formatted")
         }
 
         if (parts.size == 1 && version == null) {
@@ -51,5 +56,10 @@ class VersionOperation(
         }
 
         return parts.joinToString(" | ")
+    }
+
+    companion object {
+        private val BUILD_TIME_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z").withZone(ZoneId.systemDefault())
     }
 }
