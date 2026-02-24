@@ -8,6 +8,7 @@ import com.enigmastation.streampack.github.repository.GitHubReleaseRepository
 import com.enigmastation.streampack.github.repository.GitHubRepoRepository
 import com.enigmastation.streampack.github.repository.GitHubSubscriptionRepository
 import com.enigmastation.streampack.polling.service.EgressNotifier
+import jakarta.annotation.PostConstruct
 import java.time.Duration
 import java.time.Instant
 import org.slf4j.LoggerFactory
@@ -27,7 +28,13 @@ class GitHubPollingService(
     private val gitHubProperties: GitHubProperties,
 ) : TickListener {
     private val logger = LoggerFactory.getLogger(GitHubPollingService::class.java)
-    private var lastPollTime: Instant = Instant.EPOCH
+    private lateinit var lastPollTime: Instant
+
+    /** Delay first poll by 30 seconds so protocol adapters can finish connecting */
+    @PostConstruct
+    fun initLastPollTime() {
+        lastPollTime = Instant.now().minus(gitHubProperties.pollInterval).plusSeconds(30)
+    }
 
     override fun onTick(now: Instant) {
         if (Duration.between(lastPollTime, now) >= gitHubProperties.pollInterval) {
