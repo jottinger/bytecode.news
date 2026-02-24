@@ -19,11 +19,9 @@ import org.springframework.messaging.support.MessageBuilder
 class HangmanOperationTests {
     val logger = LoggerFactory.getLogger(HangmanOperationTests::class.java)
 
-    @Autowired
-    lateinit var eventGateway: EventGateway
+    @Autowired lateinit var eventGateway: EventGateway
 
-    @Autowired
-    lateinit var stateService: ProvenanceStateService
+    @Autowired lateinit var stateService: ProvenanceStateService
 
     private val provenance =
         Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
