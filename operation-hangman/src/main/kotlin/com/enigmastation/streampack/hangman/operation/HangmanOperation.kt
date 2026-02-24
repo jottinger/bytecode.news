@@ -122,7 +122,13 @@ class HangmanOperation(
                 "Hangman: ${updated.maskedWord} " +
                     "(${updated.livesRemaining}/${HangmanGameState.MAX_LIVES} lives, " +
                     "guessed: ${formatGuessed(updated)}) -- No '$letter'. " +
-                    "${updated.livesRemaining} lives left."
+                    "${updated.livesRemaining} ${
+                            if (updated.livesRemaining != 1) {
+                                "lives"
+                            } else {
+                                "life"
+                            }
+                        } left."
             )
         }
     }
@@ -187,13 +193,7 @@ class HangmanOperation(
                 ""
             }
         return "Hangman: ${state.maskedWord} " +
-            "(${state.livesRemaining}/${HangmanGameState.MAX_LIVES} ${
-                    if (state.livesRemaining != 1) {
-                        "lives"
-                    } else {
-                        "life"
-                    }
-                }$guessed)"
+            "(${state.livesRemaining}/${HangmanGameState.MAX_LIVES} lives$guessed)"
     }
 
     private fun formatGuessed(state: HangmanGameState): String =
