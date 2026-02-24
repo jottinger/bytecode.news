@@ -1,18 +1,22 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.github.service
 
+import com.enigmastation.streampack.core.integration.TickListener
+import com.enigmastation.streampack.github.config.GitHubProperties
 import com.enigmastation.streampack.github.entity.GitHubRelease
 import com.enigmastation.streampack.github.repository.GitHubReleaseRepository
 import com.enigmastation.streampack.github.repository.GitHubRepoRepository
 import com.enigmastation.streampack.github.repository.GitHubSubscriptionRepository
 import com.enigmastation.streampack.polling.service.EgressNotifier
+import java.time.Duration
 import java.time.Instant
 import org.slf4j.LoggerFactory
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/** Periodically polls active GitHub repos, detects new items, and notifies subscribers */
+/**
+ * Polls active GitHub repos on a tick-driven interval, detects new items, and notifies subscribers
+ */
 @Service
 class GitHubPollingService(
     private val repoRepository: GitHubRepoRepository,
@@ -20,10 +24,19 @@ class GitHubPollingService(
     private val subscriptionRepository: GitHubSubscriptionRepository,
     private val apiClient: GitHubApiClient,
     private val egressNotifier: EgressNotifier,
-) {
+    private val gitHubProperties: GitHubProperties,
+) : TickListener {
     private val logger = LoggerFactory.getLogger(GitHubPollingService::class.java)
+    private var lastPollTime: Instant = Instant.EPOCH
 
-    @Scheduled(fixedDelayString = "\${streampack.github.poll-interval:PT60M}")
+    override fun onTick(now: Instant) {
+        if (Duration.between(lastPollTime, now) >= gitHubProperties.pollInterval) {
+            lastPollTime = now
+            pollAllRepos()
+        }
+    }
+
+    @Transactional
     fun pollAllRepos() {
         val repos = repoRepository.findAllByActiveTrue()
         logger.debug("Polling {} active GitHub repos", repos.size)
@@ -43,6 +56,12 @@ class GitHubPollingService(
         val owner = repo.owner
         val name = repo.name
         val token = repo.token
+        logger.info(
+            "Polling repo {} (since issue {}, PR {})",
+            name,
+            repo.highestIssueNumber,
+            repo.highestPrNumber,
+        )
 
         val newIssues = apiClient.fetchIssues(owner, name, token, repo.highestIssueNumber)
         val newPulls = apiClient.fetchPulls(owner, name, token, repo.highestPrNumber)

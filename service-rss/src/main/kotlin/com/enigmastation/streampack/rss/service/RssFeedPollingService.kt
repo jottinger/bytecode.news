@@ -1,20 +1,24 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.rss.service
 
+import com.enigmastation.streampack.core.integration.TickListener
 import com.enigmastation.streampack.polling.service.EgressNotifier
+import com.enigmastation.streampack.rss.config.RssProperties
 import com.enigmastation.streampack.rss.entity.RssEntry
 import com.enigmastation.streampack.rss.entity.RssFeed
 import com.enigmastation.streampack.rss.repository.RssEntryRepository
 import com.enigmastation.streampack.rss.repository.RssFeedRepository
 import com.enigmastation.streampack.rss.repository.RssFeedSubscriptionRepository
 import com.rometools.rome.feed.synd.SyndEntry
+import java.time.Duration
 import java.time.Instant
 import org.slf4j.LoggerFactory
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/** Periodically polls all active feeds, stores new entries, and notifies subscribers via egress */
+/**
+ * Polls all active feeds on a tick-driven interval, stores new entries, and notifies subscribers
+ */
 @Service
 class RssFeedPollingService(
     private val feedRepository: RssFeedRepository,
@@ -22,10 +26,18 @@ class RssFeedPollingService(
     private val subscriptionRepository: RssFeedSubscriptionRepository,
     private val discoveryService: FeedDiscoveryService,
     private val egressNotifier: EgressNotifier,
-) {
+    private val rssProperties: RssProperties,
+) : TickListener {
     private val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java)
+    private var lastPollTime: Instant = Instant.EPOCH
 
-    @Scheduled(fixedDelayString = "\${streampack.rss.poll-interval:PT5M}")
+    override fun onTick(now: Instant) {
+        if (Duration.between(lastPollTime, now) >= rssProperties.pollInterval) {
+            lastPollTime = now
+            pollAllFeeds()
+        }
+    }
+
     fun pollAllFeeds() {
         val feeds = feedRepository.findAllByActiveTrue()
         logger.debug("Polling {} active feeds", feeds.size)
