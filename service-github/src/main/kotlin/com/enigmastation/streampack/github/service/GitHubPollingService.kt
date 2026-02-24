@@ -36,6 +36,7 @@ class GitHubPollingService(
         }
     }
 
+    @Transactional
     fun pollAllRepos() {
         val repos = repoRepository.findAllByActiveTrue()
         logger.debug("Polling {} active GitHub repos", repos.size)
@@ -55,6 +56,12 @@ class GitHubPollingService(
         val owner = repo.owner
         val name = repo.name
         val token = repo.token
+        logger.info(
+            "Polling repo {} (since issue {}, PR {})",
+            name,
+            repo.highestIssueNumber,
+            repo.highestPrNumber,
+        )
 
         val newIssues = apiClient.fetchIssues(owner, name, token, repo.highestIssueNumber)
         val newPulls = apiClient.fetchPulls(owner, name, token, repo.highestPrNumber)
