@@ -41,10 +41,12 @@ class HangmanOperation(
             args.lowercase() == "concede" -> concede(provenanceUri)
             args.lowercase().startsWith("solve ") ->
                 solve(provenanceUri, args.substringAfter("solve ").trim())
+
             args.lowercase().startsWith("block ") -> null
             args.lowercase().startsWith("unblock ") -> null
             args.length == 1 && (args[0] in 'a'..'z' || args[0] in 'A'..'Z') ->
                 guessLetter(provenanceUri, args[0].lowercaseChar())
+
             else ->
                 OperationResult.Error(
                     "Unknown hangman command. Use '{{ref:hangman}}' to start, " +
@@ -185,7 +187,13 @@ class HangmanOperation(
                 ""
             }
         return "Hangman: ${state.maskedWord} " +
-            "(${state.livesRemaining}/${HangmanGameState.MAX_LIVES} lives$guessed)"
+            "(${state.livesRemaining}/${HangmanGameState.MAX_LIVES} ${
+                    if (state.livesRemaining != 1) {
+                        "lives"
+                    } else {
+                        "life"
+                    }
+                }$guessed)"
     }
 
     private fun formatGuessed(state: HangmanGameState): String =
