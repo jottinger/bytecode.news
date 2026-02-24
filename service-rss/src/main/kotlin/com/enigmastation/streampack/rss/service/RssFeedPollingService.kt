@@ -10,6 +10,7 @@ import com.enigmastation.streampack.rss.repository.RssEntryRepository
 import com.enigmastation.streampack.rss.repository.RssFeedRepository
 import com.enigmastation.streampack.rss.repository.RssFeedSubscriptionRepository
 import com.rometools.rome.feed.synd.SyndEntry
+import jakarta.annotation.PostConstruct
 import java.time.Duration
 import java.time.Instant
 import org.slf4j.LoggerFactory
@@ -29,7 +30,13 @@ class RssFeedPollingService(
     private val rssProperties: RssProperties,
 ) : TickListener {
     private val logger = LoggerFactory.getLogger(RssFeedPollingService::class.java)
-    private var lastPollTime: Instant = Instant.EPOCH
+    private lateinit var lastPollTime: Instant
+
+    /** Delay first poll by 30 seconds so protocol adapters can finish connecting */
+    @PostConstruct
+    fun initLastPollTime() {
+        lastPollTime = Instant.now().minus(rssProperties.pollInterval).plusSeconds(30)
+    }
 
     override fun onTick(now: Instant) {
         if (Duration.between(lastPollTime, now) >= rssProperties.pollInterval) {
