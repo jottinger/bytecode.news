@@ -35,7 +35,7 @@ Always returns success to prevent account enumeration.
 
 **Constraints:**
 - Maximum 3 active (unused, unexpired) codes per email address
-- Codes expire after 5 minutes
+- Codes expire after 10 minutes (configurable via `streampack.otp.expiration-minutes`)
 
 **HTTP mapping:**
 ```
@@ -115,33 +115,38 @@ Content-Type: application/json
 
 ---
 
-### Delete Account
+### Erase Account
 
-Soft-deletes a user account (sets `deleted = true`).
-Supports self-deletion and admin-initiated deletion.
+Permanently erases a user's identity.
+Creates an anonymous sentinel user, reassigns all posts and comments to the sentinel, deletes OTP codes, and hard-deletes the original user record.
+Service bindings and verification tokens are removed via FK cascade.
+
+The sentinel preserves content grouping: an admin can still identify "these 47 comments came from the same erased account" and bulk-delete them via the purge operation.
 
 **Request:** `DeleteAccountRequest`
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `username` | String? | no | Target username. Null means self-deletion. |
+| `username` | String? | no | Target username. Null means self-erasure. |
 
 **Response:** `"Account deleted"` (string)
 
 **Auth:** Required.
-Self-deletion: any authenticated user (username omitted or matches own).
-Deleting others: `ADMIN` or `SUPER_ADMIN` only.
+Self-erasure: any authenticated user (username omitted or matches own).
+Erasing others: `ADMIN` or `SUPER_ADMIN` only.
 
 **Constraints:**
-- Non-admin users can only delete themselves
-- Super admin accounts cannot be deleted by other users (even admins)
-- Super admins can self-delete (use with caution)
+- Non-admin users can only erase themselves
+- Super admin accounts cannot be erased by other admins
+- Super admins can self-erase (use with caution)
+- Users with ERASED status cannot be erased again
 
 **Errors:**
 - `"Not authenticated"` - no user on provenance
-- `"Insufficient privileges"` - non-admin attempting to delete another user
+- `"Insufficient privileges"` - non-admin attempting to erase another user
 - `"User not found"` - target username does not exist
-- `"Cannot delete a super admin"` - admin attempting to delete a super admin
+- `"User is already erased"` - target has already been erased
+- `"Cannot delete a super admin"` - admin attempting to erase a super admin
 
 **HTTP mapping:**
 ```
@@ -149,12 +154,153 @@ DELETE /auth/account
 Authorization: Bearer <token>
 Content-Type: application/json
 
-{"username": "targetuser"}
+{}
 ```
 
-Self-deletion:
+Admin-initiated erasure:
 ```
-DELETE /auth/account
+DELETE /admin/users/{username}
+Authorization: Bearer <token>
+```
+
+---
+
+### Export User Data
+
+Exports a user's data as JSON for GDPR data portability.
+Authenticated users export their own data.
+Admins can export any user's data (for review before erasure).
+
+**Request:** `ExportUserDataRequest`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | String? | no | Target username. Null means export own data. |
+
+**Response:** `UserDataExport`
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `profile` | ProfileExport | Username, email, display name, role, creation date |
+| `posts` | List<PostExport> | Title, markdown source, status, creation and publication dates |
+| `comments` | List<CommentExport> | Target post title, markdown source, creation date |
+
+**Auth:** Required.
+Self-export: any authenticated user.
+Exporting others: `ADMIN` or `SUPER_ADMIN` only.
+
+**Errors:**
+- `"Not authenticated"` - no user on provenance
+- `"Insufficient privileges"` - non-admin attempting to export another user's data
+- `"User not found"` - target username does not exist
+
+**HTTP mapping:**
+```
+GET /auth/export
+Authorization: Bearer <token>
+```
+
+Admin export:
+```
+GET /admin/users/{username}/export
+Authorization: Bearer <token>
+```
+
+---
+
+### Suspend Account
+
+Freezes a user account so they cannot log in.
+Content remains attributed and navigable for admin review.
+Reversible via unsuspend.
+
+**Request:** `SuspendAccountRequest`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | String | yes | Target username |
+
+**Response:** `"Account suspended"` (string)
+
+**Auth:** Required. `ADMIN` or `SUPER_ADMIN` only.
+
+**Constraints:**
+- Target must be in ACTIVE status
+- Super admin accounts cannot be suspended
+
+**Errors:**
+- `"Not authenticated"` - no user on provenance
+- `"Insufficient privileges"` - caller lacks admin role
+- `"User not found"` - target username does not exist
+- `"User is not active"` - target is not in ACTIVE status
+- `"Cannot suspend a super admin"` - target is a super admin
+
+**HTTP mapping:**
+```
+PUT /admin/users/{username}/suspend
+Authorization: Bearer <token>
+```
+
+---
+
+### Unsuspend Account
+
+Restores a suspended user account to active status.
+
+**Request:** `UnsuspendAccountRequest`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | String | yes | Target username |
+
+**Response:** `"Account unsuspended"` (string)
+
+**Auth:** Required. `ADMIN` or `SUPER_ADMIN` only.
+
+**Constraints:**
+- Target must be in SUSPENDED status
+
+**Errors:**
+- `"Not authenticated"` - no user on provenance
+- `"Insufficient privileges"` - caller lacks admin role
+- `"User not found"` - target username does not exist
+- `"User is not suspended"` - target is not in SUSPENDED status
+
+**HTTP mapping:**
+```
+PUT /admin/users/{username}/unsuspend
+Authorization: Bearer <token>
+```
+
+---
+
+### Purge Erased Content
+
+Hard-deletes all posts and comments belonging to an erased user sentinel, then removes the sentinel itself.
+Only works on users with ERASED status.
+
+**Request:** `PurgeErasedContentRequest`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `sentinelUserId` | UUID | yes | ID of the erased sentinel user |
+
+**Response:** `"Content purged"` (string)
+
+**Auth:** Required. `ADMIN` or `SUPER_ADMIN` only.
+
+**Constraints:**
+- Target must have ERASED status (sentinel users only)
+
+**Errors:**
+- `"Not authenticated"` - no user on provenance
+- `"Insufficient privileges"` - caller lacks admin role
+- `"User not found"` - sentinel user does not exist
+- `"Target user is not an erased sentinel"` - target does not have ERASED status
+
+**HTTP mapping:**
+```
+DELETE /admin/users/{sentinel-username}/purge
 Authorization: Bearer <token>
 ```
 
@@ -229,6 +375,11 @@ The HTTP adapter should translate these to appropriate HTTP status codes:
 | `"Invalid or expired token"` | 401 Unauthorized |
 | `"Insufficient privileges"` | 403 Forbidden |
 | `"Cannot delete a super admin"` | 403 Forbidden |
+| `"Cannot suspend a super admin"` | 400 Bad Request |
 | `"Cannot change own role"` | 400 Bad Request |
-| `"User not found"` | 404 Not Found |
+| `"User not found"` | 400 Bad Request |
+| `"User is already erased"` | 400 Bad Request |
+| `"User is not active"` | 400 Bad Request |
+| `"User is not suspended"` | 400 Bad Request |
+| `"Target user is not an erased sentinel"` | 400 Bad Request |
 | `"No service context"` | 500 Internal Server Error |

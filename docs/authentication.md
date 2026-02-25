@@ -28,13 +28,13 @@ OTP requires no external dependencies - just an SMTP server for sending emails.
 ### Requesting a code
 
 The client sends the user's email to `POST /auth/otp/request`.
-The server generates a 6-digit numeric code (via `SecureRandom`), stores it in the `one_time_codes` table with a 5-minute expiry, and sends it via email.
+The server generates a 6-digit numeric code (via `SecureRandom`), stores it in the `one_time_codes` table with a configurable expiry (default 10 minutes, via `streampack.otp.expiration-minutes`), and sends it via email.
 
-The response is always `200 OK` regardless of whether the email matches an existing account.
+The response is always `202 Accepted` regardless of whether the email matches an existing account.
 This prevents account enumeration.
 
 Rate limiting: a maximum of 3 active (unused, unexpired) codes per email address.
-Requests beyond this limit are silently accepted (returning 200) but no code is generated or sent.
+Requests beyond this limit are silently accepted (returning 202) but no code is generated or sent.
 
 ### Verifying a code
 
@@ -48,7 +48,7 @@ OTP verification implies email verification, so no separate email verification s
 ### Code lifecycle
 
 - Codes are 6 digits, zero-padded (e.g., `007842`)
-- Codes expire after 5 minutes
+- Codes expire after 10 minutes by default (configurable via `streampack.otp.expiration-minutes`)
 - Each code can only be used once
 - Maximum 3 active codes per email at any time
 
@@ -94,11 +94,61 @@ Logout is a client-side operation.
 `POST /auth/logout` returns `204 No Content` - the server does nothing.
 The client should discard its stored JWT.
 
-## Account Deletion
+## Account Lifecycle
 
-`DELETE /auth/account` soft-deletes the authenticated user's account.
-Admins can delete other users by providing a username in the request body.
-Super admin accounts cannot be deleted by other admins.
+User accounts have three statuses: `ACTIVE`, `SUSPENDED`, and `ERASED`.
+
+### Suspension (Tier 2)
+
+Admin action: freezes a user's ability to log in while preserving the full content graph.
+The admin can review all of the user's posts and comments before deciding next steps.
+Suspension is reversible.
+
+- `PUT /admin/users/{username}/suspend` - freeze the account
+- `PUT /admin/users/{username}/unsuspend` - restore the account to active
+
+Super admin accounts cannot be suspended.
+
+### Account Erasure (Tier 3)
+
+Terminal state: the user's identity is permanently removed.
+Both self-service (GDPR "right to be forgotten") and admin-initiated erasure use this path.
+
+What happens during erasure:
+
+1. A unique anonymous sentinel User is created (`erased-<short-uuid>`, no email, display name "[deleted]", role GUEST, status ERASED)
+2. All posts and comments are reassigned from the original user to the sentinel
+3. One-time codes for the user's email are deleted
+4. The original User record is hard-deleted (service bindings and verification tokens cascade via FK)
+
+The sentinel preserves content grouping: an admin can still identify "these 47 comments came from the same erased account" and bulk-delete them via `DELETE /admin/users/{sentinel-username}/purge`.
+
+- `DELETE /auth/account` - self-erasure (authenticated user erases their own account)
+- `DELETE /admin/users/{username}` - admin-initiated erasure
+
+Admins can erase active or suspended users.
+Super admin accounts cannot be erased by other admins.
+
+### Content Purge
+
+After erasure, an admin may decide the sentinel's content should also be removed.
+
+`DELETE /admin/users/{sentinel-username}/purge` hard-deletes all posts and comments belonging to the sentinel, then removes the sentinel itself.
+Only works on users with ERASED status.
+
+### Listing Erased Users
+
+`GET /admin/users?status=ERASED` returns all erased sentinel users so admins can find them for review or purge.
+
+## Data Export
+
+`GET /auth/export` returns a JSON export of the authenticated user's data (profile, posts, comments).
+Admins can export any user's data via `GET /admin/users/{username}/export` for review before erasure.
+
+The export includes:
+- Profile: username, email, display name, role, creation date
+- Posts: title, markdown source, status, creation and publication dates
+- Comments: target post title, markdown source, creation date
 
 ## Super Admin Bootstrap
 
