@@ -164,20 +164,19 @@ val user = currentUserPrincipal()
 Nullable - the endpoint is `permitAll`, so the principal may or may not be present.
 
 **Files:**
-- `AuthController.kt` - `changePassword()` and `deleteAccount()` methods
+- `AuthController.kt` - `deleteAccount()` method
 - `CommentController.kt` - `getComments()` (optional), `createComment()`, `editComment()`
 - `AdminCommentController.kt` - `deleteComment()`
-- `AdminUserController.kt` - `changeRole()`, `resetPassword()`
+- `AdminUserController.kt` - `changeRole()`
 
 ## Endpoint Security Rules
 
 | Method | Path | Rule | Rationale |
 |--------|------|------|-----------|
-| POST | `/auth/login`, `/auth/register`, `/auth/verify`, `/auth/logout`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/refresh` | `permitAll` | Auth endpoints are inherently public |
+| POST | `/auth/otp/request`, `/auth/otp/verify`, `/auth/logout`, `/auth/refresh` | `permitAll` | Auth endpoints are inherently public |
 | GET | `/posts/**` | `permitAll` | Blog reads are public (filter still populates principal if token present) |
 | GET | `/factoids/**` | `permitAll` | Factoid reads are public |
 | GET | `/swagger-ui/**`, `/v3/api-docs/**` | `permitAll` | API docs |
-| PUT | `/auth/password` | `authenticated` | Change own password |
 | DELETE | `/auth/account` | `authenticated` | Delete own account |
 | POST | `/posts/**/comments` | `authenticated` | Create comment (operation also checks email-verified) |
 | PUT | `/comments/**` | `authenticated` | Edit comment (operation also checks author + edit window) |
@@ -190,18 +189,15 @@ Place `permitAll` rules before the catch-all `authenticated` rule.
 
 ## Test Impact
 
-### 5 assertions that must change
+### Assertions that must change
 
 These tests currently assert error messages produced by the controllers' `resolveUser()` / `unauthorized()` helpers.
 After the change, Spring Security's entry point and access denied handler produce the responses instead, with standardized messages.
 
-| File | Line | Test method | Old `$.detail` value | New `$.detail` value | Why |
-|------|------|-------------|---------------------|---------------------|-----|
-| `AuthControllerTests.kt` | 317 | `change password without auth returns 401` | `"Not authenticated"` | `"Authentication required"` | Entry point responds before controller |
-| `AuthControllerTests.kt` | 360 | `delete account without auth returns 401` | `"Not authenticated"` | `"Authentication required"` | Entry point responds before controller |
-| `AdminUserControllerTests.kt` | 109 | `unauthenticated role change returns 401` | `"Not authenticated"` | `"Authentication required"` | Entry point responds before controller |
-| `AdminUserControllerTests.kt` | 152 | `regular user gets 403 on password reset` | `"Insufficient privileges"` | `"Admin access required"` | USER on `/admin/**` is now rejected by Spring Security's access denied handler, not the operation |
-| `AdminUserControllerTests.kt` | 164 | `unauthenticated password reset returns 401` | `"Not authenticated"` | `"Authentication required"` | Entry point responds before controller |
+| File | Test method | Old `$.detail` value | New `$.detail` value | Why |
+|------|-------------|---------------------|---------------------|-----|
+| `AuthControllerTests.kt` | `delete account without auth returns 401` | `"Not authenticated"` | `"Authentication required"` | Entry point responds before controller |
+| `AdminUserControllerTests.kt` | `unauthenticated role change returns 401` | `"Not authenticated"` | `"Authentication required"` | Entry point responds before controller |
 
 ### Tests that pass without changes
 

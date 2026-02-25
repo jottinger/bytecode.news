@@ -1,29 +1,37 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
+import com.enigmastation.streampack.blog.entity.Comment
+import com.enigmastation.streampack.blog.entity.Post
 import com.enigmastation.streampack.blog.model.DeleteAccountRequest
+import com.enigmastation.streampack.blog.repository.CommentRepository
+import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
+import com.enigmastation.streampack.core.model.UserStatus
+import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.UserRegistrationService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * Integration tests for account deletion via the event system.
+ * Integration tests for account erasure via the event system.
  *
- * Covers self-deletion, admin-deletion of other users, privilege enforcement, and super admin
- * protection.
+ * Covers self-erasure, admin-erasure, sentinel creation, content reassignment, privilege
+ * enforcement, and super admin protection.
  */
 @SpringBootTest
 @Transactional
@@ -31,7 +39,9 @@ class DeleteAccountOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var userRegistrationService: UserRegistrationService
-    @Autowired lateinit var passwordEncoder: BCryptPasswordEncoder
+    @Autowired lateinit var userRepository: UserRepository
+    @Autowired lateinit var postRepository: PostRepository
+    @Autowired lateinit var commentRepository: CommentRepository
 
     private lateinit var regularUser: UserPrincipal
     private lateinit var adminUser: UserPrincipal
@@ -46,8 +56,7 @@ class DeleteAccountOperationTests {
                 displayName = "Regular User",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "regularuser",
-                metadata = mapOf("passwordHash" to passwordEncoder.encode("password")!!),
+                externalIdentifier = "regular@example.com",
             )
         adminUser =
             userRegistrationService.register(
@@ -56,8 +65,7 @@ class DeleteAccountOperationTests {
                 displayName = "Admin User",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "adminuser",
-                metadata = mapOf("passwordHash" to passwordEncoder.encode("password")!!),
+                externalIdentifier = "admin@example.com",
                 role = Role.ADMIN,
             )
         superAdmin =
@@ -67,8 +75,7 @@ class DeleteAccountOperationTests {
                 displayName = "Super Admin",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "superuser",
-                metadata = mapOf("passwordHash" to passwordEncoder.encode("password")!!),
+                externalIdentifier = "super@example.com",
                 role = Role.SUPER_ADMIN,
             )
     }
@@ -87,15 +94,67 @@ class DeleteAccountOperationTests {
             .build()
 
     @Test
-    fun `self-deletion succeeds`() {
+    fun `self-erasure succeeds and creates sentinel`() {
         val result = eventGateway.process(deleteMessage(asUser = regularUser))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals("Account deleted", (result as OperationResult.Success).payload)
+
+        // Original user is gone
+        assertNull(userRepository.findByUsername("regularuser"))
+
+        // Sentinel exists with erased status
+        val sentinelUsername = "erased-${regularUser.id.toString().substring(0, 8)}"
+        val sentinel = userRepository.findByUsername(sentinelUsername)
+        assertNotNull(sentinel)
+        assertTrue(sentinel!!.isErased())
+        assertEquals("[deleted]", sentinel.displayName)
+        assertEquals(Role.GUEST, sentinel.role)
     }
 
     @Test
-    fun `admin can delete another user`() {
+    fun `erasure reassigns posts and comments to sentinel`() {
+        val author = userRepository.findByUsername("regularuser")!!
+
+        // Create a post authored by the target user
+        val post =
+            postRepository.saveAndFlush(
+                Post(
+                    title = "Test Post",
+                    markdownSource = "content",
+                    renderedHtml = "<p>content</p>",
+                    author = author,
+                )
+            )
+
+        // Create a comment by the target user
+        commentRepository.saveAndFlush(
+            Comment(
+                post = post,
+                author = author,
+                markdownSource = "comment",
+                renderedHtml = "<p>comment</p>",
+            )
+        )
+
+        val result = eventGateway.process(deleteMessage(asUser = regularUser))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+
+        // Verify content was reassigned to sentinel
+        val sentinelUsername = "erased-${regularUser.id.toString().substring(0, 8)}"
+        val sentinel = userRepository.findByUsername(sentinelUsername)!!
+
+        val reassignedPost = postRepository.findById(post.id).orElse(null)
+        assertNotNull(reassignedPost)
+        assertEquals(sentinel.id, reassignedPost.author!!.id)
+
+        val comments = commentRepository.findByPost(post.id)
+        assertEquals(1, comments.size)
+        assertEquals(sentinel.id, comments[0].author.id)
+    }
+
+    @Test
+    fun `admin can erase another user`() {
         val result =
             eventGateway.process(deleteMessage(username = "regularuser", asUser = adminUser))
 
@@ -104,7 +163,7 @@ class DeleteAccountOperationTests {
     }
 
     @Test
-    fun `non-admin cannot delete another user`() {
+    fun `non-admin cannot erase another user`() {
         val result =
             eventGateway.process(deleteMessage(username = "adminuser", asUser = regularUser))
 
@@ -113,7 +172,7 @@ class DeleteAccountOperationTests {
     }
 
     @Test
-    fun `cannot delete a super admin`() {
+    fun `cannot erase a super admin`() {
         val result = eventGateway.process(deleteMessage(username = "superuser", asUser = adminUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -129,10 +188,22 @@ class DeleteAccountOperationTests {
     }
 
     @Test
-    fun `deleting nonexistent user returns error`() {
+    fun `erasing nonexistent user returns error`() {
         val result = eventGateway.process(deleteMessage(username = "nobody", asUser = adminUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("User not found", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `cannot erase already-erased user`() {
+        val user = userRepository.findByUsername("regularuser")!!
+        userRepository.saveAndFlush(user.copy(status = UserStatus.ERASED))
+
+        val result =
+            eventGateway.process(deleteMessage(username = "regularuser", asUser = adminUser))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("User is already erased", (result as OperationResult.Error).message)
     }
 }

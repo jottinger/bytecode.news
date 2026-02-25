@@ -12,9 +12,10 @@ Protected endpoints require a Bearer token in the `Authorization` header:
 Authorization: Bearer <JWT>
 ```
 
-Tokens are obtained from `POST /auth/login` or `POST /auth/refresh`.
+Tokens are obtained from `POST /auth/otp/verify`, OIDC callback, or `POST /auth/refresh`.
 The JWT encodes a `UserPrincipal` (see Common Types below).
 Token lifetime is 24 hours by default.
+See [Authentication](authentication.md) for details on the OTP and OIDC flows.
 
 ## Common Types
 
@@ -47,81 +48,41 @@ Token lifetime is 24 hours by default.
 
 ---
 
-### POST /auth/register
+### POST /auth/otp/request
 
-Create a new account.
-Sends a verification email with a link to confirm the email address.
+Request a one-time sign-in code.
+A 6-digit code is emailed to the provided address.
+Always returns 202 regardless of whether the email matches an account (prevents account enumeration).
 
 **Auth**: None
 
 **Request**:
 ```json
 {
-  "username": "dreamreal",
+  "email": "joe@example.com"
+}
+```
+
+**Success (202)**: `"If that email is registered or valid, a code has been sent"` (plain JSON string)
+
+**Side effect**: If the email is valid, a 6-digit code is generated with a 10-minute expiry (configurable via `streampack.otp.expiration-minutes`) and sent via email.
+Maximum 3 active codes per email address.
+
+---
+
+### POST /auth/otp/verify
+
+Verify a one-time sign-in code and receive a JWT.
+If no account exists for the email, one is created automatically.
+OTP verification implies email verification.
+
+**Auth**: None
+
+**Request**:
+```json
+{
   "email": "joe@example.com",
-  "displayName": "Joe Ottinger",
-  "password": "s3cureP@ss"
-}
-```
-
-All fields required.
-
-**Success (200)**:
-```json
-{
-  "id": "01234567-89ab-7def-8123-456789abcdef",
-  "username": "dreamreal",
-  "displayName": "Joe Ottinger",
-  "role": "USER"
-}
-```
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 409 | Username or email already in use | "Username already taken" / "Email already taken" |
-| 400 | Other validation failure | Varies |
-
-**Side effect**: A verification email is sent to the provided address containing a link of the form `/auth/verify?token=<uuid>`.
-The user can log in immediately but email is not yet verified.
-
----
-
-### POST /auth/verify
-
-Verify an email address using the token from the verification email.
-
-**Auth**: None
-
-**Request**:
-```json
-{
-  "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
-
-**Success (200)**: `"Email verified"` (plain JSON string)
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 400 | Token invalid, expired, or already used | "Invalid or expired token" |
-
----
-
-### POST /auth/login
-
-Authenticate with username and password.
-
-**Auth**: None
-
-**Request**:
-```json
-{
-  "username": "dreamreal",
-  "password": "s3cureP@ss"
+  "code": "123456"
 }
 ```
 
@@ -131,8 +92,8 @@ Authenticate with username and password.
   "token": "eyJhbGciOiJIUzI1NiIs...",
   "principal": {
     "id": "01234567-89ab-7def-8123-456789abcdef",
-    "username": "dreamreal",
-    "displayName": "Joe Ottinger",
+    "username": "joe",
+    "displayName": "joe",
     "role": "USER"
   }
 }
@@ -145,7 +106,7 @@ Store `token` for use in `Authorization: Bearer <token>` on protected endpoints.
 
 | Status | Condition | Detail |
 |--------|-----------|--------|
-| 401 | Bad credentials or account not found | "Invalid credentials" |
+| 401 | Wrong code, expired code, or no active code | "Invalid or expired code" |
 
 ---
 
@@ -160,58 +121,6 @@ The client should discard its stored token.
 **Request**: Empty body (or no body)
 
 **Success**: `204 No Content` (no response body)
-
----
-
-### POST /auth/forgot-password
-
-Request a password reset email.
-Always returns the same success message regardless of whether the email exists - this prevents account enumeration.
-
-**Auth**: None
-
-**Request**:
-```json
-{
-  "email": "joe@example.com"
-}
-```
-
-**Success (200)**: `"If an account with that email exists, a reset link has been sent"` (plain JSON string)
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 400 | Malformed request | Varies |
-
-**Side effect**: If the email matches an account, a password reset email is sent containing a link of the form `/auth/reset-password?token=<uuid>`.
-Reset tokens expire after 1 hour.
-
----
-
-### POST /auth/reset-password
-
-Reset password using a token from the forgot-password email.
-This is the user-facing reset (token-based), not the admin reset.
-
-**Auth**: None
-
-**Request**:
-```json
-{
-  "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "newPassword": "n3wS3cure!"
-}
-```
-
-**Success (200)**: `"Password reset successfully"` (plain JSON string)
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 400 | Token invalid, expired, or already used | "Invalid or expired token" |
 
 ---
 
@@ -250,35 +159,11 @@ Use this to extend sessions without re-authenticating.
 
 ---
 
-### PUT /auth/password
-
-Change the authenticated user's password.
-
-**Auth**: Required (Bearer token)
-
-**Request**:
-```json
-{
-  "oldPassword": "currentP@ss",
-  "newPassword": "n3wS3cure!"
-}
-```
-
-**Success (200)**: `"Password changed successfully"` (plain JSON string)
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 401 | Missing/invalid token or wrong old password | "Not authenticated" / "Invalid credentials" |
-| 400 | Other validation failure | Varies |
-
----
-
 ### DELETE /auth/account
 
-Delete the authenticated user's account (soft delete).
-Admin/super-admin can delete other users by providing a username.
+Erase the authenticated user's account permanently.
+Creates an anonymous sentinel user, reassigns all posts and comments to the sentinel, deletes OTP codes, and hard-deletes the original user record.
+Service bindings and verification tokens are removed via FK cascade.
 
 **Auth**: Required (Bearer token)
 
@@ -290,8 +175,8 @@ Admin/super-admin can delete other users by providing a username.
 ```
 
 `username` is optional.
-Omit or set to `null` for self-deletion.
-Provide a username string to delete another user (requires admin privileges).
+Omit or set to `null` for self-erasure.
+Provide a username string to erase another user (requires admin privileges).
 
 **Success (200)**: `"Account deleted"` (plain JSON string)
 
@@ -300,8 +185,53 @@ Provide a username string to delete another user (requires admin privileges).
 | Status | Condition | Detail |
 |--------|-----------|--------|
 | 401 | Missing/invalid token | "Not authenticated" |
-| 403 | Deleting another user without admin role | "Insufficient privileges" |
-| 400 | User not found or other error | Varies |
+| 403 | Erasing another user without admin role | "Insufficient privileges" |
+| 400 | User not found | "User not found" |
+| 400 | User already erased | "User is already erased" |
+| 400 | Attempting to erase a super admin | "Cannot delete a super admin" |
+
+---
+
+### GET /auth/export
+
+Export the authenticated user's data as JSON (GDPR data portability).
+
+**Auth**: Required (Bearer token)
+
+**Success (200)**:
+```json
+{
+  "profile": {
+    "username": "dreamreal",
+    "email": "joe@example.com",
+    "displayName": "Joe Ottinger",
+    "role": "USER",
+    "createdAt": "2026-01-01T00:00:00Z"
+  },
+  "posts": [
+    {
+      "title": "My Post",
+      "markdownSource": "...",
+      "status": "APPROVED",
+      "createdAt": "2026-01-15T09:00:00Z",
+      "publishedAt": "2026-01-15T12:00:00Z"
+    }
+  ],
+  "comments": [
+    {
+      "postTitle": "Target Post",
+      "markdownSource": "...",
+      "createdAt": "2026-01-16T10:00:00Z"
+    }
+  ]
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Not authenticated" |
 
 ---
 
@@ -309,6 +239,157 @@ Provide a username string to delete another user (requires admin privileges).
 
 All admin endpoints require authentication.
 The authenticated user's role determines access.
+
+---
+
+### PUT /admin/users/{username}/suspend
+
+Suspend a user account.
+The user cannot log in while suspended, but their content remains attributed and navigable for admin review.
+Reversible via unsuspend.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `username` - the target user's username
+
+**Request**: No body required.
+
+**Success (200)**: `"Account suspended"` (plain JSON string)
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Not authenticated" |
+| 403 | Caller lacks admin role | "Insufficient privileges" |
+| 400 | User not found | "User not found" |
+| 400 | User is not active | "User is not active" |
+| 400 | Target is a super admin | "Cannot suspend a super admin" |
+
+---
+
+### PUT /admin/users/{username}/unsuspend
+
+Restore a suspended user account to active status.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `username` - the target user's username
+
+**Request**: No body required.
+
+**Success (200)**: `"Account unsuspended"` (plain JSON string)
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Not authenticated" |
+| 403 | Caller lacks admin role | "Insufficient privileges" |
+| 400 | User not found | "User not found" |
+| 400 | User is not suspended | "User is not suspended" |
+
+---
+
+### DELETE /admin/users/{username}
+
+Erase a user account (admin-initiated).
+Same erasure semantics as `DELETE /auth/account` - creates sentinel, reassigns content, hard-deletes user.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `username` - the target user's username
+
+**Request**: No body required.
+
+**Success (200)**: `"Account deleted"` (plain JSON string)
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Not authenticated" |
+| 403 | Caller lacks admin role | "Insufficient privileges" |
+| 400 | User not found | "User not found" |
+| 400 | User already erased | "User is already erased" |
+| 400 | Target is a super admin | "Cannot delete a super admin" |
+
+---
+
+### DELETE /admin/users/{username}/purge
+
+Hard-delete all content belonging to an erased user sentinel, then remove the sentinel itself.
+Only works on users with ERASED status.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `username` - the erased sentinel's username (e.g. `erased-a7f3b2c1`)
+
+**Request**: No body required.
+
+**Success (200)**: `"Content purged"` (plain JSON string)
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Not authenticated" |
+| 403 | Caller lacks admin role | "Insufficient privileges" |
+| 404 | User not found | "User not found" |
+| 400 | Target is not an erased sentinel | "Target user is not an erased sentinel" |
+
+---
+
+### GET /admin/users?status={status}
+
+List users filtered by account status.
+Primarily used to find erased sentinels for review or purge.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Query parameters**: `status` - one of `ACTIVE`, `SUSPENDED`, `ERASED`
+
+**Success (200)**:
+```json
+[
+  {
+    "id": "01234567-89ab-7def-8123-456789abcdef",
+    "username": "erased-a7f3b2c1",
+    "displayName": "[deleted]",
+    "role": "GUEST"
+  }
+]
+```
+
+Returns a list of UserPrincipal objects matching the requested status.
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Not authenticated" |
+| 403 | Caller lacks admin role | "Insufficient privileges" |
+
+---
+
+### GET /admin/users/{username}/export
+
+Export a user's data for admin review (e.g. before erasure).
+Same response shape as `GET /auth/export`.
+
+**Auth**: Required (Admin or Super-admin)
+
+**Path parameters**: `username` - the target user's username
+
+**Success (200)**: Same JSON shape as `GET /auth/export`.
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Not authenticated" |
+| 403 | Caller lacks admin role | "Insufficient privileges" |
+| 400 | User not found | "User not found" |
 
 ---
 
@@ -347,37 +428,6 @@ Returns the updated UserPrincipal reflecting the new role.
 |--------|-----------|--------|
 | 401 | Missing/invalid token | "Not authenticated" |
 | 403 | Caller is not super-admin | "Insufficient privileges" |
-| 400 | Target user not found or other error | Varies |
-
----
-
-### POST /admin/users/{username}/reset-password
-
-Admin-initiated password reset.
-Generates a temporary password for the user (no email sent).
-
-**Auth**: Required (Admin or Super-admin)
-
-**Path parameters**: `username` - the target user's username
-
-**Request**: Empty body (username comes from the path)
-
-**Success (200)**:
-```json
-{
-  "username": "dreamreal",
-  "temporaryPassword": "xK7mNpQ2rT9vW3"
-}
-```
-
-The admin should communicate the temporary password to the user through a secure channel.
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 401 | Missing/invalid token | "Not authenticated" |
-| 403 | Caller lacks admin privileges | "Insufficient privileges" |
 | 400 | Target user not found or other error | Varies |
 
 ---
@@ -557,64 +607,6 @@ Add `?hard=true` for permanent removal.
 | 400 | Comment already soft-deleted (soft delete only) | "Comment is already deleted" |
 
 ---
-
-## User Flows
-
-**Registration and email verification**:
-1. `POST /auth/register` - creates account, returns UserPrincipal, sends verification email
-2. User clicks link in email (contains token)
-3. `POST /auth/verify` with the token - marks email as verified
-4. User can log in immediately after step 1, but email-gated features (commenting) require step 3
-
-**Login and session management**:
-1. `POST /auth/login` - returns JWT token + UserPrincipal
-2. Store token client-side (localStorage, cookie, etc.)
-3. Include `Authorization: Bearer <token>` on protected requests
-4. `POST /auth/refresh` before token expires to get a fresh token
-5. `POST /auth/logout` - discard the stored token client-side
-
-**Forgot password**:
-1. `POST /auth/forgot-password` with email - always returns success (prevents enumeration)
-2. If email exists, user receives reset email with token link
-3. `POST /auth/reset-password` with token + new password
-4. User logs in with new password
-
-**Change password** (while logged in):
-1. `PUT /auth/password` with old and new password (requires Bearer token)
-
-**Admin password reset**:
-1. `POST /admin/users/{username}/reset-password` - returns temporary password
-2. Admin communicates temporary password to user out-of-band
-
-**Commenting on a post**:
-1. User must be logged in with a verified email
-2. `GET /posts/{year}/{month}/{slug}/comments` - view existing comments
-3. `POST /posts/{year}/{month}/{slug}/comments` - add a top-level comment or reply (include `parentCommentId` for replies)
-4. `PUT /comments/{id}` - edit own comment within 5 minutes of creation
-
-**Admin comment moderation**:
-1. `DELETE /admin/comments/{id}` - soft-delete a comment (shows as "[deleted]" in thread)
-2. `DELETE /admin/comments/{id}?hard=true` - permanently remove a comment and its children
-
-## Endpoint Summary
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/auth/register` | No | Create account |
-| POST | `/auth/verify` | No | Verify email token |
-| POST | `/auth/login` | No | Authenticate |
-| POST | `/auth/logout` | No | Client-side logout (204) |
-| POST | `/auth/forgot-password` | No | Request reset email |
-| POST | `/auth/reset-password` | No | Reset password with token |
-| POST | `/auth/refresh` | No | Refresh JWT |
-| PUT | `/auth/password` | Yes | Change own password |
-| DELETE | `/auth/account` | Yes | Delete account |
-| PUT | `/admin/users/{username}/role` | Super-admin | Change user role |
-| POST | `/admin/users/{username}/reset-password` | Admin+ | Reset user password |
-| GET | `/posts/{year}/{month}/{slug}/comments` | No | Get comment thread |
-| POST | `/posts/{year}/{month}/{slug}/comments` | Yes (verified) | Add comment |
-| PUT | `/comments/{id}` | Yes | Edit comment (5 min window) |
-| DELETE | `/admin/comments/{id}` | Admin+ | Soft/hard delete comment |
 
 ## Implemented Endpoints: Posts
 
@@ -1011,31 +1003,45 @@ Hidden from selection, existing post associations preserved.
 
 ## User Flows
 
-**Registration and email verification**:
-1. `POST /auth/register` - creates account, returns UserPrincipal, sends verification email
-2. User clicks link in email (contains token)
-3. `POST /auth/verify` with the token - marks email as verified
-4. User can log in immediately after step 1, but email-gated features (posting, commenting) require step 3
+**OTP sign-in (new or returning user)**:
+1. `POST /auth/otp/request` with email - code is sent if the email is valid (always returns 202)
+2. User checks email for the 6-digit code
+3. `POST /auth/otp/verify` with email and code - returns JWT + UserPrincipal
+4. If no account exists for that email, one is created automatically
+5. Store token client-side (localStorage, cookie, etc.)
+6. Include `Authorization: Bearer <token>` on protected requests
 
-**Login and session management**:
-1. `POST /auth/login` - returns JWT token + UserPrincipal
-2. Store token client-side (localStorage, cookie, etc.)
-3. Include `Authorization: Bearer <token>` on protected requests
-4. `POST /auth/refresh` before token expires to get a fresh token
-5. `POST /auth/logout` - discard the stored token client-side
+**OIDC sign-in (Google / GitHub)**:
+1. Redirect user to `/oauth2/authorization/google` or `/oauth2/authorization/github`
+2. User authenticates with the provider
+3. Browser is redirected to `/auth/callback#token=<jwt>`
+4. Frontend extracts the JWT from the URL fragment
 
-**Forgot password**:
-1. `POST /auth/forgot-password` with email - always returns success (prevents enumeration)
-2. If email exists, user receives reset email with token link
-3. `POST /auth/reset-password` with token + new password
-4. User logs in with new password
+**Session management**:
+1. `POST /auth/refresh` before token expires to get a fresh token
+2. `POST /auth/logout` - discard the stored token client-side
 
-**Change password** (while logged in):
-1. `PUT /auth/password` with old and new password (requires Bearer token)
+**Data export (GDPR)**:
+1. `GET /auth/export` - download own data as JSON (profile, posts, comments)
 
-**Admin password reset**:
-1. `POST /admin/users/{username}/reset-password` - returns temporary password
-2. Admin communicates temporary password to user out-of-band
+**Account erasure (self-service GDPR)**:
+1. Optionally export data first: `GET /auth/export`
+2. `DELETE /auth/account` with `{}` - creates an anonymous sentinel, reassigns content, hard-deletes identity
+3. Client should discard the stored JWT
+
+**Admin: suspend a user**:
+1. `PUT /admin/users/{username}/suspend` - freeze the account (login blocked, content preserved)
+2. Review the user's content: `GET /admin/users/{username}/export`
+3. `PUT /admin/users/{username}/unsuspend` - restore the account if appropriate
+
+**Admin: erase a user**:
+1. `GET /admin/users/{username}/export` - review the user's data
+2. Optionally hard-delete specific toxic content via `DELETE /admin/posts/{id}?hard=true` / `DELETE /admin/comments/{id}?hard=true`
+3. `DELETE /admin/users/{username}` - create sentinel, reassign remaining content, scrub identity
+4. Optionally `DELETE /admin/users/{sentinel-username}/purge` - remove all remaining content and the sentinel
+
+**Admin: list erased users**:
+1. `GET /admin/users?status=ERASED` - find sentinel users for review or purge
 
 **Post submission and approval**:
 1. User creates a draft: `POST /posts` with title, markdown, optional tags and categories
@@ -1068,17 +1074,19 @@ Hidden from selection, existing post associations preserved.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/auth/register` | No | Create account |
-| POST | `/auth/verify` | No | Verify email token |
-| POST | `/auth/login` | No | Authenticate |
+| POST | `/auth/otp/request` | No | Request sign-in code (202) |
+| POST | `/auth/otp/verify` | No | Verify code, get JWT |
 | POST | `/auth/logout` | No | Client-side logout (204) |
-| POST | `/auth/forgot-password` | No | Request reset email |
-| POST | `/auth/reset-password` | No | Reset password with token |
 | POST | `/auth/refresh` | No | Refresh JWT |
-| PUT | `/auth/password` | Yes | Change own password |
-| DELETE | `/auth/account` | Yes | Delete account |
+| DELETE | `/auth/account` | Yes | Erase account (creates sentinel) |
+| GET | `/auth/export` | Yes | Export own data as JSON |
 | PUT | `/admin/users/{username}/role` | Super-admin | Change user role |
-| POST | `/admin/users/{username}/reset-password` | Admin+ | Reset user password |
+| PUT | `/admin/users/{username}/suspend` | Admin+ | Suspend user account |
+| PUT | `/admin/users/{username}/unsuspend` | Admin+ | Unsuspend user account |
+| DELETE | `/admin/users/{username}` | Admin+ | Erase user account |
+| DELETE | `/admin/users/{username}/purge` | Admin+ | Purge erased sentinel content |
+| GET | `/admin/users?status=` | Admin+ | List users by status |
+| GET | `/admin/users/{username}/export` | Admin+ | Export user data (admin) |
 | GET | `/posts` | No | List published posts |
 | GET | `/posts/{year}/{month}/{slug}` | No | Get single post |
 | GET | `/posts/search?q=` | No | Search published posts |

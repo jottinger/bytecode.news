@@ -3,6 +3,7 @@ package com.enigmastation.streampack.core.repository
 
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.model.UserStatus
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -77,16 +78,16 @@ class UserRepositoryTests {
     }
 
     @Test
-    fun `soft delete filtering`() {
+    fun `status-based filtering excludes erased users`() {
         userRepository.save(
             User(username = "active", email = "active@test.com", displayName = "Active User")
         )
         userRepository.save(
             User(
-                username = "deleted",
-                email = "deleted@test.com",
-                displayName = "Deleted User",
-                deleted = true,
+                username = "erased",
+                email = "erased@test.com",
+                displayName = "Erased User",
+                status = UserStatus.ERASED,
             )
         )
         val activeUsers = userRepository.findActive()

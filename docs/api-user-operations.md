@@ -7,6 +7,10 @@ Every request message carries a `Provenance` header identifying the protocol, se
 
 ## Authentication Model
 
+Authentication is passwordless.
+Users sign in via email one-time passcode (OTP) or OIDC (Google/GitHub).
+Both paths produce a JWT that is included in subsequent requests.
+
 Operations that require authentication check `provenance.user` (a `UserPrincipal`).
 The HTTP adapter is responsible for extracting the JWT from the `Authorization` header and populating the principal on the provenance before dispatching.
 
@@ -14,16 +18,47 @@ Privilege levels follow the `Role` hierarchy: `GUEST < USER < ADMIN < SUPER_ADMI
 
 ## Operations
 
-### Login
+### OTP Request
 
-Authenticates a user by username and password, returning a JWT.
+Generates a one-time sign-in code and sends it via email.
+Always returns success to prevent account enumeration.
 
-**Request:** `LoginRequest`
+**Request:** `OtpRequest`
 
 | Field | Type | Required |
 |-------|------|----------|
-| `username` | String | yes |
-| `password` | String | yes |
+| `email` | String | yes |
+
+**Response:** `"Code sent"` (string)
+
+**Auth:** None (public).
+
+**Constraints:**
+- Maximum 3 active (unused, unexpired) codes per email address
+- Codes expire after 10 minutes (configurable via `streampack.otp.expiration-minutes`)
+
+**HTTP mapping:**
+```
+POST /auth/otp/request
+Content-Type: application/json
+
+{"email": "alice@example.com"}
+```
+
+---
+
+### OTP Verify
+
+Validates a one-time code and returns a JWT.
+If no account exists for the email, one is created automatically.
+OTP verification implies email verification.
+
+**Request:** `OtpVerifyRequest`
+
+| Field | Type | Required |
+|-------|------|----------|
+| `email` | String | yes |
+| `code` | String | yes |
 
 **Response:** `LoginResponse`
 
@@ -35,89 +70,14 @@ Authenticates a user by username and password, returning a JWT.
 **Auth:** None (public).
 
 **Errors:**
-- `"Invalid credentials"` - wrong username, wrong password, or deleted user
-- `"No service context"` - provenance missing serviceId
+- `"Invalid or expired code"` - wrong code, expired code, or no active code for that email
 
 **HTTP mapping:**
 ```
-POST /auth/login
+POST /auth/otp/verify
 Content-Type: application/json
 
-{"username": "alice", "password": "secret"}
-```
-
----
-
-### Registration
-
-Creates a new user account with password.
-Returns the created principal.
-The frontend should call login separately to obtain a JWT.
-
-**Request:** `RegistrationRequest`
-
-| Field | Type | Required |
-|-------|------|----------|
-| `username` | String | yes |
-| `email` | String | yes |
-| `displayName` | String | yes |
-| `password` | String | yes |
-
-**Response:** `UserPrincipal`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | UUID | User's unique identifier |
-| `username` | String | Chosen username |
-| `displayName` | String | Display name |
-| `role` | Role | Always `USER` for new registrations |
-
-**Auth:** None (public).
-
-**Errors:**
-- `"Username already taken"` - duplicate username
-- `"No service context"` - provenance missing serviceId
-
-**HTTP mapping:**
-```
-POST /auth/register
-Content-Type: application/json
-
-{"username": "alice", "email": "alice@example.com", "displayName": "Alice", "password": "secret"}
-```
-
----
-
-### Change Password
-
-Changes the authenticated user's password.
-Requires knowledge of the current password.
-
-**Request:** `ChangePasswordRequest`
-
-| Field | Type | Required |
-|-------|------|----------|
-| `oldPassword` | String | yes |
-| `newPassword` | String | yes |
-
-**Response:** `"Password changed successfully"` (string)
-
-**Auth:** Required. Any authenticated user.
-
-**Errors:**
-- `"Not authenticated"` - no user on provenance
-- `"No service context"` - provenance missing serviceId
-- `"Binding not found"` - no service binding for this user/protocol
-- `"No password set"` - binding has no passwordHash in metadata
-- `"Invalid current password"` - oldPassword does not match
-
-**HTTP mapping:**
-```
-PUT /auth/change-password
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{"oldPassword": "oldsecret", "newPassword": "newsecret"}
+{"email": "alice@example.com", "code": "123456"}
 ```
 
 ---
@@ -155,33 +115,38 @@ Content-Type: application/json
 
 ---
 
-### Delete Account
+### Erase Account
 
-Soft-deletes a user account (sets `deleted = true`).
-Supports self-deletion and admin-initiated deletion.
+Permanently erases a user's identity.
+Creates an anonymous sentinel user, reassigns all posts and comments to the sentinel, deletes OTP codes, and hard-deletes the original user record.
+Service bindings and verification tokens are removed via FK cascade.
+
+The sentinel preserves content grouping: an admin can still identify "these 47 comments came from the same erased account" and bulk-delete them via the purge operation.
 
 **Request:** `DeleteAccountRequest`
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `username` | String? | no | Target username. Null means self-deletion. |
+| `username` | String? | no | Target username. Null means self-erasure. |
 
 **Response:** `"Account deleted"` (string)
 
 **Auth:** Required.
-Self-deletion: any authenticated user (username omitted or matches own).
-Deleting others: `ADMIN` or `SUPER_ADMIN` only.
+Self-erasure: any authenticated user (username omitted or matches own).
+Erasing others: `ADMIN` or `SUPER_ADMIN` only.
 
 **Constraints:**
-- Non-admin users can only delete themselves
-- Super admin accounts cannot be deleted by other users (even admins)
-- Super admins can self-delete (use with caution)
+- Non-admin users can only erase themselves
+- Super admin accounts cannot be erased by other admins
+- Super admins can self-erase (use with caution)
+- Users with ERASED status cannot be erased again
 
 **Errors:**
 - `"Not authenticated"` - no user on provenance
-- `"Insufficient privileges"` - non-admin attempting to delete another user
+- `"Insufficient privileges"` - non-admin attempting to erase another user
 - `"User not found"` - target username does not exist
-- `"Cannot delete a super admin"` - admin attempting to delete a super admin
+- `"User is already erased"` - target has already been erased
+- `"Cannot delete a super admin"` - admin attempting to erase a super admin
 
 **HTTP mapping:**
 ```
@@ -189,55 +154,155 @@ DELETE /auth/account
 Authorization: Bearer <token>
 Content-Type: application/json
 
-{"username": "targetuser"}
+{}
 ```
 
-Self-deletion:
+Admin-initiated erasure:
 ```
-DELETE /auth/account
+DELETE /admin/users/{username}
 Authorization: Bearer <token>
 ```
 
 ---
 
-### Password Reset (Admin)
+### Export User Data
 
-Admin-initiated password reset.
-Generates a temporary random password and returns it to the admin.
-The admin is responsible for communicating the temporary password to the user.
+Exports a user's data as JSON for GDPR data portability.
+Authenticated users export their own data.
+Admins can export any user's data (for review before erasure).
 
-**Request:** `PasswordResetRequest`
+**Request:** `ExportUserDataRequest`
 
-| Field | Type | Required |
-|-------|------|----------|
-| `username` | String | yes |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | String? | no | Target username. Null means export own data. |
 
-**Response:** `PasswordResetResponse`
+**Response:** `UserDataExport`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `username` | String | The user whose password was reset |
-| `temporaryPassword` | String | The generated temporary password |
+| `profile` | ProfileExport | Username, email, display name, role, creation date |
+| `posts` | List<PostExport> | Title, markdown source, status, creation and publication dates |
+| `comments` | List<CommentExport> | Target post title, markdown source, creation date |
 
-**Auth:** Required. `ADMIN` or `SUPER_ADMIN` only.
+**Auth:** Required.
+Self-export: any authenticated user.
+Exporting others: `ADMIN` or `SUPER_ADMIN` only.
 
 **Errors:**
 - `"Not authenticated"` - no user on provenance
-- `"Insufficient privileges"` - non-admin user
-- `"No service context"` - provenance missing serviceId
-- `"Binding not found"` - no service binding for the target user/protocol
+- `"Insufficient privileges"` - non-admin attempting to export another user's data
+- `"User not found"` - target username does not exist
 
 **HTTP mapping:**
 ```
-POST /admin/reset-password
+GET /auth/export
 Authorization: Bearer <token>
-Content-Type: application/json
-
-{"username": "targetuser"}
 ```
 
-**Future:** This will eventually be supplemented by a self-service flow where the user requests a reset, the system emails a time-limited token, and the user redeems it.
-This requires the MAILTO protocol adapter (not yet implemented).
+Admin export:
+```
+GET /admin/users/{username}/export
+Authorization: Bearer <token>
+```
+
+---
+
+### Suspend Account
+
+Freezes a user account so they cannot log in.
+Content remains attributed and navigable for admin review.
+Reversible via unsuspend.
+
+**Request:** `SuspendAccountRequest`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | String | yes | Target username |
+
+**Response:** `"Account suspended"` (string)
+
+**Auth:** Required. `ADMIN` or `SUPER_ADMIN` only.
+
+**Constraints:**
+- Target must be in ACTIVE status
+- Super admin accounts cannot be suspended
+
+**Errors:**
+- `"Not authenticated"` - no user on provenance
+- `"Insufficient privileges"` - caller lacks admin role
+- `"User not found"` - target username does not exist
+- `"User is not active"` - target is not in ACTIVE status
+- `"Cannot suspend a super admin"` - target is a super admin
+
+**HTTP mapping:**
+```
+PUT /admin/users/{username}/suspend
+Authorization: Bearer <token>
+```
+
+---
+
+### Unsuspend Account
+
+Restores a suspended user account to active status.
+
+**Request:** `UnsuspendAccountRequest`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | String | yes | Target username |
+
+**Response:** `"Account unsuspended"` (string)
+
+**Auth:** Required. `ADMIN` or `SUPER_ADMIN` only.
+
+**Constraints:**
+- Target must be in SUSPENDED status
+
+**Errors:**
+- `"Not authenticated"` - no user on provenance
+- `"Insufficient privileges"` - caller lacks admin role
+- `"User not found"` - target username does not exist
+- `"User is not suspended"` - target is not in SUSPENDED status
+
+**HTTP mapping:**
+```
+PUT /admin/users/{username}/unsuspend
+Authorization: Bearer <token>
+```
+
+---
+
+### Purge Erased Content
+
+Hard-deletes all posts and comments belonging to an erased user sentinel, then removes the sentinel itself.
+Only works on users with ERASED status.
+
+**Request:** `PurgeErasedContentRequest`
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `sentinelUserId` | UUID | yes | ID of the erased sentinel user |
+
+**Response:** `"Content purged"` (string)
+
+**Auth:** Required. `ADMIN` or `SUPER_ADMIN` only.
+
+**Constraints:**
+- Target must have ERASED status (sentinel users only)
+
+**Errors:**
+- `"Not authenticated"` - no user on provenance
+- `"Insufficient privileges"` - caller lacks admin role
+- `"User not found"` - sentinel user does not exist
+- `"Target user is not an erased sentinel"` - target does not have ERASED status
+
+**HTTP mapping:**
+```
+DELETE /admin/users/{sentinel-username}/purge
+Authorization: Bearer <token>
+```
 
 ---
 
@@ -295,7 +360,7 @@ Lightweight identity carried in message headers and returned from several operat
 |------|--------|
 | `GUEST` | Read-only, no posting or commenting |
 | `USER` | Submit posts (as drafts), comment, edit own profile |
-| `ADMIN` | All USER + approve/reject posts, reset passwords, delete users/content |
+| `ADMIN` | All USER + approve/reject posts, delete users/content |
 | `SUPER_ADMIN` | All ADMIN + change user roles, system configuration |
 
 ### Error Response Format
@@ -306,12 +371,15 @@ The HTTP adapter should translate these to appropriate HTTP status codes:
 | Error message pattern | HTTP status |
 |----------------------|-------------|
 | `"Not authenticated"` | 401 Unauthorized |
-| `"Invalid credentials"` | 401 Unauthorized |
+| `"Invalid or expired code"` | 401 Unauthorized |
 | `"Invalid or expired token"` | 401 Unauthorized |
 | `"Insufficient privileges"` | 403 Forbidden |
 | `"Cannot delete a super admin"` | 403 Forbidden |
+| `"Cannot suspend a super admin"` | 400 Bad Request |
 | `"Cannot change own role"` | 400 Bad Request |
-| `"User not found"` | 404 Not Found |
-| `"Binding not found"` | 404 Not Found |
-| `"Username already taken"` | 409 Conflict |
+| `"User not found"` | 400 Bad Request |
+| `"User is already erased"` | 400 Bad Request |
+| `"User is not active"` | 400 Bad Request |
+| `"User is not suspended"` | 400 Bad Request |
+| `"Target user is not an erased sentinel"` | 400 Bad Request |
 | `"No service context"` | 500 Internal Server Error |

@@ -16,7 +16,7 @@ class UserResolutionService(private val serviceBindingRepository: ServiceBinding
         val binding =
             serviceBindingRepository.resolve(protocol, serviceId, externalIdentifier) ?: return null
         val user = binding.user
-        if (user.deleted) return null
+        if (!user.isActive()) return null
         return user.toUserPrincipal()
     }
 }

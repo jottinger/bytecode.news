@@ -60,6 +60,16 @@ interface PostRepository : JpaRepository<Post, UUID> {
     )
     fun findDrafts(pageable: Pageable): Page<Post>
 
+    /** Hard-deletes all posts by a given author (for purging erased user content) */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Post p WHERE p.author.id = :authorId")
+    fun hardDeleteByAuthor(authorId: UUID)
+
+    /** Reassigns all posts from one author to another (for account erasure) */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Post p SET p.author.id = :toUserId WHERE p.author.id = :fromUserId")
+    fun reassignAuthor(fromUserId: UUID, toUserId: UUID)
+
     /** Full-text search on published posts, ranked by relevance */
     @Query(
         nativeQuery = true,

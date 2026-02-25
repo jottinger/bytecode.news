@@ -30,5 +30,15 @@ interface CommentRepository : JpaRepository<Comment, UUID> {
     @Query("SELECT COUNT(c) FROM Comment c WHERE c.post.id = :postId AND c.deleted = false")
     fun countActiveByPost(postId: UUID): Long
 
+    /** Hard-deletes all comments by a given author (for purging erased user content) */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Comment c WHERE c.author.id = :authorId")
+    fun hardDeleteByAuthor(authorId: UUID)
+
+    /** Reassigns all comments from one author to another (for account erasure) */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Comment c SET c.author.id = :toUserId WHERE c.author.id = :fromUserId")
+    fun reassignAuthor(fromUserId: UUID, toUserId: UUID)
+
     @Modifying @Query("DELETE FROM Comment c WHERE c.id = :id") fun hardDeleteById(id: UUID)
 }
