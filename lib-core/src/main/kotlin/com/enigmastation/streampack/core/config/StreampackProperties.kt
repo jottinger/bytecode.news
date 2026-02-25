@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 @ConfigurationProperties(prefix = "streampack")
 data class StreampackProperties(
     val baseUrl: String = "http://localhost:8080",
+    val frontendUrl: String = "",
     val jwt: JwtProperties = JwtProperties(),
     val token: TokenProperties = TokenProperties(),
     val mail: MailProperties = MailProperties(),
