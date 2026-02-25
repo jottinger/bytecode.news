@@ -30,18 +30,6 @@
         "required" : [ "id", "name", "slug" ],
         "type" : "object"
       },
-      "ChangePasswordRequest" : {
-        "properties" : {
-          "newPassword" : {
-            "type" : "string"
-          },
-          "oldPassword" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "newPassword", "oldPassword" ],
-        "type" : "object"
-      },
       "CommentDetail" : {
         "properties" : {
           "authorDisplayName" : {
@@ -478,27 +466,6 @@
         "required" : [ "locked", "selector", "updatedAt" ],
         "type" : "object"
       },
-      "ForgotPasswordRequest" : {
-        "properties" : {
-          "email" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "email" ],
-        "type" : "object"
-      },
-      "LoginRequest" : {
-        "properties" : {
-          "password" : {
-            "type" : "string"
-          },
-          "username" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "password", "username" ],
-        "type" : "object"
-      },
       "LoginResponse" : {
         "properties" : {
           "principal" : {
@@ -509,6 +476,27 @@
           }
         },
         "required" : [ "principal", "token" ],
+        "type" : "object"
+      },
+      "OtpRequest" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "email" ],
+        "type" : "object"
+      },
+      "OtpVerifyRequest" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "email" ],
         "type" : "object"
       },
       "PageFactoidSummaryResponse" : {
@@ -583,18 +571,6 @@
         },
         "type" : "object"
       },
-      "PasswordResetResponse" : {
-        "properties" : {
-          "temporaryPassword" : {
-            "type" : "string"
-          },
-          "username" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "temporaryPassword", "username" ],
-        "type" : "object"
-      },
       "ProblemDetail" : {
         "properties" : {
           "detail" : {
@@ -620,36 +596,6 @@
             "type" : "string"
           }
         },
-        "type" : "object"
-      },
-      "RegistrationRequest" : {
-        "properties" : {
-          "displayName" : {
-            "type" : "string"
-          },
-          "email" : {
-            "type" : "string"
-          },
-          "password" : {
-            "type" : "string"
-          },
-          "username" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "displayName", "email", "password", "username" ],
-        "type" : "object"
-      },
-      "ResetPasswordRequest" : {
-        "properties" : {
-          "newPassword" : {
-            "type" : "string"
-          },
-          "token" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "newPassword", "token" ],
         "type" : "object"
       },
       "RoleUpdateRequest" : {
@@ -703,15 +649,6 @@
           }
         },
         "required" : [ "displayName", "id", "role", "username" ],
-        "type" : "object"
-      },
-      "VerifyEmailRequest" : {
-        "properties" : {
-          "token" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "token" ],
         "type" : "object"
       }
     },
@@ -1182,66 +1119,6 @@
         "tags" : [ "Admin - Post Management" ]
       }
     },
-    "/admin/users/{username}/reset-password" : {
-      "post" : {
-        "operationId" : "resetPassword_1",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "username",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/PasswordResetResponse"
-                }
-              }
-            },
-            "description" : "Password reset with temporary password"
-          },
-          "400" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Invalid request"
-          },
-          "401" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Not authenticated"
-          },
-          "403" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Insufficient privileges"
-          }
-        },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ],
-        "summary" : "Reset a user's password and generate a temporary one",
-        "tags" : [ "Admin - User Management" ]
-      }
-    },
     "/admin/users/{username}/role" : {
       "put" : {
         "operationId" : "changeRole",
@@ -1330,125 +1207,17 @@
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "type" : "string"
+                  "type" : "object"
                 }
               }
             },
-            "description" : "Account deleted"
-          },
-          "400" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Invalid request"
-          },
-          "401" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Not authenticated"
-          },
-          "403" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Insufficient privileges"
+            "description" : "OK"
           }
         },
         "security" : [ {
           "bearerAuth" : [ ]
         } ],
         "summary" : "Soft-delete the authenticated user's account",
-        "tags" : [ "Authentication" ]
-      }
-    },
-    "/auth/forgot-password" : {
-      "post" : {
-        "operationId" : "forgotPassword",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ForgotPasswordRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            },
-            "description" : "Reset email sent if account exists"
-          },
-          "400" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Invalid request"
-          }
-        },
-        "summary" : "Request a password reset email",
-        "tags" : [ "Authentication" ]
-      }
-    },
-    "/auth/login" : {
-      "post" : {
-        "operationId" : "login",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/LoginRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/LoginResponse"
-                }
-              }
-            },
-            "description" : "Login successful"
-          },
-          "401" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Invalid credentials"
-          }
-        },
-        "summary" : "Authenticate with username and password",
         "tags" : [ "Authentication" ]
       }
     },
@@ -1464,14 +1233,14 @@
         "tags" : [ "Authentication" ]
       }
     },
-    "/auth/password" : {
-      "put" : {
-        "operationId" : "changePassword",
+    "/auth/otp/request" : {
+      "post" : {
+        "operationId" : "requestOtp",
         "requestBody" : {
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ChangePasswordRequest"
+                "$ref" : "#/components/schemas/OtpRequest"
               }
             }
           },
@@ -1482,21 +1251,40 @@
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "type" : "string"
+                  "type" : "object"
                 }
               }
             },
-            "description" : "Password changed"
+            "description" : "Code sent if email is valid"
+          }
+        },
+        "summary" : "Request a one-time sign-in code",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/otp/verify" : {
+      "post" : {
+        "operationId" : "verifyOtp",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/OtpVerifyRequest"
+              }
+            }
           },
-          "400" : {
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/LoginResponse"
                 }
               }
             },
-            "description" : "Invalid password data"
+            "description" : "Authentication successful"
           },
           "401" : {
             "content" : {
@@ -1506,13 +1294,10 @@
                 }
               }
             },
-            "description" : "Not authenticated"
+            "description" : "Invalid or expired code"
           }
         },
-        "security" : [ {
-          "bearerAuth" : [ ]
-        } ],
-        "summary" : "Change password for the authenticated user",
+        "summary" : "Verify a one-time sign-in code",
         "tags" : [ "Authentication" ]
       }
     },
@@ -1552,133 +1337,6 @@
           }
         },
         "summary" : "Refresh an expired JWT token",
-        "tags" : [ "Authentication" ]
-      }
-    },
-    "/auth/register" : {
-      "post" : {
-        "operationId" : "register",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/RegistrationRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserPrincipal"
-                }
-              }
-            },
-            "description" : "Registration successful"
-          },
-          "400" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Invalid registration data"
-          },
-          "409" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Username already taken"
-          }
-        },
-        "summary" : "Register a new user account",
-        "tags" : [ "Authentication" ]
-      }
-    },
-    "/auth/reset-password" : {
-      "post" : {
-        "operationId" : "resetPassword",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ResetPasswordRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            },
-            "description" : "Password reset successful"
-          },
-          "400" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Invalid or expired reset token"
-          }
-        },
-        "summary" : "Reset password using a reset token",
-        "tags" : [ "Authentication" ]
-      }
-    },
-    "/auth/verify" : {
-      "post" : {
-        "operationId" : "verify",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/VerifyEmailRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string"
-                }
-              }
-            },
-            "description" : "Email verified"
-          },
-          "400" : {
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
-                }
-              }
-            },
-            "description" : "Invalid or expired verification token"
-          }
-        },
-        "summary" : "Verify email address with token",
         "tags" : [ "Authentication" ]
       }
     },

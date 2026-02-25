@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -31,7 +30,6 @@ class DeleteAccountOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var userRegistrationService: UserRegistrationService
-    @Autowired lateinit var passwordEncoder: BCryptPasswordEncoder
 
     private lateinit var regularUser: UserPrincipal
     private lateinit var adminUser: UserPrincipal
@@ -46,8 +44,7 @@ class DeleteAccountOperationTests {
                 displayName = "Regular User",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "regularuser",
-                metadata = mapOf("passwordHash" to passwordEncoder.encode("password")!!),
+                externalIdentifier = "regular@example.com",
             )
         adminUser =
             userRegistrationService.register(
@@ -56,8 +53,7 @@ class DeleteAccountOperationTests {
                 displayName = "Admin User",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "adminuser",
-                metadata = mapOf("passwordHash" to passwordEncoder.encode("password")!!),
+                externalIdentifier = "admin@example.com",
                 role = Role.ADMIN,
             )
         superAdmin =
@@ -67,8 +63,7 @@ class DeleteAccountOperationTests {
                 displayName = "Super Admin",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "superuser",
-                metadata = mapOf("passwordHash" to passwordEncoder.encode("password")!!),
+                externalIdentifier = "super@example.com",
                 role = Role.SUPER_ADMIN,
             )
     }

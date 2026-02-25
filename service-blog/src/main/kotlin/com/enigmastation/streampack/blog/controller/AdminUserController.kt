@@ -2,8 +2,6 @@
 package com.enigmastation.streampack.blog.controller
 
 import com.enigmastation.streampack.blog.config.BlogProperties
-import com.enigmastation.streampack.blog.model.PasswordResetRequest
-import com.enigmastation.streampack.blog.model.PasswordResetResponse
 import com.enigmastation.streampack.blog.model.RoleUpdateRequest
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.AlterUserRequest
@@ -25,7 +23,6 @@ import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -75,38 +72,6 @@ class AdminUserController(
 
         val payload = AlterUserRequest(username = username, role = request.newRole)
         return dispatch(payload, "admin/users/role", user) { result -> mapError(result) }
-    }
-
-    @Operation(summary = "Reset a user's password and generate a temporary one")
-    @ApiResponse(
-        responseCode = "200",
-        description = "Password reset with temporary password",
-        content = [Content(schema = Schema(implementation = PasswordResetResponse::class))],
-    )
-    @ApiResponse(
-        responseCode = "401",
-        description = "Not authenticated",
-        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
-    )
-    @ApiResponse(
-        responseCode = "403",
-        description = "Insufficient privileges",
-        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
-    )
-    @ApiResponse(
-        responseCode = "400",
-        description = "Invalid request",
-        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
-    )
-    @PostMapping("/{username}/reset-password")
-    fun resetPassword(
-        @PathVariable username: String,
-        httpRequest: HttpServletRequest,
-    ): ResponseEntity<*> {
-        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
-
-        val payload = PasswordResetRequest(username = username)
-        return dispatch(payload, "admin/users/reset-password", user) { result -> mapError(result) }
     }
 
     /** Extracts and validates the Bearer token from the Authorization header */

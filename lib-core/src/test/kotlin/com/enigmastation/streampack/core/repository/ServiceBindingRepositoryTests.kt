@@ -114,7 +114,7 @@ class ServiceBindingRepositoryTests {
 
     @Test
     fun `JSONB metadata round-trip`() {
-        val metadata = mapOf("passwordHash" to "bcrypt\$hash123", "oauthProvider" to "github")
+        val metadata = mapOf("authMethod" to "oidc", "oauthProvider" to "github")
         serviceBindingRepository.save(
             ServiceBinding(
                 user = testUser,
@@ -129,7 +129,7 @@ class ServiceBindingRepositoryTests {
         val found = serviceBindingRepository.resolve(Protocol.HTTP, "blog-service", "dreamreal")
 
         assertNotNull(found)
-        assertEquals("bcrypt\$hash123", found!!.metadata["passwordHash"])
+        assertEquals("oidc", found!!.metadata["authMethod"])
         assertEquals("github", found.metadata["oauthProvider"])
     }
 

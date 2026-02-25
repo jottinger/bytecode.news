@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.transaction.annotation.Transactional
 
 /**
@@ -36,7 +35,6 @@ class TokenRefreshOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var userRegistrationService: UserRegistrationService
-    @Autowired lateinit var passwordEncoder: BCryptPasswordEncoder
     @Autowired lateinit var jwtService: JwtService
     @Autowired lateinit var userRepository: UserRepository
 
@@ -51,8 +49,7 @@ class TokenRefreshOperationTests {
                 displayName = "Test User",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "testuser",
-                metadata = mapOf("passwordHash" to passwordEncoder.encode("password")!!),
+                externalIdentifier = "test@example.com",
             )
     }
 

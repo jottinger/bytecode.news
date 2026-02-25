@@ -7,7 +7,7 @@ import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Service
 
-/** Sends transactional emails for verification and password reset flows */
+/** Sends transactional emails for authentication and account management flows */
 @Service
 class EmailService(private val mailSender: JavaMailSender, properties: StreampackProperties) {
     private val baseUrl = properties.baseUrl
@@ -29,19 +29,17 @@ class EmailService(private val mailSender: JavaMailSender, properties: Streampac
         mailSender.send(message)
     }
 
-    /** Sends a password reset link to the user */
-    fun sendPasswordResetEmail(to: String, token: String) {
-        val link = "$baseUrl/auth/reset-password?token=$token"
+    /** Sends a one-time sign-in code to the given email address */
+    fun sendOneTimeCode(to: String, code: String) {
         val message = SimpleMailMessage()
         message.from = fromAddress
         message.setTo(to)
-        message.subject = "Reset your password"
+        message.subject = "Your sign-in code for bytecode.news"
         message.text =
-            "A password reset was requested for your jvm.news account.\n\n" +
-                "Reset your password by visiting:\n$link\n\n" +
-                "This link will expire in 1 hour.\n" +
+            "Your one-time sign-in code is: $code\n\n" +
+                "This code will expire in 5 minutes.\n" +
                 "If you did not request this, please ignore this email."
-        logger.info("Sending password reset email to {}", to)
+        logger.info("Sending OTP code to {}", to)
         mailSender.send(message)
     }
 }

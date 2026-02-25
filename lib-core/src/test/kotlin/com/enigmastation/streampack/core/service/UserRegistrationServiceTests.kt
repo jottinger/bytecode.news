@@ -32,7 +32,7 @@ class UserRegistrationServiceTests {
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
                 externalIdentifier = "dreamreal",
-                metadata = mapOf("passwordHash" to "bcrypt\$hash123"),
+                metadata = mapOf("authMethod" to "otp"),
             )
 
         assertEquals("dreamreal", principal.username)
@@ -46,7 +46,7 @@ class UserRegistrationServiceTests {
         val binding = serviceBindingRepository.resolve(Protocol.HTTP, "blog-service", "dreamreal")
         assertNotNull(binding)
         assertEquals(user.id, binding!!.user.id)
-        assertEquals("bcrypt\$hash123", binding.metadata["passwordHash"])
+        assertEquals("otp", binding.metadata["authMethod"])
     }
 
     @Test

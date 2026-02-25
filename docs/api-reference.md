@@ -12,9 +12,10 @@ Protected endpoints require a Bearer token in the `Authorization` header:
 Authorization: Bearer <JWT>
 ```
 
-Tokens are obtained from `POST /auth/login` or `POST /auth/refresh`.
+Tokens are obtained from `POST /auth/otp/verify`, OIDC callback, or `POST /auth/refresh`.
 The JWT encodes a `UserPrincipal` (see Common Types below).
 Token lifetime is 24 hours by default.
+See [Authentication](authentication.md) for details on the OTP and OIDC flows.
 
 ## Common Types
 
@@ -47,81 +48,41 @@ Token lifetime is 24 hours by default.
 
 ---
 
-### POST /auth/register
+### POST /auth/otp/request
 
-Create a new account.
-Sends a verification email with a link to confirm the email address.
+Request a one-time sign-in code.
+A 6-digit code is emailed to the provided address.
+Always returns 200 regardless of whether the email matches an account (prevents account enumeration).
 
 **Auth**: None
 
 **Request**:
 ```json
 {
-  "username": "dreamreal",
+  "email": "joe@example.com"
+}
+```
+
+**Success (200)**: `"Code sent"` (plain JSON string)
+
+**Side effect**: If the email is valid, a 6-digit code is generated with a 5-minute expiry and sent via email.
+Maximum 3 active codes per email address.
+
+---
+
+### POST /auth/otp/verify
+
+Verify a one-time sign-in code and receive a JWT.
+If no account exists for the email, one is created automatically.
+OTP verification implies email verification.
+
+**Auth**: None
+
+**Request**:
+```json
+{
   "email": "joe@example.com",
-  "displayName": "Joe Ottinger",
-  "password": "s3cureP@ss"
-}
-```
-
-All fields required.
-
-**Success (200)**:
-```json
-{
-  "id": "01234567-89ab-7def-8123-456789abcdef",
-  "username": "dreamreal",
-  "displayName": "Joe Ottinger",
-  "role": "USER"
-}
-```
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 409 | Username or email already in use | "Username already taken" / "Email already taken" |
-| 400 | Other validation failure | Varies |
-
-**Side effect**: A verification email is sent to the provided address containing a link of the form `/auth/verify?token=<uuid>`.
-The user can log in immediately but email is not yet verified.
-
----
-
-### POST /auth/verify
-
-Verify an email address using the token from the verification email.
-
-**Auth**: None
-
-**Request**:
-```json
-{
-  "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-}
-```
-
-**Success (200)**: `"Email verified"` (plain JSON string)
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 400 | Token invalid, expired, or already used | "Invalid or expired token" |
-
----
-
-### POST /auth/login
-
-Authenticate with username and password.
-
-**Auth**: None
-
-**Request**:
-```json
-{
-  "username": "dreamreal",
-  "password": "s3cureP@ss"
+  "code": "123456"
 }
 ```
 
@@ -131,8 +92,8 @@ Authenticate with username and password.
   "token": "eyJhbGciOiJIUzI1NiIs...",
   "principal": {
     "id": "01234567-89ab-7def-8123-456789abcdef",
-    "username": "dreamreal",
-    "displayName": "Joe Ottinger",
+    "username": "joe",
+    "displayName": "joe",
     "role": "USER"
   }
 }
@@ -145,7 +106,7 @@ Store `token` for use in `Authorization: Bearer <token>` on protected endpoints.
 
 | Status | Condition | Detail |
 |--------|-----------|--------|
-| 401 | Bad credentials or account not found | "Invalid credentials" |
+| 401 | Wrong code, expired code, or no active code | "Invalid or expired code" |
 
 ---
 
@@ -160,58 +121,6 @@ The client should discard its stored token.
 **Request**: Empty body (or no body)
 
 **Success**: `204 No Content` (no response body)
-
----
-
-### POST /auth/forgot-password
-
-Request a password reset email.
-Always returns the same success message regardless of whether the email exists - this prevents account enumeration.
-
-**Auth**: None
-
-**Request**:
-```json
-{
-  "email": "joe@example.com"
-}
-```
-
-**Success (200)**: `"If an account with that email exists, a reset link has been sent"` (plain JSON string)
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 400 | Malformed request | Varies |
-
-**Side effect**: If the email matches an account, a password reset email is sent containing a link of the form `/auth/reset-password?token=<uuid>`.
-Reset tokens expire after 1 hour.
-
----
-
-### POST /auth/reset-password
-
-Reset password using a token from the forgot-password email.
-This is the user-facing reset (token-based), not the admin reset.
-
-**Auth**: None
-
-**Request**:
-```json
-{
-  "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "newPassword": "n3wS3cure!"
-}
-```
-
-**Success (200)**: `"Password reset successfully"` (plain JSON string)
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 400 | Token invalid, expired, or already used | "Invalid or expired token" |
 
 ---
 
@@ -247,31 +156,6 @@ Use this to extend sessions without re-authenticating.
 | Status | Condition | Detail |
 |--------|-----------|--------|
 | 401 | Token invalid or expired | "Invalid or expired token" |
-
----
-
-### PUT /auth/password
-
-Change the authenticated user's password.
-
-**Auth**: Required (Bearer token)
-
-**Request**:
-```json
-{
-  "oldPassword": "currentP@ss",
-  "newPassword": "n3wS3cure!"
-}
-```
-
-**Success (200)**: `"Password changed successfully"` (plain JSON string)
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 401 | Missing/invalid token or wrong old password | "Not authenticated" / "Invalid credentials" |
-| 400 | Other validation failure | Varies |
 
 ---
 
@@ -347,37 +231,6 @@ Returns the updated UserPrincipal reflecting the new role.
 |--------|-----------|--------|
 | 401 | Missing/invalid token | "Not authenticated" |
 | 403 | Caller is not super-admin | "Insufficient privileges" |
-| 400 | Target user not found or other error | Varies |
-
----
-
-### POST /admin/users/{username}/reset-password
-
-Admin-initiated password reset.
-Generates a temporary password for the user (no email sent).
-
-**Auth**: Required (Admin or Super-admin)
-
-**Path parameters**: `username` - the target user's username
-
-**Request**: Empty body (username comes from the path)
-
-**Success (200)**:
-```json
-{
-  "username": "dreamreal",
-  "temporaryPassword": "xK7mNpQ2rT9vW3"
-}
-```
-
-The admin should communicate the temporary password to the user through a secure channel.
-
-**Errors**:
-
-| Status | Condition | Detail |
-|--------|-----------|--------|
-| 401 | Missing/invalid token | "Not authenticated" |
-| 403 | Caller lacks admin privileges | "Insufficient privileges" |
 | 400 | Target user not found or other error | Varies |
 
 ---
@@ -560,31 +413,23 @@ Add `?hard=true` for permanent removal.
 
 ## User Flows
 
-**Registration and email verification**:
-1. `POST /auth/register` - creates account, returns UserPrincipal, sends verification email
-2. User clicks link in email (contains token)
-3. `POST /auth/verify` with the token - marks email as verified
-4. User can log in immediately after step 1, but email-gated features (commenting) require step 3
+**OTP sign-in (new or returning user)**:
+1. `POST /auth/otp/request` with email - code is sent if the email is valid (always returns 200)
+2. User checks email for the 6-digit code
+3. `POST /auth/otp/verify` with email and code - returns JWT + UserPrincipal
+4. If no account exists for that email, one is created automatically
+5. Store token client-side (localStorage, cookie, etc.)
+6. Include `Authorization: Bearer <token>` on protected requests
 
-**Login and session management**:
-1. `POST /auth/login` - returns JWT token + UserPrincipal
-2. Store token client-side (localStorage, cookie, etc.)
-3. Include `Authorization: Bearer <token>` on protected requests
-4. `POST /auth/refresh` before token expires to get a fresh token
-5. `POST /auth/logout` - discard the stored token client-side
+**OIDC sign-in (Google / GitHub)**:
+1. Redirect user to `/oauth2/authorization/google` or `/oauth2/authorization/github`
+2. User authenticates with the provider
+3. Browser is redirected to `/auth/callback#token=<jwt>`
+4. Frontend extracts the JWT from the URL fragment
 
-**Forgot password**:
-1. `POST /auth/forgot-password` with email - always returns success (prevents enumeration)
-2. If email exists, user receives reset email with token link
-3. `POST /auth/reset-password` with token + new password
-4. User logs in with new password
-
-**Change password** (while logged in):
-1. `PUT /auth/password` with old and new password (requires Bearer token)
-
-**Admin password reset**:
-1. `POST /admin/users/{username}/reset-password` - returns temporary password
-2. Admin communicates temporary password to user out-of-band
+**Session management**:
+1. `POST /auth/refresh` before token expires to get a fresh token
+2. `POST /auth/logout` - discard the stored token client-side
 
 **Commenting on a post**:
 1. User must be logged in with a verified email
@@ -600,17 +445,12 @@ Add `?hard=true` for permanent removal.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/auth/register` | No | Create account |
-| POST | `/auth/verify` | No | Verify email token |
-| POST | `/auth/login` | No | Authenticate |
+| POST | `/auth/otp/request` | No | Request sign-in code |
+| POST | `/auth/otp/verify` | No | Verify code, get JWT |
 | POST | `/auth/logout` | No | Client-side logout (204) |
-| POST | `/auth/forgot-password` | No | Request reset email |
-| POST | `/auth/reset-password` | No | Reset password with token |
 | POST | `/auth/refresh` | No | Refresh JWT |
-| PUT | `/auth/password` | Yes | Change own password |
 | DELETE | `/auth/account` | Yes | Delete account |
 | PUT | `/admin/users/{username}/role` | Super-admin | Change user role |
-| POST | `/admin/users/{username}/reset-password` | Admin+ | Reset user password |
 | GET | `/posts/{year}/{month}/{slug}/comments` | No | Get comment thread |
 | POST | `/posts/{year}/{month}/{slug}/comments` | Yes (verified) | Add comment |
 | PUT | `/comments/{id}` | Yes | Edit comment (5 min window) |
@@ -1011,31 +851,23 @@ Hidden from selection, existing post associations preserved.
 
 ## User Flows
 
-**Registration and email verification**:
-1. `POST /auth/register` - creates account, returns UserPrincipal, sends verification email
-2. User clicks link in email (contains token)
-3. `POST /auth/verify` with the token - marks email as verified
-4. User can log in immediately after step 1, but email-gated features (posting, commenting) require step 3
+**OTP sign-in (new or returning user)**:
+1. `POST /auth/otp/request` with email - code is sent if the email is valid (always returns 200)
+2. User checks email for the 6-digit code
+3. `POST /auth/otp/verify` with email and code - returns JWT + UserPrincipal
+4. If no account exists for that email, one is created automatically
+5. Store token client-side (localStorage, cookie, etc.)
+6. Include `Authorization: Bearer <token>` on protected requests
 
-**Login and session management**:
-1. `POST /auth/login` - returns JWT token + UserPrincipal
-2. Store token client-side (localStorage, cookie, etc.)
-3. Include `Authorization: Bearer <token>` on protected requests
-4. `POST /auth/refresh` before token expires to get a fresh token
-5. `POST /auth/logout` - discard the stored token client-side
+**OIDC sign-in (Google / GitHub)**:
+1. Redirect user to `/oauth2/authorization/google` or `/oauth2/authorization/github`
+2. User authenticates with the provider
+3. Browser is redirected to `/auth/callback#token=<jwt>`
+4. Frontend extracts the JWT from the URL fragment
 
-**Forgot password**:
-1. `POST /auth/forgot-password` with email - always returns success (prevents enumeration)
-2. If email exists, user receives reset email with token link
-3. `POST /auth/reset-password` with token + new password
-4. User logs in with new password
-
-**Change password** (while logged in):
-1. `PUT /auth/password` with old and new password (requires Bearer token)
-
-**Admin password reset**:
-1. `POST /admin/users/{username}/reset-password` - returns temporary password
-2. Admin communicates temporary password to user out-of-band
+**Session management**:
+1. `POST /auth/refresh` before token expires to get a fresh token
+2. `POST /auth/logout` - discard the stored token client-side
 
 **Post submission and approval**:
 1. User creates a draft: `POST /posts` with title, markdown, optional tags and categories
@@ -1068,17 +900,12 @@ Hidden from selection, existing post associations preserved.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/auth/register` | No | Create account |
-| POST | `/auth/verify` | No | Verify email token |
-| POST | `/auth/login` | No | Authenticate |
+| POST | `/auth/otp/request` | No | Request sign-in code |
+| POST | `/auth/otp/verify` | No | Verify code, get JWT |
 | POST | `/auth/logout` | No | Client-side logout (204) |
-| POST | `/auth/forgot-password` | No | Request reset email |
-| POST | `/auth/reset-password` | No | Reset password with token |
 | POST | `/auth/refresh` | No | Refresh JWT |
-| PUT | `/auth/password` | Yes | Change own password |
 | DELETE | `/auth/account` | Yes | Delete account |
 | PUT | `/admin/users/{username}/role` | Super-admin | Change user role |
-| POST | `/admin/users/{username}/reset-password` | Admin+ | Reset user password |
 | GET | `/posts` | No | List published posts |
 | GET | `/posts/{year}/{month}/{slug}` | No | Get single post |
 | GET | `/posts/search?q=` | No | Search published posts |

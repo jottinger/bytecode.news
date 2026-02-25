@@ -12,30 +12,24 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/** Manages creation and consumption of verification tokens for email and password reset flows */
+/** Manages creation and consumption of verification tokens for email flows */
 @Service
 class VerificationTokenService(
     private val verificationTokenRepository: VerificationTokenRepository,
     properties: StreampackProperties,
 ) {
     private val emailVerificationHours = properties.token.emailVerificationHours
-    private val passwordResetHours = properties.token.passwordResetHours
     private val logger = LoggerFactory.getLogger(VerificationTokenService::class.java)
 
     /** Creates a new token for the given user and type */
     @Transactional
     fun createToken(user: User, type: TokenType): VerificationToken {
-        val hours =
-            when (type) {
-                TokenType.EMAIL_VERIFICATION -> emailVerificationHours
-                TokenType.PASSWORD_RESET -> passwordResetHours
-            }
         val token =
             VerificationToken(
                 user = user,
                 token = UUID.randomUUID().toString(),
                 tokenType = type,
-                expiresAt = Instant.now().plusSeconds(hours * 3600),
+                expiresAt = Instant.now().plusSeconds(emailVerificationHours * 3600),
                 createdAt = Instant.now(),
             )
         logger.debug("Created {} token for user {}", type, user.username)
