@@ -22,7 +22,7 @@ class OidcAuthenticationSuccessHandler(
     properties: StreampackProperties,
 ) : AuthenticationSuccessHandler {
     private val logger = LoggerFactory.getLogger(OidcAuthenticationSuccessHandler::class.java)
-    private val frontendUrl = properties.baseUrl
+    private val frontendUrl = properties.frontendUrl.ifEmpty { properties.baseUrl }
 
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,

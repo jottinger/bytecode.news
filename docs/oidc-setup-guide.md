@@ -29,7 +29,8 @@ OIDC is optional - the app works with OTP-only authentication when no provider c
 2. Click **Create Credentials > OAuth client ID**
 3. Application type: **Web application**
 4. Name: your site name
-5. Authorized redirect URIs: `https://your-domain.com/login/oauth2/code/google`
+5. Authorized redirect URIs: `https://rest.your-domain.com/login/oauth2/code/google`
+   - The redirect URI must point to the **API** domain, not the frontend
    - For local development: `http://localhost:8080/login/oauth2/code/google`
 6. Copy the **Client ID** and **Client Secret**
 
@@ -64,7 +65,8 @@ spring:
 3. Fill in:
    - Application name: your site name
    - Homepage URL: `https://your-domain.com`
-   - Authorization callback URL: `https://your-domain.com/login/oauth2/code/github`
+   - Authorization callback URL: `https://rest.your-domain.com/login/oauth2/code/github`
+   - The callback URL must point to the **API** domain, not the frontend
    - For local development: `http://localhost:8080/login/oauth2/code/github`
 4. Click **Register application**
 5. Copy the **Client ID**
@@ -102,8 +104,31 @@ When a user clicks "Sign in with Google" or "Sign in with GitHub":
 4. Spring Security exchanges the authorization code for user info
 5. The app's `OidcAuthenticationSuccessHandler` extracts the email and display name
 6. Identity convergence runs: find-or-create user by email, ensure HTTP ServiceBinding, issue JWT
-7. The browser is redirected to `/auth/callback#token=<jwt>`
+7. The browser is redirected to `{frontendUrl}/auth/callback#token=<jwt>`
 8. The frontend extracts the JWT from the URL fragment and stores it
+
+## Split-Domain Deployment
+
+When the API and frontend live on different domains (e.g. `rest.bytecode.news` and `bytecode.news`), two properties control the redirect flow:
+
+- `streampack.baseUrl` - the API's public URL (`https://rest.bytecode.news`).
+  This is what Google/GitHub call back to.
+- `streampack.frontendUrl` - the frontend's public URL (`https://bytecode.news`).
+  This is where the success handler redirects the user after authentication.
+
+If `frontendUrl` is not set, it defaults to `baseUrl` (single-domain deployment).
+
+```yaml
+streampack:
+  base-url: https://rest.bytecode.news
+  frontend-url: https://bytecode.news
+```
+
+The CORS configuration must include all frontend origins that call the API:
+
+```bash
+export CORS_ORIGINS="https://bytecode.news,https://nextjs.bytecode.news,https://svelte.bytecode.news,http://localhost:3000"
+```
 
 ## Notes
 
