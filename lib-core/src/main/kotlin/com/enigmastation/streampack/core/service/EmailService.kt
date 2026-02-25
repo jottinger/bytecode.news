@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service
 class EmailService(private val mailSender: JavaMailSender, properties: StreampackProperties) {
     private val baseUrl = properties.baseUrl
     private val fromAddress = properties.mail.from
+    private val otpExpirationMinutes = properties.otp.expirationMinutes
     private val logger = LoggerFactory.getLogger(EmailService::class.java)
 
     /** Sends an email verification link to the user */
@@ -37,7 +38,7 @@ class EmailService(private val mailSender: JavaMailSender, properties: Streampac
         message.subject = "Your sign-in code for bytecode.news"
         message.text =
             "Your one-time sign-in code is: $code\n\n" +
-                "This code will expire in 5 minutes.\n" +
+                "This code will expire in $otpExpirationMinutes minutes.\n" +
                 "If you did not request this, please ignore this email."
         logger.info("Sending OTP code to {}", to)
         mailSender.send(message)

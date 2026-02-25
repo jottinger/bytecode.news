@@ -86,9 +86,11 @@ class TokenRefreshOperationTests {
     fun `deleted user token returns error`() {
         val token = jwtService.generateToken(testPrincipal)
 
-        // Soft-delete the user
+        // Mark the user as erased
         val user = userRepository.findByUsername("testuser")!!
-        userRepository.saveAndFlush(user.copy(deleted = true))
+        userRepository.saveAndFlush(
+            user.copy(status = com.enigmastation.streampack.core.model.UserStatus.ERASED)
+        )
 
         val result = eventGateway.process(refreshMessage(token))
 

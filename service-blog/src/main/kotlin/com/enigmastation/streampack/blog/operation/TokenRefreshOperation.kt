@@ -27,7 +27,7 @@ class TokenRefreshOperation(
             jwtService.validateToken(request.token)
                 ?: return OperationResult.Error("Invalid or expired token")
 
-        // Verify the user still exists and is not deleted
+        // Verify the user still exists and is active
         userRepository.findActiveById(principal.id)
             ?: return OperationResult.Error("Invalid or expired token")
 

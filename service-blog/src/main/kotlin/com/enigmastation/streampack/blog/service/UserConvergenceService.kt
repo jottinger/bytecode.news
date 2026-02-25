@@ -52,7 +52,7 @@ class UserConvergenceService(
             user = userRepository.findActiveById(principal.id)!!
         }
 
-        if (user.deleted) {
+        if (!user.isActive()) {
             throw IllegalStateException("Account is deactivated")
         }
 

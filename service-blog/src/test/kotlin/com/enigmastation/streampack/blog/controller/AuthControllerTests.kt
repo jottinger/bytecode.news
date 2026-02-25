@@ -14,6 +14,8 @@ import com.icegreen.greenmail.junit5.GreenMailExtension
 import com.icegreen.greenmail.util.ServerSetupTest
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -81,13 +83,13 @@ class AuthControllerTests {
     /* ── OTP Request ────────────────────────────────────── */
 
     @Test
-    fun `otp request returns 200 and sends email`() {
+    fun `otp request returns 202 and sends email`() {
         mockMvc
             .post("/auth/otp/request") {
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"email":"test@example.com"}"""
             }
-            .andExpect { status { isOk() } }
+            .andExpect { status { isAccepted() } }
 
         val messages = greenMail.receivedMessages
         assertEquals(1, messages.size)
@@ -95,13 +97,13 @@ class AuthControllerTests {
     }
 
     @Test
-    fun `otp request for unknown email still returns 200`() {
+    fun `otp request for unknown email still returns 202`() {
         mockMvc
             .post("/auth/otp/request") {
                 contentType = MediaType.APPLICATION_JSON
                 content = """{"email":"nobody@example.com"}"""
             }
-            .andExpect { status { isOk() } }
+            .andExpect { status { isAccepted() } }
     }
 
     /* ── OTP Verify ─────────────────────────────────────── */
@@ -213,8 +215,14 @@ class AuthControllerTests {
             }
             .andExpect { status { isOk() } }
 
-        val deletedUser = userRepository.findByUsername("testuser")!!
-        assertTrue(deletedUser.deleted)
+        // Original user is hard-deleted
+        assertNull(userRepository.findByUsername("testuser"))
+
+        // Sentinel was created with erased status
+        val sentinelUsername = "erased-${testUser.id.toString().substring(0, 8)}"
+        val sentinel = userRepository.findByUsername(sentinelUsername)
+        assertNotNull(sentinel)
+        assertTrue(sentinel!!.isErased())
     }
 
     @Test

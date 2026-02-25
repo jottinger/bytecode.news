@@ -126,7 +126,9 @@ class OtpVerifyOperationTests {
                 externalIdentifier = "deleted@example.com",
             )
         val user = userRepository.findActiveById(principal.id)!!
-        userRepository.saveAndFlush(user.copy(deleted = true))
+        userRepository.saveAndFlush(
+            user.copy(status = com.enigmastation.streampack.core.model.UserStatus.ERASED)
+        )
         seedCode("deleted@example.com", "111111")
 
         val result = eventGateway.process(verifyMessage("deleted@example.com", "111111"))

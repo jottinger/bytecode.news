@@ -2,13 +2,19 @@
 package com.enigmastation.streampack.blog.controller
 
 import com.enigmastation.streampack.blog.config.BlogProperties
+import com.enigmastation.streampack.blog.model.DeleteAccountRequest
+import com.enigmastation.streampack.blog.model.PurgeErasedContentRequest
 import com.enigmastation.streampack.blog.model.RoleUpdateRequest
+import com.enigmastation.streampack.blog.model.SuspendAccountRequest
+import com.enigmastation.streampack.blog.model.UnsuspendAccountRequest
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.AlterUserRequest
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.UserPrincipal
+import com.enigmastation.streampack.core.model.UserStatus
+import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.JwtService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -22,10 +28,13 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.messaging.support.MessageBuilder
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /** HTTP adapter for admin user management endpoints */
@@ -36,6 +45,7 @@ import org.springframework.web.bind.annotation.RestController
 class AdminUserController(
     private val eventGateway: EventGateway,
     private val jwtService: JwtService,
+    private val userRepository: UserRepository,
     blogProperties: BlogProperties,
 ) {
     private val serviceId = blogProperties.serviceId
@@ -72,6 +82,102 @@ class AdminUserController(
 
         val payload = AlterUserRequest(username = username, role = request.newRole)
         return dispatch(payload, "admin/users/role", user) { result -> mapError(result) }
+    }
+
+    @Operation(summary = "Suspend a user account")
+    @ApiResponse(responseCode = "200", description = "Account suspended")
+    @PutMapping("/{username}/suspend")
+    fun suspendAccount(
+        @PathVariable username: String,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+        return dispatch(SuspendAccountRequest(username), "admin/users/suspend", user) { result ->
+            mapError(result)
+        }
+    }
+
+    @Operation(summary = "Unsuspend a user account")
+    @ApiResponse(responseCode = "200", description = "Account unsuspended")
+    @PutMapping("/{username}/unsuspend")
+    fun unsuspendAccount(
+        @PathVariable username: String,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+        return dispatch(UnsuspendAccountRequest(username), "admin/users/unsuspend", user) { result
+            ->
+            mapError(result)
+        }
+    }
+
+    @Operation(summary = "Erase a user account (admin-initiated)")
+    @ApiResponse(responseCode = "200", description = "Account erased")
+    @DeleteMapping("/{username}")
+    fun eraseAccount(
+        @PathVariable username: String,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+        return dispatch(DeleteAccountRequest(username), "admin/users/erase", user) { result ->
+            mapError(result)
+        }
+    }
+
+    @Operation(summary = "Purge all content from an erased user sentinel")
+    @ApiResponse(responseCode = "200", description = "Content purged")
+    @DeleteMapping("/{username}/purge")
+    fun purgeErasedContent(
+        @PathVariable username: String,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+        val targetUser =
+            userRepository.findByUsername(username)
+                ?: return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "User not found"))
+        return dispatch(PurgeErasedContentRequest(targetUser.id), "admin/users/purge", user) {
+            result ->
+            mapError(result)
+        }
+    }
+
+    @Operation(summary = "List erased user sentinels")
+    @ApiResponse(responseCode = "200", description = "Erased user sentinels")
+    @GetMapping(params = ["status"])
+    fun listByStatus(
+        @RequestParam status: UserStatus,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+        if (user.role < com.enigmastation.streampack.core.model.Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(
+                    ProblemDetail.forStatusAndDetail(
+                        HttpStatus.FORBIDDEN,
+                        "Insufficient privileges",
+                    )
+                )
+        }
+        val users = userRepository.findByStatus(status).map { it.toUserPrincipal() }
+        return ResponseEntity.ok(users)
+    }
+
+    @Operation(summary = "Export a user's data for admin review")
+    @ApiResponse(responseCode = "200", description = "User data export")
+    @GetMapping("/{username}/export")
+    fun exportUserData(
+        @PathVariable username: String,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+        return dispatch(
+            com.enigmastation.streampack.blog.model.ExportUserDataRequest(username),
+            "admin/users/export",
+            user,
+        ) { result ->
+            mapError(result)
+        }
     }
 
     /** Extracts and validates the Bearer token from the Authorization header */

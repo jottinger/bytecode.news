@@ -3,6 +3,7 @@ package com.enigmastation.streampack.blog.controller
 
 import com.enigmastation.streampack.blog.config.BlogProperties
 import com.enigmastation.streampack.blog.model.DeleteAccountRequest
+import com.enigmastation.streampack.blog.model.ExportUserDataRequest
 import com.enigmastation.streampack.blog.model.LoginResponse
 import com.enigmastation.streampack.blog.model.OtpRequest
 import com.enigmastation.streampack.blog.model.OtpVerifyRequest
@@ -26,6 +27,7 @@ import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -44,10 +46,11 @@ class AuthController(
     private val logger = LoggerFactory.getLogger(AuthController::class.java)
 
     @Operation(summary = "Request a one-time sign-in code")
-    @ApiResponse(responseCode = "200", description = "Code sent if email is valid")
+    @ApiResponse(responseCode = "202", description = "Code sent if email is valid")
     @PostMapping("/otp/request")
     fun requestOtp(@RequestBody request: OtpRequest): ResponseEntity<*> {
-        return dispatch(request, "auth/otp/request") { result ->
+        return dispatch(request, "auth/otp/request", successStatus = HttpStatus.ACCEPTED) { result
+            ->
             mapError(result, HttpStatus.BAD_REQUEST)
         }
     }
@@ -95,7 +98,7 @@ class AuthController(
         }
     }
 
-    @Operation(summary = "Soft-delete the authenticated user's account")
+    @Operation(summary = "Erase the authenticated user's account")
     @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/account")
     fun deleteAccount(
@@ -115,6 +118,18 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Export the authenticated user's data")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "200", description = "User data export")
+    @GetMapping("/export")
+    fun exportUserData(httpRequest: HttpServletRequest): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+
+        return dispatch(ExportUserDataRequest(), "auth/export", user) { result ->
+            mapError(result, HttpStatus.BAD_REQUEST)
+        }
+    }
+
     /** Extracts and validates the Bearer token from the Authorization header */
     private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
         val header = request.getHeader("Authorization") ?: return null
@@ -128,6 +143,7 @@ class AuthController(
         payload: Any,
         replyTo: String,
         user: UserPrincipal? = null,
+        successStatus: HttpStatus = HttpStatus.OK,
         onError: (OperationResult) -> ResponseEntity<*>,
     ): ResponseEntity<*> {
         val provenance =
@@ -141,7 +157,7 @@ class AuthController(
             MessageBuilder.withPayload(payload).setHeader(Provenance.HEADER, provenance).build()
 
         return when (val result = eventGateway.process(message)) {
-            is OperationResult.Success -> ResponseEntity.ok(result.payload)
+            is OperationResult.Success -> ResponseEntity.status(successStatus).body(result.payload)
             is OperationResult.Error -> onError(result)
             is OperationResult.NotHandled -> {
                 logger.warn("Request to {} was not handled by any operation", replyTo)

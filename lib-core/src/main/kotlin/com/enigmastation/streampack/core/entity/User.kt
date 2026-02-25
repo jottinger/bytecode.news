@@ -3,6 +3,7 @@ package com.enigmastation.streampack.core.entity
 
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
+import com.enigmastation.streampack.core.model.UserStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -26,8 +27,16 @@ data class User(
     @Enumerated(EnumType.STRING) @Column(nullable = false) val role: Role = Role.USER,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     val lastLoginAt: Instant? = null,
-    @Column(nullable = false) val deleted: Boolean = false,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    val status: UserStatus = UserStatus.ACTIVE,
 ) {
+    fun isActive(): Boolean = status == UserStatus.ACTIVE
+
+    fun isSuspended(): Boolean = status == UserStatus.SUSPENDED
+
+    fun isErased(): Boolean = status == UserStatus.ERASED
+
     /** Produces the lightweight principal carried in message headers */
     fun toUserPrincipal(): UserPrincipal =
         UserPrincipal(id = id, username = username, displayName = displayName, role = role)

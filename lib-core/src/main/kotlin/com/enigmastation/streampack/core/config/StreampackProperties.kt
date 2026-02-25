@@ -19,5 +19,5 @@ data class StreampackProperties(
 
     data class MailProperties(val from: String = "noreply@jvm.news")
 
-    data class OtpProperties(val maxActiveCodes: Int = 3, val expirationMinutes: Long = 5)
+    data class OtpProperties(val maxActiveCodes: Int = 3, val expirationMinutes: Long = 10)
 }

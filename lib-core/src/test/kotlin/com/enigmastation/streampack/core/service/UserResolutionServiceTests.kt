@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.entity.ServiceBinding
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.model.UserStatus
 import com.enigmastation.streampack.core.repository.ServiceBindingRepository
 import com.enigmastation.streampack.core.repository.UserRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -64,14 +65,14 @@ class UserResolutionServiceTests {
     }
 
     @Test
-    fun `returns null for deleted user`() {
+    fun `returns null for erased user`() {
         val user =
             userRepository.saveAndFlush(
                 User(
-                    username = "deleted-user",
-                    email = "deleted@test.com",
-                    displayName = "Deleted User",
-                    deleted = true,
+                    username = "erased-user",
+                    email = "erased@test.com",
+                    displayName = "Erased User",
+                    status = UserStatus.ERASED,
                 )
             )
         serviceBindingRepository.saveAndFlush(

@@ -19,6 +19,11 @@ interface OneTimeCodeRepository : JpaRepository<OneTimeCode, UUID> {
     )
     fun countActiveByEmail(email: String, now: Instant): Long
 
+    /** Removes all codes for a given email address (for account erasure) */
+    @Modifying
+    @Query("DELETE FROM OneTimeCode c WHERE c.email = :email")
+    fun deleteByEmail(email: String)
+
     /** Removes codes that expired before the given cutoff */
     @Modifying
     @Query("DELETE FROM OneTimeCode c WHERE c.expiresAt < :cutoff")

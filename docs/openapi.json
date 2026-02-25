@@ -1119,6 +1119,127 @@
         "tags" : [ "Admin - Post Management" ]
       }
     },
+    "/admin/users" : {
+      "get" : {
+        "operationId" : "listByStatus",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "ACTIVE", "SUSPENDED", "ERASED" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Erased user sentinels"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "List erased user sentinels",
+        "tags" : [ "Admin - User Management" ]
+      }
+    },
+    "/admin/users/{username}" : {
+      "delete" : {
+        "operationId" : "eraseAccount",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Account erased"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Erase a user account (admin-initiated)",
+        "tags" : [ "Admin - User Management" ]
+      }
+    },
+    "/admin/users/{username}/export" : {
+      "get" : {
+        "operationId" : "exportUserData_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "User data export"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Export a user's data for admin review",
+        "tags" : [ "Admin - User Management" ]
+      }
+    },
+    "/admin/users/{username}/purge" : {
+      "delete" : {
+        "operationId" : "purgeErasedContent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Content purged"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Purge all content from an erased user sentinel",
+        "tags" : [ "Admin - User Management" ]
+      }
+    },
     "/admin/users/{username}/role" : {
       "put" : {
         "operationId" : "changeRole",
@@ -1189,6 +1310,66 @@
         "tags" : [ "Admin - User Management" ]
       }
     },
+    "/admin/users/{username}/suspend" : {
+      "put" : {
+        "operationId" : "suspendAccount",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Account suspended"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Suspend a user account",
+        "tags" : [ "Admin - User Management" ]
+      }
+    },
+    "/admin/users/{username}/unsuspend" : {
+      "put" : {
+        "operationId" : "unsuspendAccount",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Account unsuspended"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Unsuspend a user account",
+        "tags" : [ "Admin - User Management" ]
+      }
+    },
     "/auth/account" : {
       "delete" : {
         "operationId" : "deleteAccount",
@@ -1217,7 +1398,29 @@
         "security" : [ {
           "bearerAuth" : [ ]
         } ],
-        "summary" : "Soft-delete the authenticated user's account",
+        "summary" : "Erase the authenticated user's account",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/export" : {
+      "get" : {
+        "operationId" : "exportUserData",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "User data export"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Export the authenticated user's data",
         "tags" : [ "Authentication" ]
       }
     },
@@ -1247,7 +1450,7 @@
           "required" : true
         },
         "responses" : {
-          "200" : {
+          "202" : {
             "content" : {
               "*/*" : {
                 "schema" : {
