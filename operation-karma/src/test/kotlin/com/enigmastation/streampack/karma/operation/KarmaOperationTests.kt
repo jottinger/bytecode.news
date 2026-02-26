@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.service.OperationConfigService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Test
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 class KarmaOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
+    @Autowired lateinit var operationConfigService: OperationConfigService
 
     private fun provenance() =
         Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
@@ -70,10 +72,17 @@ class KarmaOperationTests {
     }
 
     @Test
-    fun `subject over 150 chars returns not handled`() {
-        val longSubject = "a".repeat(151)
+    fun `subject over max length returns not handled`() {
+        val longSubject = "a".repeat(46)
         val result = eventGateway.process(karmaMessage("$longSubject++"))
         assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `subject at max length is handled`() {
+        val subject = "a".repeat(45)
+        val result = eventGateway.process(karmaMessage("$subject++"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
     }
 
     @Test
@@ -260,6 +269,84 @@ class KarmaOperationTests {
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("winner"))
         assertTrue(!payload.contains("neutral"))
+    }
+
+    // -- Prose dash neutralization --
+
+    @Test
+    fun `prose dash with spaces on both sides is not karma`() {
+        val result = eventGateway.process(karmaMessage("foo says Y -- and I don't like that"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `attached dash without leading space is karma`() {
+        val result = eventGateway.process(karmaMessage("Hey-- I don't like XYZ"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertEquals("Hey now has karma of -1.", payload)
+    }
+
+    @Test
+    fun `attached dash without trailing space is karma`() {
+        val result = eventGateway.process(karmaMessage("foo --bar"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `prose dash becomes karma when ignoreEmdash is disabled`() {
+        val provenanceUri = provenance().encode()
+        operationConfigService.setConfigValue(provenanceUri, "karma", "ignoreEmdash", "false")
+
+        val result = eventGateway.process(karmaMessage("foo says Y -- and I don't like that"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    // -- Program flag rejection --
+
+    @Test
+    fun `program flag --verbose is not karma`() {
+        val result = eventGateway.process(karmaMessage("--verbose"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `program flag --ignore-capability is not karma`() {
+        val result = eventGateway.process(karmaMessage("--ignore-capability"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `program flag in sentence is not karma`() {
+        val result = eventGateway.process(karmaMessage("use --no-verify to skip"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    // -- Language reference guard --
+
+    @Test
+    fun `multi-word subject ending in C is rejected`() {
+        val result = eventGateway.process(karmaMessage("I really like C++"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `multi-word subject ending in J is rejected`() {
+        val result = eventGateway.process(karmaMessage("you should learn J++"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `bare C++ is still karma on C`() {
+        val result = eventGateway.process(karmaMessage("C++"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals("C now has karma of 1.", (result as OperationResult.Success).payload)
+    }
+
+    @Test
+    fun `single-word C++ is still karma`() {
+        val result = eventGateway.process(karmaMessage("C++ is great"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
     }
 
     // -- Helper --
