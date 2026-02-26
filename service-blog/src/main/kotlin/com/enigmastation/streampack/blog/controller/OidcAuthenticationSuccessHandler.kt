@@ -3,6 +3,7 @@ package com.enigmastation.streampack.blog.controller
 
 import com.enigmastation.streampack.blog.service.UserConvergenceService
 import com.enigmastation.streampack.core.config.StreampackProperties
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
@@ -15,6 +16,9 @@ import org.springframework.stereotype.Component
 /**
  * Handles successful OIDC/OAuth2 authentication by converging the external identity to a local user
  * and redirecting to the frontend with a JWT in the URL fragment.
+ *
+ * Reads the origin cookie set by OidcOriginFilter to determine which frontend to redirect to. Falls
+ * back to the configured frontendUrl (or baseUrl) when no cookie is present.
  */
 @Component
 class OidcAuthenticationSuccessHandler(
@@ -22,7 +26,7 @@ class OidcAuthenticationSuccessHandler(
     properties: StreampackProperties,
 ) : AuthenticationSuccessHandler {
     private val logger = LoggerFactory.getLogger(OidcAuthenticationSuccessHandler::class.java)
-    private val frontendUrl = properties.frontendUrl.ifEmpty { properties.baseUrl }
+    private val defaultFrontendUrl = properties.frontendUrl.ifEmpty { properties.baseUrl }
 
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
@@ -34,8 +38,32 @@ class OidcAuthenticationSuccessHandler(
         logger.info("OIDC authentication succeeded for {}", email)
         val loginResponse = userConvergenceService.converge(email, displayName)
 
+        val targetUrl = resolveTargetUrl(request, response)
+
         /* Deliver JWT via URL fragment so it is not sent to the server in subsequent requests */
-        response.sendRedirect("$frontendUrl/auth/callback#token=${loginResponse.token}")
+        response.sendRedirect("$targetUrl/auth/callback#token=${loginResponse.token}")
+    }
+
+    /** Reads the origin cookie if present, clears it, and returns the target frontend URL */
+    private fun resolveTargetUrl(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+    ): String {
+        val cookie =
+            request.cookies?.firstOrNull { it.name == OidcOriginFilter.COOKIE_NAME }
+                ?: return defaultFrontendUrl
+
+        val origin = cookie.value
+
+        // Delete the cookie after reading
+        val deleteCookie = Cookie(OidcOriginFilter.COOKIE_NAME, "")
+        deleteCookie.maxAge = 0
+        deleteCookie.isHttpOnly = true
+        deleteCookie.path = "/"
+        response.addCookie(deleteCookie)
+
+        logger.debug("Using OIDC origin cookie for redirect: {}", origin)
+        return origin
     }
 
     /** Extracts email and display name from either an OIDC or plain OAuth2 principal */

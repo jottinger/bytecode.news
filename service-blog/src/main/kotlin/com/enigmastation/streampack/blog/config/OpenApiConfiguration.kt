@@ -17,7 +17,7 @@ class OpenApiConfiguration {
         OpenAPI()
             .info(
                 Info()
-                    .title("jvm.news API")
+                    .title("bytecode.news API")
                     .version("0.1.0")
                     .description("Content hub and knowledge management for the JVM ecosystem")
             )

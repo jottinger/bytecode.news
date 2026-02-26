@@ -41,12 +41,14 @@ spring:
 
 streampack:
   base-url: ${BASE_URL:http://localhost:8080}
+  frontend-url: ${FRONTEND_URL:}
   jwt:
     secret: ${JWT_SECRET:change-me-in-production}
   console:
     enabled: ${CONSOLE_ENABLED:false}
   mail:
     enabled: ${MAIL_ENABLED:false}
+    from: noreply@bytecode.news
   irc:
     enabled: ${IRC_ENABLED:false}
   karma:

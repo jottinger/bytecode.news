@@ -78,7 +78,9 @@ class ApproveContentOperation(
                 updatedAt = approved.updatedAt,
                 commentCount = commentRepository.countActiveByPost(approved.id).toInt(),
                 tags = postTagRepository.findByPost(approved.id).map { it.tag.name },
-                categories = postCategoryRepository.findByPost(approved.id).map { it.category.name },
+                categories =
+                    postCategoryRepository.findByPost(approved.id).map { it.category.name },
+                markdownSource = approved.markdownSource,
             )
         )
     }

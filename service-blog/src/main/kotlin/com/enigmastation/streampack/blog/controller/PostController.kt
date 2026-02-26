@@ -88,6 +88,24 @@ class PostController(
         return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
     }
 
+    @Operation(summary = "Get a post by ID")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Post detail",
+        content = [Content(schema = Schema(implementation = ContentDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Post not found",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/posts/{id}")
+    fun getPostById(@PathVariable id: UUID, httpRequest: HttpServletRequest): ResponseEntity<*> {
+        val user = resolveUser(httpRequest)
+        val payload = FindContentRequest.FindById(id)
+        return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
+    }
+
     @Operation(summary = "Search published posts")
     @ApiResponse(
         responseCode = "200",

@@ -14,5 +14,6 @@ data class CommentNode(
     val updatedAt: Instant,
     val deleted: Boolean,
     val editable: Boolean,
+    val markdownSource: String? = null,
     val children: List<CommentNode>,
 )

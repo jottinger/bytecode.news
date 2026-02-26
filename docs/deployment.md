@@ -46,6 +46,7 @@ The `docker-compose.yml` includes optional profiles:
 
 ```bash
 docker compose up -d                                              # PostgreSQL only (default)
+docker compose --profile mail up -d                               # PostgreSQL + Mailpit
 docker compose --profile frontend up -d                           # PostgreSQL + frontend
 docker compose --profile backend up -d                            # PostgreSQL + backend
 docker compose --profile frontend --profile backend up -d         # All three
@@ -103,6 +104,26 @@ link user admin irc libera ~yournick@your/cloak
 feed add https://inside.java
 feed subscribe https://inside.java to irc://libera/%23java
 ```
+
+### 6. Email Testing with Mailpit
+
+For testing OTP login locally, start Mailpit to catch outbound emails:
+
+```bash
+docker compose --profile mail up -d
+```
+
+Add to your `.env`:
+
+```
+MAIL_HOST=localhost
+MAIL_PORT=3025
+```
+
+Mailpit's web UI is at `http://localhost:8025`.
+When you request an OTP login, the email with the passcode appears there.
+
+Mailpit does not send mail externally - it only captures and displays.
 
 ### HTTP Access
 
@@ -231,7 +252,26 @@ Verify: `curl http://localhost:8080/v3/api-docs` returns JSON.
 
 For production, run as a systemd service (see [Process Management](#process-management)).
 
-### 5. Start the Frontend
+### 5. Start a Frontend
+
+#### Reference UI (vanilla JS, recommended for testing)
+
+```bash
+cd reference-ui && npm install && npm run dev
+```
+
+Opens on `http://localhost:3003`, proxies API requests to `localhost:8080`.
+
+For production, build static files and serve with nginx:
+
+```bash
+cd reference-ui && npm run build
+```
+
+The `dist/` directory contains the built files.
+See the nginx config at `deploy/nginx/bytecode.news.conf` for the `reference.bytecode.news` server block.
+
+#### Next.js Frontend
 
 **Docker (recommended)**:
 
@@ -250,6 +290,59 @@ cd frontend && npm install && npm run build && npm start
 
 Verify: `curl http://localhost:3000` returns HTML.
 
+### Reference UI Production Deployment
+
+The reference UI is a static site - no server process, no systemd unit, no restart needed for updates.
+
+**Build**:
+
+```bash
+cd reference-ui && npm install && npm run build
+```
+
+This creates `reference-ui/dist/` with the bundled static files.
+
+**Deploy**:
+
+Copy the built files to the expected location (or build in place if the repo is on the server):
+
+```bash
+sudo mkdir -p /opt/nevet/reference-ui
+sudo cp -r reference-ui/dist /opt/nevet/reference-ui/
+```
+
+The nginx config in `deploy/nginx/bytecode.news.conf` already has a `reference.bytecode.news` server block that serves from `/opt/nevet/reference-ui/dist` with `try_files` for SPA routing.
+No proxy is needed for the UI itself - only the `/api/` location proxies to the backend.
+
+**Backend configuration**:
+
+Add the reference UI's origin to `CORS_ORIGINS` in `.env`:
+
+```
+CORS_ORIGINS=https://bytecode.news,https://reference.bytecode.news
+```
+
+If this is the primary frontend for OIDC login, set `FRONTEND_URL`:
+
+```
+FRONTEND_URL=https://reference.bytecode.news
+```
+
+Restart the backend after changing environment variables.
+
+**TLS**:
+
+`reference.bytecode.news` is already included in the certbot domain list (see [TLS Certificates](#7-tls-certificates)).
+No additional certificate step is needed if you followed the standard deployment.
+
+**Updating**:
+
+```bash
+cd /opt/nevet && git pull && cd reference-ui && npm run build
+```
+
+Since the files are static, nginx serves the new build immediately - no process restart required.
+
 ### 6. Configure nginx
 
 ```bash
@@ -267,7 +360,8 @@ sudo nginx -t && sudo systemctl reload nginx
 sudo mkdir -p /var/www/certbot
 sudo certbot certonly --webroot -w /var/www/certbot \
   -d bytecode.news -d www.bytecode.news \
-  -d nextjs.bytecode.news -d primate.bytecode.news
+  -d nextjs.bytecode.news -d primate.bytecode.news \
+  -d reference.bytecode.news
 ```
 
 After certificates are issued:

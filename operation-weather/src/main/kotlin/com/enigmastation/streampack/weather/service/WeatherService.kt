@@ -114,7 +114,10 @@ class WeatherService(private val config: WeatherProperties) {
                 HttpRequest.newBuilder()
                     .uri(URI(url))
                     .timeout(Duration.ofSeconds(config.readTimeoutSeconds.toLong()))
-                    .header("User-Agent", "Mozilla/5.0 (compatible; Nevet/1.0; +https://jvm.news)")
+                    .header(
+                        "User-Agent",
+                        "Mozilla/5.0 (compatible; Nevet/1.0; +https://bytecode.news)",
+                    )
                     .GET()
                     .build()
             val response = client.send(request, HttpResponse.BodyHandlers.ofString())

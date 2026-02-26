@@ -92,6 +92,7 @@ class FindCommentsOperation(
                 updatedAt = comment.updatedAt,
                 deleted = false,
                 editable = editable,
+                markdownSource = if (editable) comment.markdownSource else null,
                 children = children,
             )
         }

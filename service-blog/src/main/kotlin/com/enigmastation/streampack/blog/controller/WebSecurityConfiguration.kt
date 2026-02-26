@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -51,6 +52,10 @@ class WebSecurityConfiguration(
 
         if (oidcSuccessHandler != null && clientRegistrationRepository != null) {
             http.oauth2Login { it.successHandler(oidcSuccessHandler) }
+            http.addFilterBefore(
+                OidcOriginFilter(corsConfigurationSource()),
+                OAuth2AuthorizationRequestRedirectFilter::class.java,
+            )
         }
 
         return http.build()

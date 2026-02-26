@@ -11,6 +11,14 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  mailpit:
+    image: axllent/mailpit
+    profiles: ["mail"]
+    ports:
+      - "3025:1025"
+      - "8025:8025"
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend

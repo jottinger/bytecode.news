@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nevet - Reference UI</title>
+    <link rel="stylesheet" href="/node_modules/@picocss/pico/css/pico.min.css" />
+    <style>
+      /* Minimal layout tweaks beyond Pico defaults */
+      #app { min-height: 60vh; }
+      .sr-only {
+        position: absolute; width: 1px; height: 1px;
+        padding: 0; margin: -1px; overflow: hidden;
+        clip: rect(0,0,0,0); border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="container">
+      <nav>
+        <ul><li><strong><a href="/">Nevet</a></strong></li></ul>
+        <ul id="nav"></ul>
+      </nav>
+    </header>
+    <main class="container" id="app">
+      <article aria-busy="true">Loading...</article>
+    </main>
+    <footer class="container">
+      <small>Reference UI for the Nevet API. Not a production frontend.</small>
+      <small><a href="/terms">Terms of Service</a> | <a href="/privacy">Privacy Policy</a> | <a href="/cookies">Cookie Policy</a></small>
+    </footer>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

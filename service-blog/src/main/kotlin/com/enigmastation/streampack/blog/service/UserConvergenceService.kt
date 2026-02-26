@@ -38,7 +38,7 @@ class UserConvergenceService(
 
         if (user == null) {
             val username = deriveUsername(normalizedEmail)
-            val name = displayName ?: username
+            val name = displayName ?: normalizedEmail
             logger.info("Creating new account for {} (username: {})", normalizedEmail, username)
             val principal =
                 userRegistrationService.register(

@@ -8,6 +8,7 @@ import com.enigmastation.streampack.blog.model.LoginResponse
 import com.enigmastation.streampack.blog.model.OtpRequest
 import com.enigmastation.streampack.blog.model.OtpVerifyRequest
 import com.enigmastation.streampack.blog.model.TokenRefreshRequest
+import com.enigmastation.streampack.blog.model.UpdateProfileRequest
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
@@ -29,6 +30,7 @@ import org.springframework.messaging.support.MessageBuilder
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -95,6 +97,21 @@ class AuthController(
     fun refresh(@RequestBody request: TokenRefreshRequest): ResponseEntity<*> {
         return dispatch(request, "auth/refresh") { result ->
             mapError(result, HttpStatus.UNAUTHORIZED)
+        }
+    }
+
+    @Operation(summary = "Update the authenticated user's profile")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(responseCode = "200", description = "Profile updated")
+    @PutMapping("/profile")
+    fun updateProfile(
+        @RequestBody request: UpdateProfileRequest,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+
+        return dispatch(request, "auth/profile", user) { result ->
+            mapError(result, HttpStatus.BAD_REQUEST)
         }
     }
 

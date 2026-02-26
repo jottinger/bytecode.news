@@ -83,6 +83,9 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "markdownSource" : {
+            "type" : "string"
+          },
           "renderedHtml" : {
             "type" : "string"
           },
@@ -142,6 +145,9 @@
           },
           "id" : {
             "format" : "uuid",
+            "type" : "string"
+          },
+          "markdownSource" : {
             "type" : "string"
           },
           "publishedAt" : {
@@ -223,6 +229,10 @@
             },
             "type" : "array"
           },
+          "commentCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
           "excerpt" : {
             "type" : "string"
           },
@@ -247,7 +257,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "id", "slug", "tags", "title" ],
+        "required" : [ "authorDisplayName", "categories", "commentCount", "id", "slug", "tags", "title" ],
         "type" : "object"
       },
       "CreateCategoryRequest" : {
@@ -631,6 +641,15 @@
         "required" : [ "token" ],
         "type" : "object"
       },
+      "UpdateProfileRequest" : {
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "displayName" ],
+        "type" : "object"
+      },
       "UserPrincipal" : {
         "properties" : {
           "displayName" : {
@@ -662,7 +681,7 @@
   },
   "info" : {
     "description" : "Content hub and knowledge management for the JVM ecosystem",
-    "title" : "jvm.news API",
+    "title" : "bytecode.news API",
     "version" : "0.1.0"
   },
   "openapi" : "3.1.0",
@@ -1504,6 +1523,38 @@
         "tags" : [ "Authentication" ]
       }
     },
+    "/auth/profile" : {
+      "put" : {
+        "operationId" : "updateProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Profile updated"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Update the authenticated user's profile",
+        "tags" : [ "Authentication" ]
+      }
+    },
     "/auth/refresh" : {
       "post" : {
         "operationId" : "refresh",
@@ -1848,6 +1899,42 @@
       }
     },
     "/posts/{id}" : {
+      "get" : {
+        "operationId" : "getPostById",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentDetail"
+                }
+              }
+            },
+            "description" : "Post detail"
+          },
+          "404" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post not found"
+          }
+        },
+        "summary" : "Get a post by ID",
+        "tags" : [ "Posts" ]
+      },
       "put" : {
         "operationId" : "editPost",
         "parameters" : [ {

@@ -49,6 +49,13 @@ class FindContentOperation(
         }
     }
 
+    /** Authors and admins can see the raw markdown source for editing */
+    private fun canSeeSource(post: Post, user: UserPrincipal?): Boolean {
+        if (user == null) return false
+        if (user.role == Role.ADMIN || user.role == Role.SUPER_ADMIN) return true
+        return post.author != null && post.author.id == user.id
+    }
+
     private fun findBySlug(path: String, user: UserPrincipal?): OperationResult {
         val slug = slugRepository.resolve(path) ?: return OperationResult.Error("Post not found")
 
@@ -61,7 +68,7 @@ class FindContentOperation(
         }
 
         val canonicalSlug = slugRepository.findCanonical(post.id)
-        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: path))
+        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: path, user))
     }
 
     private fun findById(id: java.util.UUID, user: UserPrincipal?): OperationResult {
@@ -74,7 +81,7 @@ class FindContentOperation(
         }
 
         val canonicalSlug = slugRepository.findCanonical(post.id)
-        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: ""))
+        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: "", user))
     }
 
     private fun findPublished(page: Int, size: Int): OperationResult {
@@ -84,16 +91,7 @@ class FindContentOperation(
         val summaries =
             pageResult.content.map { post ->
                 val canonicalSlug = slugRepository.findCanonical(post.id)
-                ContentSummary(
-                    id = post.id,
-                    title = post.title,
-                    slug = canonicalSlug?.path ?: "",
-                    excerpt = post.excerpt,
-                    authorDisplayName = post.author?.displayName ?: "Anonymous",
-                    publishedAt = post.publishedAt,
-                    tags = tagNamesForPost(post.id),
-                    categories = categoryNamesForPost(post.id),
-                )
+                toSummary(post, canonicalSlug?.path ?: "")
             }
 
         return OperationResult.Success(
@@ -119,16 +117,7 @@ class FindContentOperation(
         val summaries =
             pageResult.content.map { post ->
                 val canonicalSlug = slugRepository.findCanonical(post.id)
-                ContentSummary(
-                    id = post.id,
-                    title = post.title,
-                    slug = canonicalSlug?.path ?: "",
-                    excerpt = post.excerpt,
-                    authorDisplayName = post.author?.displayName ?: "Anonymous",
-                    publishedAt = post.publishedAt,
-                    tags = tagNamesForPost(post.id),
-                    categories = categoryNamesForPost(post.id),
-                )
+                toSummary(post, canonicalSlug?.path ?: "")
             }
 
         return OperationResult.Success(
@@ -159,7 +148,7 @@ class FindContentOperation(
         return false
     }
 
-    private fun toDetail(post: Post, slug: String): ContentDetail {
+    private fun toDetail(post: Post, slug: String, user: UserPrincipal? = null): ContentDetail {
         return ContentDetail(
             id = post.id,
             title = post.title,
@@ -172,6 +161,21 @@ class FindContentOperation(
             publishedAt = post.publishedAt,
             createdAt = post.createdAt,
             updatedAt = post.updatedAt,
+            commentCount = commentRepository.countActiveByPost(post.id).toInt(),
+            tags = tagNamesForPost(post.id),
+            categories = categoryNamesForPost(post.id),
+            markdownSource = if (canSeeSource(post, user)) post.markdownSource else null,
+        )
+    }
+
+    private fun toSummary(post: Post, slug: String): ContentSummary {
+        return ContentSummary(
+            id = post.id,
+            title = post.title,
+            slug = slug,
+            excerpt = post.excerpt,
+            authorDisplayName = post.author?.displayName ?: "Anonymous",
+            publishedAt = post.publishedAt,
             commentCount = commentRepository.countActiveByPost(post.id).toInt(),
             tags = tagNamesForPost(post.id),
             categories = categoryNamesForPost(post.id),
