@@ -144,6 +144,16 @@ Type `exit` or `quit` to stop.
 | `service-console` | Interactive console adapter |
 | `app` | Assembly module - produces the bootable JAR |
 
+## Documentation
+
+| Document | Audience | Description |
+|----------|----------|-------------|
+| [User Guide](docs/user-guide.md) | End users | Complete command reference for all bot operations |
+| [API Reference](docs/api-reference.md) | Frontend developers | REST endpoint documentation, request/response shapes |
+| [Architecture](docs/architecture.md) | Backend contributors | Messaging pipeline, operation system, module design |
+| [Deployment](docs/deployment.md) | Ops / self-hosters | Local setup, production deployment, adapter configuration |
+| [Authentication](docs/authentication.md) | All | OTP, OIDC, JWT, account lifecycle |
+
 ## License
 
 All user-submitted content is licensed under Creative Commons CC BY-SA 4.0.

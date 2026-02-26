@@ -4,6 +4,9 @@ All request and response bodies are JSON (`Content-Type: application/json`).
 Field names are camelCase and match the Kotlin property names exactly - no custom serialization annotations.
 All entity IDs are UUIDv7 strings (e.g. `"01234567-89ab-7def-8123-456789abcdef"`).
 
+For authentication flows, see [Authentication](authentication.md).
+For deployment and configuration, see [Deployment Guide](deployment.md).
+
 ## Authentication
 
 Protected endpoints require a Bearer token in the `Authorization` header:
@@ -1104,18 +1107,73 @@ Hidden from selection, existing post associations preserved.
 | PUT | `/comments/{id}` | Yes | Edit comment (5 min window) |
 | DELETE | `/admin/comments/{id}` | Admin+ | Soft/hard delete comment |
 
-## Planned Endpoints (Not Yet Implemented)
+## Factoid Endpoints
 
-**Admin Blog**:
+Read-only REST endpoints for factoid browsing and search.
+No authentication required.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| PUT | `/admin/posts/{id}/reject` | Reject post (needs its own operation) |
+---
 
-**RSS**:
+### `GET /factoids`
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/feed` | Full RSS feed |
-| GET | `/feed/category/{slug}` | Filtered by category |
-| GET | `/feed/tag/{slug}` | Filtered by tag |
+Paginated listing with optional search.
+
+**Query parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `q` | string | (none) | Search term (filters by selector and text content) |
+| `page` | int | 0 | Page number (0-indexed) |
+| `size` | int | 20 | Page size (max 100) |
+
+**Response:** Spring Data `Page<FactoidSummaryResponse>`
+
+```json
+{
+  "content": [
+    {
+      "selector": "spring",
+      "locked": false,
+      "updatedBy": "dreamreal",
+      "updatedAt": "2026-02-25T10:30:00Z"
+    }
+  ],
+  "totalElements": 142,
+  "totalPages": 8,
+  "number": 0,
+  "size": 20
+}
+```
+
+---
+
+### `GET /factoids/{selector}`
+
+Single factoid with all rendered attributes.
+
+**Response:** `FactoidDetailResponse`
+
+```json
+{
+  "selector": "spring",
+  "locked": false,
+  "updatedBy": "dreamreal",
+  "updatedAt": "2026-02-25T10:30:00Z",
+  "attributes": [
+    {
+      "type": "text",
+      "value": "A popular Java application framework",
+      "rendered": "spring is A popular Java application framework."
+    },
+    {
+      "type": "urls",
+      "value": "https://spring.io",
+      "rendered": "URL: https://spring.io"
+    }
+  ]
+}
+```
+
+**404** when no factoid exists for the selector.
+
+Only attributes with non-empty values that are marked `includeInSummary` are returned.

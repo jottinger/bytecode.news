@@ -55,7 +55,7 @@ OTP verification implies email verification, so no separate email verification s
 ## OIDC Flow
 
 OIDC uses Spring Security's OAuth2 Client with Google and GitHub as providers.
-See [OIDC Setup Guide](oidc-setup-guide.md) for configuration instructions.
+See [Deployment Guide](deployment.md#oidc-setup) for configuration instructions.
 
 ### How it works
 
