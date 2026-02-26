@@ -191,11 +191,20 @@ spring boot++   multi-word subjects work
 - IRC nick-completion suffixes (`:` `,` `;`) are stripped: `jreicher: ++` increments "jreicher"
 - The `c++` language is handled correctly: `c++--` decrements "c++", `c+++` increments "c+"
 - Arrow sequences (`-->`, `<--`) are normalized to avoid false matches
-- Subjects longer than 150 characters are ignored
+- Prose em-dashes (` -- ` with spaces on both sides) are neutralized to avoid false matches on sentences like "foo says Y -- and I don't like that"
+- Program flags like `--verbose` or `--no-verify` are not treated as karma operations
+- Multi-word subjects where the last word is "C" or "J" (case-insensitive) are rejected to avoid false matches on language references like "I really like C++"
+- Subjects longer than 45 characters are ignored (configurable via `streampack.karma.max-subject-length`)
 
 **Self-karma protection**: If you increment your own karma, it is silently flipped to a decrement.
 
 **Immune subjects**: Subjects listed in the `KARMA_IMMUNE_SUBJECTS` configuration are silently ignored.
+
+**Per-channel configuration**:
+
+| Key | Default | Effect |
+|-----|---------|--------|
+| `ignoreEmdash` | `true` | When true, prose em-dashes (` -- `) are neutralized before matching. Set to `false` with `channel set karma ignoreEmdash false` if a channel wants `foo -- bar` to decrement "foo". |
 
 ### Query Karma
 
