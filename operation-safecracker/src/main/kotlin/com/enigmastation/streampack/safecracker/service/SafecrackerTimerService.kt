@@ -18,13 +18,6 @@ import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
-/** Tracks active safecracker games for countdown announcements and timeout */
-data class ActiveGame(
-    val provenanceUri: String,
-    val startedAt: Instant,
-    var lastAnnouncementAt: Instant,
-)
-
 /** Monitors active safecracker games for 30-second countdown and 5-minute timeout */
 @Component
 class SafecrackerTimerService(
@@ -88,7 +81,8 @@ class SafecrackerTimerService(
 
         val state = objectMapper.convertValue<SafecrackerGameState>(data)
         val formatted = state.formatTimeRemaining(now)
-        game.lastAnnouncementAt = now
+        game.lastAnnouncementAt =
+            game.lastAnnouncementAt.plus(SafecrackerGameState.ANNOUNCEMENT_INTERVAL)
         sendToEgress("Safecracker: $formatted remaining!", game.provenanceUri)
     }
 
