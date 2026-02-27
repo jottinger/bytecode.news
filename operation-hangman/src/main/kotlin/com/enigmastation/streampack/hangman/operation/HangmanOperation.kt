@@ -40,16 +40,18 @@ class HangmanOperation(
         val compressed = payload.compress()
         val args = compressed.substringAfter("hangman", "").trim()
 
+        val playerName = senderName(message)
+
         return when {
             args.isEmpty() -> startOrShowGame(provenanceUri)
-            args.lowercase() == "concede" -> concede(provenanceUri)
+            args.lowercase() == "concede" -> concede(provenanceUri, playerName)
             args.lowercase().startsWith("solve ") ->
-                solve(provenanceUri, args.substringAfter("solve ").trim())
+                solve(provenanceUri, args.substringAfter("solve ").trim(), playerName)
 
             args.lowercase().startsWith("block ") -> null
             args.lowercase().startsWith("unblock ") -> null
             args.length == 1 && (args[0] in 'a'..'z' || args[0] in 'A'..'Z') ->
-                guessLetter(provenanceUri, args[0].lowercaseChar())
+                guessLetter(provenanceUri, args[0].lowercaseChar(), playerName)
 
             args.length == 1 ->
                 OperationResult.Error("All the letters I use are in the English alphabet!")
@@ -81,7 +83,11 @@ class HangmanOperation(
         )
     }
 
-    private fun guessLetter(provenanceUri: String, letter: Char): OperationOutcome {
+    private fun guessLetter(
+        provenanceUri: String,
+        letter: Char,
+        playerName: String,
+    ): OperationOutcome {
         val existing =
             stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
                 ?: return OperationResult.Error(
@@ -108,7 +114,7 @@ class HangmanOperation(
         if (updated.isWon) {
             stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
             return OperationResult.Success(
-                "You got it! The word was '${state.word}'. Use '{{ref:hangman}}' to play again."
+                "$playerName got it! The word was '${state.word}'. Use '{{ref:hangman}}' to play again."
             )
         }
 
@@ -147,7 +153,7 @@ class HangmanOperation(
         }
     }
 
-    private fun solve(provenanceUri: String, guess: String): OperationOutcome {
+    private fun solve(provenanceUri: String, guess: String, playerName: String): OperationOutcome {
         val existing =
             stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
                 ?: return OperationResult.Error(
@@ -158,7 +164,7 @@ class HangmanOperation(
 
         if (guess.lowercase() == state.word) {
             stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
-            val reaction = solveReaction(state.guessedLetters.size)
+            val reaction = solveReaction(state.guessedLetters.size, playerName)
             return OperationResult.Success(
                 "$reaction The word was '${state.word}'. Use '{{ref:hangman}}' to play again."
             )
@@ -182,7 +188,7 @@ class HangmanOperation(
         )
     }
 
-    private fun concede(provenanceUri: String): OperationOutcome {
+    private fun concede(provenanceUri: String, playerName: String): OperationOutcome {
         val existing =
             stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
                 ?: return OperationResult.Success(
@@ -192,15 +198,15 @@ class HangmanOperation(
         val state = objectMapper.convertValue<HangmanGameState>(existing)
         stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
         return OperationResult.Success(
-            "You concede. The word was '${state.word}'. Use '{{ref:hangman}}' for a new game."
+            "$playerName concedes. The word was '${state.word}'. Use '{{ref:hangman}}' for a new game."
         )
     }
 
-    private fun solveReaction(lettersGuessed: Int): String =
+    private fun solveReaction(lettersGuessed: Int, playerName: String): String =
         when (lettersGuessed) {
             0 -> ZERO_GUESS_REACTIONS.random()
             1 -> ONE_GUESS_REACTIONS.random()
-            else -> "You got it!"
+            else -> "$playerName got it!"
         }
 
     private fun formatState(state: HangmanGameState): String {

@@ -4,6 +4,7 @@ package com.enigmastation.streampack.core.service
 import com.enigmastation.streampack.core.model.Declined
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.RedactionRule
 import com.enigmastation.streampack.core.model.ThrottlePolicy
 import java.time.Duration
@@ -86,6 +87,17 @@ interface Operation {
      */
     val operationGroup: String?
         get() = null
+
+    /**
+     * Resolves the best display name for the message sender: protocol nick, then identity, then
+     * fallback
+     */
+    fun senderName(message: Message<*>): String {
+        val nick = message.headers["nick"] as? String
+        if (nick != null) return nick
+        val provenance = message.headers[Provenance.HEADER] as? Provenance
+        return provenance?.user?.displayName ?: provenance?.user?.username ?: "someone"
+    }
 
     /** Quick pre-flight check: is this operation relevant for this message? */
     fun canHandle(message: Message<*>): Boolean = true

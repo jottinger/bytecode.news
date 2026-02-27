@@ -44,7 +44,7 @@ class SafecrackerOperation(
         return when {
             args.isEmpty() -> startOrShowGame(provenanceUri)
             args.lowercase() == "concede" -> concede(provenanceUri)
-            else -> guess(provenanceUri, args, provenance)
+            else -> guess(provenanceUri, args, message)
         }
     }
 
@@ -78,11 +78,7 @@ class SafecrackerOperation(
         )
     }
 
-    private fun guess(
-        provenanceUri: String,
-        args: String,
-        provenance: Provenance,
-    ): OperationOutcome {
+    private fun guess(provenanceUri: String, args: String, message: Message<*>): OperationOutcome {
         val existing =
             stateService.getState(provenanceUri, SafecrackerGameState.STATE_KEY)
                 ?: return OperationResult.Error(
@@ -96,7 +92,7 @@ class SafecrackerOperation(
                 )
 
         val state = objectMapper.convertValue<SafecrackerGameState>(existing)
-        val playerName = provenance.user?.displayName ?: provenance.user?.username ?: "someone"
+        val playerName = senderName(message)
 
         if (digits == state.combination) {
             stateService.clearState(provenanceUri, SafecrackerGameState.STATE_KEY)
