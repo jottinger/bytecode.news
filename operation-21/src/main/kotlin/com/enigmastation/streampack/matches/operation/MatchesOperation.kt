@@ -31,11 +31,14 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
                 ?: return OperationResult.Error("No provenance available.")
         val provenanceUri = provenance.encode()
         val command = payload.trim().substringAfter("21 ").trim().lowercase()
+        val playerName = senderName(message)
 
         return when {
             command == "matches" -> startGame(provenanceUri)
-            command.startsWith("take ") -> takeTurn(provenanceUri, command.substringAfter("take "))
-            command == "concede" -> concede(provenanceUri)
+            command.startsWith("take ") ->
+                takeTurn(provenanceUri, command.substringAfter("take "), playerName)
+
+            command == "concede" -> concede(provenanceUri, playerName)
             else ->
                 OperationResult.Error(
                     "Unknown command. Usage: {{ref:21 matches}} | {{ref:21 take <1-3>}} | {{ref:21 concede}}"
@@ -65,7 +68,11 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         )
     }
 
-    private fun takeTurn(provenanceUri: String, input: String): OperationOutcome {
+    private fun takeTurn(
+        provenanceUri: String,
+        input: String,
+        playerName: String,
+    ): OperationOutcome {
         val existing = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         if (existing == null) {
             return OperationResult.Error(
@@ -97,7 +104,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         reaction =
             if (reaction.startsWith("--DERIVED--")) {
                 val otherChoice = listOf(1, 2, 3).filter({ it != playerTake }).random()
-                "I see you picked $playerTake. I'd expected you to pick $otherChoice."
+                "I see $playerName picked $playerTake. I'd expected $playerName to pick $otherChoice."
             } else {
                 reaction
             }
@@ -119,13 +126,13 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         )
     }
 
-    private fun concede(provenanceUri: String): OperationOutcome {
+    private fun concede(provenanceUri: String, playerName: String): OperationOutcome {
         val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         if (state == null) {
             return OperationResult.Success("No game in progress. Nothing to concede!")
         }
         stateService.clearState(provenanceUri, MatchesGameState.STATE_KEY)
-        return OperationResult.Success(CONCEDE_LINES.random())
+        return OperationResult.Success("$playerName concedes! ${CONCEDE_LINES.random()}")
     }
 
     companion object {
@@ -195,11 +202,11 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
 
         val CONCEDE_LINES =
             listOf(
-                "You concede! The matches fade away, like tears in rain. Except they're matches.",
-                "A graceful surrender, I see. The board is cleared.",
-                "Conceded! Perhaps next time.",
+                "The matches fade away, like tears in rain. Except they're matches.",
+                "A graceful surrender. The board is cleared.",
+                "Perhaps next time.",
                 "A wise retreat. The matches are put away.",
-                "You live to play another day. This time.",
+                "Live to play another day.",
                 "The matches breathe a sigh of relief.",
             )
     }
