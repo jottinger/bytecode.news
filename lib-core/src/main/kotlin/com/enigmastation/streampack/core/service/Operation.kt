@@ -6,6 +6,7 @@ import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.RedactionRule
 import com.enigmastation.streampack.core.model.ThrottlePolicy
+import java.time.Duration
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
@@ -58,6 +59,14 @@ interface Operation {
      */
     val redactionRules: List<RedactionRule>
         get() = emptyList()
+
+    /**
+     * Maximum time this operation may spend in [execute] before being interrupted. When an
+     * operation exceeds its timeout, the executing thread is interrupted, the result is discarded,
+     * and the chain continues to the next operation.
+     */
+    val timeout: Duration
+        get() = Duration.ofSeconds(30)
 
     /**
      * Optional rate limit for this operation. When set, OperationService checks a token bucket

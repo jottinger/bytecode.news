@@ -6,8 +6,12 @@ import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.Declined
 import com.enigmastation.streampack.core.model.FanOut
 import com.enigmastation.streampack.core.model.LoggingRequest
+import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Lazy
@@ -39,6 +43,8 @@ class OperationService(
 ) {
     private val logger = LoggerFactory.getLogger(OperationService::class.java)
     private val sortedOperations = operations.sortedBy { it.priority }
+    private val watchdogScheduler: ScheduledExecutorService =
+        Executors.newSingleThreadScheduledExecutor(Thread.ofVirtual().factory())
 
     /**
      * Checks whether any non-addressed operation is interested in this message.
@@ -99,7 +105,14 @@ class OperationService(
                     op::class.simpleName,
                     message.headers.id,
                 )
-                val result = op.execute(message)
+                val result = executeWithTimeout(op, message)
+                if (result == null) {
+                    logger.debug(
+                        "Operation {} returned null, continuing chain",
+                        op::class.simpleName,
+                    )
+                    continue
+                }
                 if (result is Declined) {
                     logger.info(
                         "Operation {} declined message {}: {}",
@@ -128,7 +141,6 @@ class OperationService(
                     }
                     return result
                 }
-                logger.debug("Operation {} returned null, continuing chain", op::class.simpleName)
             }
         }
         logger.debug("No operation handled message {}", message.headers.id)
@@ -190,6 +202,42 @@ class OperationService(
         val provenanceUri = provenance?.encode() ?: "unknown"
         val key = "${op::class.simpleName}:$provenanceUri"
         return throttleService.tryAcquire(key, policy)
+    }
+
+    /**
+     * Executes an operation on the current thread with a scheduled watchdog interrupt. Keeping
+     * execution on the caller's thread preserves transaction context and ThreadLocal state. On
+     * timeout the watchdog interrupts the operation thread; blocking I/O and Thread.sleep on
+     * virtual threads respond to interruption.
+     */
+    private fun executeWithTimeout(op: Operation, message: Message<*>): OperationOutcome? {
+        val caller = Thread.currentThread()
+        val watchdog =
+            watchdogScheduler.schedule(
+                { caller.interrupt() },
+                op.timeout.toMillis(),
+                TimeUnit.MILLISECONDS,
+            )
+        return try {
+            val result = op.execute(message)
+            watchdog.cancel(false)
+            Thread.interrupted() // clear any interrupt that raced with completion
+            result
+        } catch (e: InterruptedException) {
+            watchdog.cancel(false)
+            Thread.interrupted()
+            logger.warn(
+                "Operation {} timed out after {} for message {}",
+                op::class.simpleName,
+                op.timeout,
+                message.headers.id,
+            )
+            null
+        } catch (e: Exception) {
+            watchdog.cancel(false)
+            Thread.interrupted()
+            throw e
+        }
     }
 
     /** Dispatches each child message with an incremented hop count */
