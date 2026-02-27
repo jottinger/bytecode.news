@@ -123,7 +123,7 @@ class HangmanOperationTests {
         val result = eventGateway.process(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("You got it"))
+        assertTrue(payload.contains("got it"))
         assertTrue(payload.contains("apple"))
 
         val cleared = stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
@@ -142,8 +142,8 @@ class HangmanOperationTests {
         val result = eventGateway.process(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        // Should NOT contain the normal "You got it" - should be a playful suspicion
-        assertFalse(payload.startsWith("You got it"))
+        // Should NOT contain the normal "got it" - should be a playful suspicion
+        assertFalse(payload.contains("got it"))
         assertTrue(payload.contains("apple"))
     }
 
@@ -159,7 +159,7 @@ class HangmanOperationTests {
         val result = eventGateway.process(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertFalse(payload.startsWith("You got it"))
+        assertFalse(payload.contains("got it"))
         assertTrue(payload.contains("apple"))
     }
 
@@ -240,7 +240,7 @@ class HangmanOperationTests {
         val result = eventGateway.process(hangmanMessage("hangman t"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("You got it"))
+        assertTrue(payload.contains("got it"))
         assertTrue(payload.contains("cat"))
 
         val cleared = stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
