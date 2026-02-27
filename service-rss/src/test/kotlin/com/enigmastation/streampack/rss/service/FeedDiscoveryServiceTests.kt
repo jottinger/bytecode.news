@@ -8,8 +8,10 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 
 class FeedDiscoveryServiceTests {
 
@@ -134,6 +136,43 @@ class FeedDiscoveryServiceTests {
 
         val result = service.discover("$baseUrl/error")
         assertNull(result)
+    }
+
+    @Test
+    fun `non-2xx response with XML body is still parsed`() {
+        httpServer.createContext("/misconfigured") { exchange ->
+            val rss = sampleRss("Misconfigured Server Feed", 2)
+            exchange.sendResponseHeaders(404, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+
+        val result = service.discover("$baseUrl/misconfigured")
+        assertNotNull(result)
+        assertEquals("Misconfigured Server Feed", result!!.feed.title)
+        assertEquals(2, result.feed.entries.size)
+    }
+
+    @Test
+    fun `non-2xx response with non-XML body returns null`() {
+        httpServer.createContext("/bad") { exchange ->
+            val body = "404 Not Found"
+            exchange.sendResponseHeaders(404, body.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+
+        val result = service.discover("$baseUrl/bad")
+        assertNull(result)
+    }
+
+    @EnabledIfSystemProperty(named = "live.tests", matches = "true")
+    @Test
+    fun `live fetch of primate run blog rss`() {
+        val liveService = FeedDiscoveryService(RssProperties())
+        val result = liveService.discover("https://primate.run/blog.rss")
+        assertNotNull(result, "Discovery should succeed for primate.run/blog.rss")
+        assertEquals("https://primate.run/blog.rss", result!!.feedUrl)
+        assertTrue(result.feed.title.isNotBlank(), "Feed title should not be blank")
+        assertTrue(result.feed.entries.isNotEmpty(), "Feed should have at least one entry")
     }
 
     companion object {
