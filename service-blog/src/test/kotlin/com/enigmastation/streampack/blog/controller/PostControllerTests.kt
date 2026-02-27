@@ -158,15 +158,18 @@ class PostControllerTests {
     }
 
     @Test
-    fun `POST unauthenticated returns 401`() {
+    fun `POST anonymous submission creates draft`() {
         mockMvc
             .post("/posts") {
                 contentType = MediaType.APPLICATION_JSON
-                content = """{"title":"My Post","markdownSource":"Content."}"""
+                content = """{"title":"Community Post","markdownSource":"Anonymous content."}"""
             }
             .andExpect {
-                status { isUnauthorized() }
-                jsonPath("$.detail") { value("Authentication required") }
+                status { isCreated() }
+                jsonPath("$.title") { value("Community Post") }
+                jsonPath("$.status") { value("DRAFT") }
+                jsonPath("$.authorDisplayName") { value("Anonymous") }
+                jsonPath("$.id") { isNotEmpty() }
             }
     }
 

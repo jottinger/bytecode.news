@@ -11,7 +11,7 @@ data class CreateContentResponse(
     val slug: String,
     val excerpt: String?,
     val status: PostStatus,
-    val authorId: UUID,
+    val authorId: UUID?,
     val authorDisplayName: String,
     val createdAt: Instant,
     val tags: List<String> = emptyList(),

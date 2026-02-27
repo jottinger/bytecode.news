@@ -22,6 +22,7 @@ import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -136,12 +137,15 @@ class CreateContentOperationTests {
     }
 
     @Test
-    fun `unauthenticated request returns error`() {
+    fun `anonymous request creates draft`() {
         val request = CreateContentRequest("Test", "Content")
         val result = eventGateway.process(createMessage(request, null))
 
-        assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Authentication required", (result as OperationResult.Error).message)
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals("Anonymous", response.authorDisplayName)
+        assertNull(response.authorId)
+        assertEquals(PostStatus.DRAFT, response.status)
     }
 
     @Test

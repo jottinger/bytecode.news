@@ -373,7 +373,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "authorId", "categories", "createdAt", "id", "slug", "status", "tags", "title" ],
+        "required" : [ "authorDisplayName", "categories", "createdAt", "id", "slug", "status", "tags", "title" ],
         "type" : "object"
       },
       "DeleteAccountRequest" : {

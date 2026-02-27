@@ -141,7 +141,7 @@ class PostController(
         @RequestBody request: CreateContentHttpRequest,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
-        val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
+        val user = resolveUser(httpRequest)
         val payload =
             CreateContentRequest(
                 title = request.title,
@@ -237,7 +237,7 @@ class PostController(
     private fun dispatchCreated(
         payload: Any,
         replyTo: String,
-        user: UserPrincipal,
+        user: UserPrincipal?,
         onError: (OperationResult) -> ResponseEntity<*>,
     ): ResponseEntity<*> {
         val provenance =

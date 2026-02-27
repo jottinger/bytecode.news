@@ -44,13 +44,16 @@ class CreateContentOperation(
             message.headers[Provenance.HEADER] as? Provenance
                 ?: return OperationResult.Error("No provenance context")
 
-        val principal = provenance.user ?: return OperationResult.Error("Authentication required")
-
+        val principal = provenance.user
         val user =
-            userRepository.findActiveById(principal.id)
-                ?: return OperationResult.Error("User not found")
+            if (principal != null) {
+                userRepository.findActiveById(principal.id)
+                    ?: return OperationResult.Error("User not found")
+            } else {
+                null
+            }
 
-        if (!user.emailVerified) {
+        if (user != null && !user.emailVerified) {
             return OperationResult.Error("Email verification required")
         }
 
@@ -94,8 +97,8 @@ class CreateContentOperation(
                 slug = slugPath,
                 excerpt = post.excerpt,
                 status = post.status,
-                authorId = user.id,
-                authorDisplayName = user.displayName,
+                authorId = user?.id,
+                authorDisplayName = user?.displayName ?: "Anonymous",
                 createdAt = post.createdAt,
                 tags = tagNames,
                 categories = categoryNames,
