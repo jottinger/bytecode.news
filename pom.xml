@@ -62,6 +62,7 @@
         <module>operation-ask</module>
         <module>operation-21</module>
         <module>operation-hangman</module>
+        <module>operation-safecracker</module>
         <module>service-factoid</module>
         <module>service-rss</module>
         <module>service-slack</module>
@@ -198,6 +199,10 @@
 
 
     <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+        </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>

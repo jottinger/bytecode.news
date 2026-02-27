@@ -6,6 +6,7 @@ import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ProvenanceStateService
+import com.enigmastation.streampack.matches.model.MatchesGameState
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -32,7 +33,7 @@ class MatchesOperationTests {
 
     @BeforeEach
     fun cleanup() {
-        stateService.clearState(provenanceUri, MatchesOperation.STATE_KEY)
+        stateService.clearState(provenanceUri, MatchesGameState.STATE_KEY)
     }
 
     @Test
@@ -42,7 +43,7 @@ class MatchesOperationTests {
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("21"))
 
-        val state = stateService.getState(provenanceUri, MatchesOperation.STATE_KEY)
+        val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         assertNotNull(state)
         assertEquals(21, (state!!["remaining"] as Number).toInt())
     }
@@ -63,7 +64,7 @@ class MatchesOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
 
         // Player takes 2, bot takes 2 (4-2), so 21 - 2 - 2 = 17
-        val state = stateService.getState(provenanceUri, MatchesOperation.STATE_KEY)
+        val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         assertNotNull(state)
         assertEquals(17, (state!!["remaining"] as Number).toInt())
     }
@@ -100,13 +101,13 @@ class MatchesOperationTests {
         eventGateway.process(matchesMessage("21 take 1")) // 13 -> 9
         eventGateway.process(matchesMessage("21 take 1")) // 9 -> 5
 
-        val state = stateService.getState(provenanceUri, MatchesOperation.STATE_KEY)
+        val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         assertNotNull(state)
         assertEquals(5, (state!!["remaining"] as Number).toInt())
 
         // No error since 3 <= 5, but let's not test that here;
         // instead directly set state to a low number
-        stateService.setState(provenanceUri, MatchesOperation.STATE_KEY, mapOf("remaining" to 2))
+        stateService.setState(provenanceUri, MatchesGameState.STATE_KEY, mapOf("remaining" to 2))
 
         val result = eventGateway.process(matchesMessage("21 take 3"))
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -128,7 +129,7 @@ class MatchesOperationTests {
         val result = eventGateway.process(matchesMessage("21 concede"))
         assertInstanceOf(OperationResult.Success::class.java, result)
 
-        val state = stateService.getState(provenanceUri, MatchesOperation.STATE_KEY)
+        val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         assertNull(state)
     }
 
@@ -162,7 +163,7 @@ class MatchesOperationTests {
         )
 
         // State should be cleared after victory
-        val state = stateService.getState(provenanceUri, MatchesOperation.STATE_KEY)
+        val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         assertNull(state)
     }
 
