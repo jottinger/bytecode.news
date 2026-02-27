@@ -127,16 +127,19 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         )
     }
 
-    private fun concede(provenanceUri: String, playerName: String): OperationOutcome {
-        val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
+    private fun concede(provenanceUri: String): OperationOutcome {
+        val state = stateService.getState(provenanceUri, STATE_KEY)
         if (state == null) {
             return OperationResult.Success("No game in progress. Nothing to concede!")
         }
-        stateService.clearState(provenanceUri, MatchesGameState.STATE_KEY)
-        return OperationResult.Success("$playerName concedes! ${CONCEDE_LINES.random()}")
+        stateService.clearState(provenanceUri, STATE_KEY)
+        return OperationResult.Success(CONCEDE_LINES.random())
     }
 
     companion object {
+        const val STATE_KEY = "21-matches"
+        const val INITIAL_MATCHES = 21
+
         val REACTIONS =
             listOf(
                 "Excellent choice!",
@@ -218,11 +221,11 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
 
         val CONCEDE_LINES =
             listOf(
-                "The matches fade away, like tears in rain. Except they're matches.",
-                "A graceful surrender. The board is cleared.",
-                "Perhaps next time.",
+                "You concede! The matches fade away, like tears in rain. Except they're matches.",
+                "A graceful surrender, I see. The board is cleared.",
+                "Conceded! Perhaps next time.",
                 "A wise retreat. The matches are put away.",
-                "Live to play another day.",
+                "You live to play another day. This time.",
                 "The matches breathe a sigh of relief.",
             )
     }
