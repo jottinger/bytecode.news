@@ -6,6 +6,9 @@ import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TypedOperation
+import com.enigmastation.streampack.matches.model.MatchesGameState
+import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -13,6 +16,8 @@ import org.springframework.stereotype.Component
 @Component
 class MatchesOperation(private val stateService: ProvenanceStateService) :
     TypedOperation<String>(String::class) {
+
+    private val objectMapper = jacksonObjectMapper()
 
     override val operationGroup: String = "21-matches"
 
@@ -39,31 +44,36 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
     }
 
     private fun startGame(provenanceUri: String): OperationOutcome {
-        val existing = stateService.getState(provenanceUri, STATE_KEY)
+        val existing = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         if (existing != null) {
-            val remaining = (existing["remaining"] as Number).toInt()
+            val state = objectMapper.convertValue<MatchesGameState>(existing)
             return OperationResult.Error(
-                "A game is already in progress with $remaining matches remaining. " +
+                "A game is already in progress with ${state.remaining} matches remaining. " +
                     "Use '{{ref:21 concede}}' to give up, or '{{ref:21 take <1-3>}}' to continue."
             )
         }
-        stateService.setState(provenanceUri, STATE_KEY, mapOf("remaining" to INITIAL_MATCHES))
+        val state = MatchesGameState(remaining = MatchesGameState.INITIAL_MATCHES)
+        stateService.setState(
+            provenanceUri,
+            MatchesGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
         return OperationResult.Success(
-            "A new game of 21 Matches begins! There are $INITIAL_MATCHES matches on the table. " +
+            "A new game of 21 Matches begins! There are ${MatchesGameState.INITIAL_MATCHES} matches on the table. " +
                 "Take 1, 2, or 3 matches each turn. Whoever is forced to take the last match loses. " +
                 "Use '{{ref:21 take <1-3>}}' to play."
         )
     }
 
     private fun takeTurn(provenanceUri: String, input: String): OperationOutcome {
-        val state = stateService.getState(provenanceUri, STATE_KEY)
-        if (state == null) {
+        val existing = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
+        if (existing == null) {
             return OperationResult.Error(
                 "No game in progress. Use '{{ref:21 matches}}' to start a new game."
             )
         }
 
-        val remaining = (state["remaining"] as Number).toInt()
+        val state = objectMapper.convertValue<MatchesGameState>(existing)
         val playerTake =
             input.trim().toIntOrNull()
                 ?: return OperationResult.Error(
@@ -73,13 +83,13 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         if (playerTake < 1 || playerTake > 3) {
             return OperationResult.Error("You must take 1, 2, or 3 matches.")
         }
-        if (playerTake > remaining) {
+        if (playerTake > state.remaining) {
             return OperationResult.Error(
-                "There are only $remaining matches remaining. You cannot take $playerTake."
+                "There are only ${state.remaining} matches remaining. You cannot take $playerTake."
             )
         }
 
-        val afterPlayer = remaining - playerTake
+        val afterPlayer = state.remaining - playerTake
         val botTake = 4 - playerTake
         val afterBot = afterPlayer - botTake
 
@@ -94,30 +104,31 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         val consideration = CONSIDERATIONS.random()
 
         if (afterBot <= 1) {
-            stateService.clearState(provenanceUri, STATE_KEY)
+            stateService.clearState(provenanceUri, MatchesGameState.STATE_KEY)
             val victory = VICTORY_LINES.random()
             return OperationResult.Success("$reaction $consideration, I take $botTake. $victory")
         }
 
-        stateService.setState(provenanceUri, STATE_KEY, mapOf("remaining" to afterBot))
+        stateService.setState(
+            provenanceUri,
+            MatchesGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(MatchesGameState(remaining = afterBot)),
+        )
         return OperationResult.Success(
             "$reaction $consideration, I take $botTake. There are $afterBot matches remaining."
         )
     }
 
     private fun concede(provenanceUri: String): OperationOutcome {
-        val state = stateService.getState(provenanceUri, STATE_KEY)
+        val state = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
         if (state == null) {
             return OperationResult.Success("No game in progress. Nothing to concede!")
         }
-        stateService.clearState(provenanceUri, STATE_KEY)
+        stateService.clearState(provenanceUri, MatchesGameState.STATE_KEY)
         return OperationResult.Success(CONCEDE_LINES.random())
     }
 
     companion object {
-        const val STATE_KEY = "21-matches"
-        const val INITIAL_MATCHES = 21
-
         val REACTIONS =
             listOf(
                 "Excellent choice!",

@@ -102,6 +102,7 @@ class AskOperation(
             Be *very* succinct, as the output length is quite constrained.
             If context confers that extreme feelings are involved, mitigate them.
             Be direct and factual. If you do not know, say so.
+            Use the most recent and up-to-date information available.
             $contextSection
             """
             .trimIndent()
