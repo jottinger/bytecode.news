@@ -7,6 +7,8 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.hangman.model.HangmanGameState
+import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -22,6 +24,8 @@ class HangmanOperationTests {
     @Autowired lateinit var eventGateway: EventGateway
 
     @Autowired lateinit var stateService: ProvenanceStateService
+
+    private val objectMapper = jacksonObjectMapper()
 
     private val provenance =
         Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")
@@ -63,7 +67,11 @@ class HangmanOperationTests {
     fun `guess correct letter updates state`() {
         // Seed a known word so we can test deterministically
         val state = HangmanGameState(word = "apple")
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman a"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -75,7 +83,11 @@ class HangmanOperationTests {
     @Test
     fun `guess incorrect letter decrements lives`() {
         val state = HangmanGameState(word = "apple")
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman z"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -87,7 +99,11 @@ class HangmanOperationTests {
     @Test
     fun `guess already guessed letter returns message`() {
         val state = HangmanGameState(word = "apple", guessedLetters = setOf('a'))
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman a"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -98,7 +114,11 @@ class HangmanOperationTests {
     @Test
     fun `correct solve wins the game`() {
         val state = HangmanGameState(word = "apple", guessedLetters = setOf('a', 'p'))
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -113,7 +133,11 @@ class HangmanOperationTests {
     @Test
     fun `solve with zero guesses gets suspicious reaction`() {
         val state = HangmanGameState(word = "apple")
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -126,7 +150,11 @@ class HangmanOperationTests {
     @Test
     fun `solve with one guess gets congratulatory reaction`() {
         val state = HangmanGameState(word = "apple", guessedLetters = setOf('a'))
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman solve apple"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -138,7 +166,11 @@ class HangmanOperationTests {
     @Test
     fun `incorrect solve decrements lives`() {
         val state = HangmanGameState(word = "apple")
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman solve orange"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -153,7 +185,11 @@ class HangmanOperationTests {
     @Test
     fun `concede reveals word and clears state`() {
         val state = HangmanGameState(word = "apple")
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman concede"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -176,7 +212,11 @@ class HangmanOperationTests {
     @Test
     fun `losing all lives ends game`() {
         val state = HangmanGameState(word = "apple", livesRemaining = 1)
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman z"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -191,7 +231,11 @@ class HangmanOperationTests {
     @Test
     fun `winning by guessing all letters`() {
         val state = HangmanGameState(word = "cat", guessedLetters = setOf('c', 'a'))
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman t"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -232,7 +276,11 @@ class HangmanOperationTests {
     @Test
     fun `non-ASCII letter guess is rejected`() {
         val state = HangmanGameState(word = "apple")
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         // Hebrew alef should not be accepted as a valid guess
         val result = eventGateway.process(hangmanMessage("hangman \u05D0"))
@@ -250,7 +298,11 @@ class HangmanOperationTests {
     @Test
     fun `incorrect solve on last life ends game`() {
         val state = HangmanGameState(word = "apple", livesRemaining = 1)
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
 
         val result = eventGateway.process(hangmanMessage("hangman solve wrong"))
         assertInstanceOf(OperationResult.Success::class.java, result)

@@ -9,6 +9,8 @@ import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.hangman.model.HangmanGameState
 import com.enigmastation.streampack.hangman.service.HangmanService
+import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -18,6 +20,8 @@ class HangmanOperation(
     private val stateService: ProvenanceStateService,
     private val hangmanService: HangmanService,
 ) : TypedOperation<String>(String::class) {
+
+    private val objectMapper = jacksonObjectMapper()
 
     override val priority: Int = 50
     override val addressed: Boolean = true
@@ -60,13 +64,17 @@ class HangmanOperation(
     private fun startOrShowGame(provenanceUri: String): OperationOutcome {
         val existing = stateService.getState(provenanceUri, HangmanGameState.STATE_KEY)
         if (existing != null) {
-            val state = HangmanGameState.fromMap(existing)
+            val state = objectMapper.convertValue<HangmanGameState>(existing)
             return OperationResult.Success(formatState(state))
         }
 
         val word = hangmanService.selectWord()
         val state = HangmanGameState(word = word)
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, state.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(state),
+        )
         return OperationResult.Success(
             "Hangman: ${state.maskedWord} (${state.livesRemaining}/${HangmanGameState.MAX_LIVES} lives)" +
                 " -- Use '{{ref:hangman <letter>}}' to guess, '{{ref:hangman solve <word>}}' to solve."
@@ -80,7 +88,7 @@ class HangmanOperation(
                     "No game in progress. Use '{{ref:hangman}}' to start a new game."
                 )
 
-        val state = HangmanGameState.fromMap(existing)
+        val state = objectMapper.convertValue<HangmanGameState>(existing)
 
         if (letter in state.guessedLetters) {
             return OperationResult.Success("You already guessed '$letter'. ${formatState(state)}")
@@ -111,7 +119,11 @@ class HangmanOperation(
             )
         }
 
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, updated.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(updated),
+        )
 
         return if (correct) {
             OperationResult.Success(
@@ -142,7 +154,7 @@ class HangmanOperation(
                     "No game in progress. Use '{{ref:hangman}}' to start a new game."
                 )
 
-        val state = HangmanGameState.fromMap(existing)
+        val state = objectMapper.convertValue<HangmanGameState>(existing)
 
         if (guess.lowercase() == state.word) {
             stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
@@ -160,7 +172,11 @@ class HangmanOperation(
             )
         }
 
-        stateService.setState(provenanceUri, HangmanGameState.STATE_KEY, updated.toMap())
+        stateService.setState(
+            provenanceUri,
+            HangmanGameState.STATE_KEY,
+            objectMapper.convertValue<Map<String, Any>>(updated),
+        )
         return OperationResult.Success(
             "'${guess.lowercase()}' is not the word. ${formatState(updated)}"
         )
@@ -173,7 +189,7 @@ class HangmanOperation(
                     "No game in progress. Use '{{ref:hangman}}' to start one."
                 )
 
-        val state = HangmanGameState.fromMap(existing)
+        val state = objectMapper.convertValue<HangmanGameState>(existing)
         stateService.clearState(provenanceUri, HangmanGameState.STATE_KEY)
         return OperationResult.Success(
             "You concede. The word was '${state.word}'. Use '{{ref:hangman}}' for a new game."

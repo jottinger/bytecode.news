@@ -1,12 +1,16 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.hangman.model
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.convertValue
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class HangmanGameStateTests {
+    private val objectMapper: ObjectMapper = jacksonObjectMapper()
 
     @Test
     fun `masked word hides unguessed letters`() {
@@ -76,7 +80,8 @@ class HangmanGameStateTests {
                 guessedLetters = setOf('h', 'a', 'x'),
                 livesRemaining = 5,
             )
-        val restored = HangmanGameState.fromMap(state.toMap())
+        val map = objectMapper.convertValue<Map<String, Any>>(state)
+        val restored = objectMapper.convertValue<HangmanGameState>(map)
         assertEquals(state.word, restored.word)
         assertEquals(state.guessedLetters, restored.guessedLetters)
         assertEquals(state.livesRemaining, restored.livesRemaining)
@@ -85,7 +90,8 @@ class HangmanGameStateTests {
     @Test
     fun `round-trip serialization with empty guessed letters`() {
         val state = HangmanGameState(word = "test")
-        val restored = HangmanGameState.fromMap(state.toMap())
+        val map = objectMapper.convertValue<Map<String, Any>>(state)
+        val restored = objectMapper.convertValue<HangmanGameState>(map)
         assertEquals(state.word, restored.word)
         assertEquals(emptySet<Char>(), restored.guessedLetters)
         assertEquals(6, restored.livesRemaining)
