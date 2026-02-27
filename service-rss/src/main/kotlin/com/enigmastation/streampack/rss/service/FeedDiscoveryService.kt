@@ -32,11 +32,18 @@ class FeedDiscoveryService(private val properties: RssProperties) {
      * alternate-link discovery.
      */
     fun discover(url: String): DiscoveryResult? {
-        val body = fetchBody(url) ?: return null
+        val body = fetchBody(url)
+        if (body == null) {
+            logger.debug("Discovery failed: no response body from {}", url)
+            return null
+        }
+
+        logger.debug("Discovery fetched {} bytes from {}", body.length, url)
 
         // Try direct ROME parse
         val directFeed = tryParseFeed(url, body)
         if (directFeed != null) {
+            logger.debug("Direct parse succeeded for {} (title: {})", url, directFeed.title)
             return DiscoveryResult(feedUrl = url, feed = directFeed)
         }
 
@@ -55,15 +62,40 @@ class FeedDiscoveryService(private val properties: RssProperties) {
                 HttpRequest.newBuilder()
                     .uri(URI(url))
                     .timeout(Duration.ofSeconds(properties.readTimeoutSeconds.toLong()))
-                    .header("User-Agent", "Mozilla/5.0 (compatible; Nevet/1.0; +https://jvm.news)")
+                    .header(
+                        "User-Agent",
+                        "Mozilla/5.0 (compatible; Nevet/1.0; +https://bytecode.news)",
+                    )
+                    .header(
+                        "Accept",
+                        "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html, */*;q=0.8",
+                    )
                     .GET()
                     .build()
             val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+            val contentType = response.headers().firstValue("content-type").orElse("(none)")
+            val body = response.body()
+            logger.debug(
+                "HTTP {} from {} (content-type: {}, body: {} bytes)",
+                response.statusCode(),
+                url,
+                contentType,
+                body?.length ?: 0,
+            )
             if (response.statusCode() in 200..299) {
-                response.body()
+                body
             } else {
-                logger.debug("HTTP {} fetching {}", response.statusCode(), url)
-                null
+                // Return body on non-2xx if it looks like XML; some servers misconfigure status
+                // codes
+                if (body != null && body.trimStart().startsWith("<?xml", ignoreCase = true)) {
+                    logger.debug(
+                        "Non-2xx response contains XML, attempting parse anyway for {}",
+                        url,
+                    )
+                    body
+                } else {
+                    null
+                }
             }
         } catch (e: Exception) {
             logger.debug("Failed to fetch {}: {}", url, e.message)
@@ -77,7 +109,7 @@ class FeedDiscoveryService(private val properties: RssProperties) {
             input.isAllowDoctypes = true
             input.build(StringReader(body))
         } catch (e: Exception) {
-            logger.trace("Not a valid feed at {}: {}", url, e.message)
+            logger.debug("ROME parse failed for {} ({} bytes): {}", url, body.length, e.message)
             null
         }
     }
