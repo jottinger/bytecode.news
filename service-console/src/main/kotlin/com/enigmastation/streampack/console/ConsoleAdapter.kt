@@ -7,6 +7,7 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.repository.UserRepository
+import com.enigmastation.streampack.core.service.ProtocolAdapter
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import org.slf4j.LoggerFactory
@@ -27,7 +28,16 @@ import org.springframework.stereotype.Component
 class ConsoleAdapter(
     private val eventGateway: EventGateway,
     private val userRepository: UserRepository,
-) : ApplicationRunner {
+) : ApplicationRunner, ProtocolAdapter {
+    override val protocol: Protocol = Protocol.CONSOLE
+    override val serviceName: String = "console"
+
+    override fun wouldTriggerIngress(text: String): Boolean = false
+
+    override fun sendReply(provenance: Provenance, text: String) {
+        // ConsoleEgressSubscriber handles output delivery
+    }
+
     private val logger = LoggerFactory.getLogger(ConsoleAdapter::class.java)
 
     override fun run(args: ApplicationArguments) {

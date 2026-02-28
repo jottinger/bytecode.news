@@ -6,6 +6,7 @@ import com.enigmastation.streampack.core.integration.EgressSubscriber
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.service.ProtocolAdapter
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.mail.SimpleMailMessage
@@ -18,7 +19,15 @@ import org.springframework.stereotype.Component
 class MailEgressSubscriber(
     private val mailSender: JavaMailSender,
     private val properties: StreampackProperties,
-) : EgressSubscriber() {
+) : EgressSubscriber(), ProtocolAdapter {
+    override val protocol: Protocol = Protocol.MAILTO
+    override val serviceName: String = "mail"
+
+    override fun wouldTriggerIngress(text: String): Boolean = false
+
+    override fun sendReply(provenance: Provenance, text: String) {
+        // Egress subscriber handles email delivery via deliver()
+    }
 
     private val logger = LoggerFactory.getLogger(MailEgressSubscriber::class.java)
 

@@ -11,6 +11,18 @@
         "required" : [ "publishedAt" ],
         "type" : "object"
       },
+      "AuthenticationFeatures" : {
+        "properties" : {
+          "oidc" : {
+            "$ref" : "#/components/schemas/OidcFeatures"
+          },
+          "otp" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "otp" ],
+        "type" : "object"
+      },
       "CategorySummary" : {
         "properties" : {
           "id" : {
@@ -476,6 +488,33 @@
         "required" : [ "locked", "selector", "updatedAt" ],
         "type" : "object"
       },
+      "FeaturesResponse" : {
+        "properties" : {
+          "adapters" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "ai" : {
+            "type" : "boolean"
+          },
+          "authentication" : {
+            "$ref" : "#/components/schemas/AuthenticationFeatures"
+          },
+          "operationGroups" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "version" : {
+            "$ref" : "#/components/schemas/VersionInfo"
+          }
+        },
+        "required" : [ "adapters", "ai", "authentication", "operationGroups", "version" ],
+        "type" : "object"
+      },
       "LoginResponse" : {
         "properties" : {
           "principal" : {
@@ -486,6 +525,18 @@
           }
         },
         "required" : [ "principal", "token" ],
+        "type" : "object"
+      },
+      "OidcFeatures" : {
+        "properties" : {
+          "github" : {
+            "type" : "boolean"
+          },
+          "google" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "github", "google" ],
         "type" : "object"
       },
       "OtpRequest" : {
@@ -668,6 +719,27 @@
           }
         },
         "required" : [ "displayName", "id", "role", "username" ],
+        "type" : "object"
+      },
+      "VersionInfo" : {
+        "properties" : {
+          "branch" : {
+            "type" : "string"
+          },
+          "buildTime" : {
+            "type" : "string"
+          },
+          "commit" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name" ],
         "type" : "object"
       }
     },
@@ -1773,6 +1845,24 @@
           }
         },
         "tags" : [ "factoid-controller" ]
+      }
+    },
+    "/features" : {
+      "get" : {
+        "operationId" : "getFeatures",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FeaturesResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "features-controller" ]
       }
     },
     "/posts" : {
