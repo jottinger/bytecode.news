@@ -27,8 +27,8 @@ See [Authentication](authentication.md) for details on the OTP and OIDC flows.
 ```json
 {
   "id": "01234567-89ab-7def-8123-456789abcdef",
-  "username": "dreamreal",
-  "displayName": "Joe Ottinger",
+  "username": "testuser",
+  "displayName": "Test User",
   "role": "USER"
 }
 ```
@@ -147,8 +147,8 @@ Use this to extend sessions without re-authenticating.
   "token": "eyJhbGciOiJIUzI1NiIs...(new token)",
   "principal": {
     "id": "01234567-89ab-7def-8123-456789abcdef",
-    "username": "dreamreal",
-    "displayName": "Joe Ottinger",
+    "username": "testuser",
+    "displayName": "Test User",
     "role": "USER"
   }
 }
@@ -205,9 +205,9 @@ Export the authenticated user's data as JSON (GDPR data portability).
 ```json
 {
   "profile": {
-    "username": "dreamreal",
+    "username": "testuser",
     "email": "joe@example.com",
-    "displayName": "Joe Ottinger",
+    "displayName": "Test User",
     "role": "USER",
     "createdAt": "2026-01-01T00:00:00Z"
   },
@@ -417,8 +417,8 @@ Change a user's role.
 ```json
 {
   "id": "01234567-89ab-7def-8123-456789abcdef",
-  "username": "dreamreal",
-  "displayName": "Joe Ottinger",
+  "username": "testuser",
+  "displayName": "Test User",
   "role": "ADMIN"
 }
 ```
@@ -456,7 +456,7 @@ The slug path matches the post's URL structure (e.g. `2026/01/my-post-title`).
     {
       "id": "11111111-1111-7111-8111-111111111111",
       "authorId": "22222222-2222-7222-8222-222222222222",
-      "authorDisplayName": "Joe Ottinger",
+      "authorDisplayName": "Test User",
       "renderedHtml": "<p>Great article!</p>",
       "createdAt": "2026-01-15T10:30:00Z",
       "updatedAt": "2026-01-15T10:30:00Z",
@@ -506,7 +506,7 @@ Provide a comment UUID to create a nested reply.
 {
   "id": "11111111-1111-7111-8111-111111111111",
   "postId": "01234567-89ab-7def-8123-456789abcdef",
-  "authorDisplayName": "Joe Ottinger",
+  "authorDisplayName": "Test User",
   "renderedHtml": "<p>This is my comment.</p>",
   "createdAt": "2026-01-15T10:30:00Z"
 }
@@ -546,7 +546,7 @@ Admins can edit anytime.
 {
   "id": "11111111-1111-7111-8111-111111111111",
   "postId": "01234567-89ab-7def-8123-456789abcdef",
-  "authorDisplayName": "Joe Ottinger",
+  "authorDisplayName": "Test User",
   "renderedHtml": "<p>Updated comment text.</p>",
   "createdAt": "2026-01-15T10:30:00Z"
 }
@@ -634,7 +634,7 @@ List published posts, paginated.
       "title": "Understanding Virtual Threads",
       "slug": "2026/01/understanding-virtual-threads",
       "excerpt": "Virtual threads change the concurrency model...",
-      "authorDisplayName": "Joe Ottinger",
+      "authorDisplayName": "Test User",
       "publishedAt": "2026-01-15T12:00:00Z",
       "tags": ["java", "concurrency"],
       "categories": ["JVM Internals"]
@@ -667,7 +667,7 @@ Get a single published post by its slug path.
   "renderedHtml": "<p>Virtual threads change the concurrency model...</p>",
   "excerpt": "Virtual threads change the concurrency model...",
   "authorId": "22222222-2222-7222-8222-222222222222",
-  "authorDisplayName": "Joe Ottinger",
+  "authorDisplayName": "Test User",
   "status": "APPROVED",
   "publishedAt": "2026-01-15T12:00:00Z",
   "createdAt": "2026-01-14T09:00:00Z",
@@ -735,7 +735,7 @@ Category IDs that don't exist or point to deleted categories are silently skippe
   "excerpt": "Virtual threads change the concurrency model...",
   "status": "DRAFT",
   "authorId": "22222222-2222-7222-8222-222222222222",
-  "authorDisplayName": "Joe Ottinger",
+  "authorDisplayName": "Test User",
   "createdAt": "2026-01-14T09:00:00Z",
   "tags": ["java", "concurrency"],
   "categories": ["JVM Internals"]
@@ -1134,7 +1134,7 @@ Paginated listing with optional search.
     {
       "selector": "spring",
       "locked": false,
-      "updatedBy": "dreamreal",
+      "updatedBy": "testuser",
       "updatedAt": "2026-02-25T10:30:00Z"
     }
   ],
@@ -1157,7 +1157,7 @@ Single factoid with all rendered attributes.
 {
   "selector": "spring",
   "locked": false,
-  "updatedBy": "dreamreal",
+  "updatedBy": "testuser",
   "updatedAt": "2026-02-25T10:30:00Z",
   "attributes": [
     {

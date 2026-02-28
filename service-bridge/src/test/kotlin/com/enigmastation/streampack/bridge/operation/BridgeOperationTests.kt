@@ -235,11 +235,11 @@ class BridgeOperationTests {
                 MessageBuilder.withPayload("hello world")
                     .setHeader(Provenance.HEADER, provenance("#test", "testnet"))
                     .setHeader(Provenance.ADDRESSED, false)
-                    .setHeader("nick", "dreamreal")
+                    .setHeader("nick", "testuser")
                     .build()
             eventGateway.process(message)
 
-            assertTrue(captured.any { it.contains("<irc:dreamreal>") })
+            assertTrue(captured.any { it.contains("<irc:testuser>") })
             assertTrue(captured.any { it.contains("hello world") })
         } finally {
             egressChannel.unsubscribe(handler)
@@ -317,16 +317,16 @@ class BridgeOperationTests {
         egressChannel.subscribe(handler)
         try {
             val message =
-                MessageBuilder.withPayload("* dreamreal waves")
+                MessageBuilder.withPayload("* testuser waves")
                     .setHeader(Provenance.HEADER, provenance("#test", "testnet"))
                     .setHeader(Provenance.ADDRESSED, false)
                     .setHeader(Provenance.IS_ACTION, true)
-                    .setHeader("nick", "dreamreal")
+                    .setHeader("nick", "testuser")
                     .build()
             eventGateway.process(message)
 
-            assertTrue(captured.any { it.contains("<irc:dreamreal>") })
-            assertTrue(captured.any { it.contains("* dreamreal waves") })
+            assertTrue(captured.any { it.contains("<irc:testuser>") })
+            assertTrue(captured.any { it.contains("* testuser waves") })
         } finally {
             egressChannel.unsubscribe(handler)
         }

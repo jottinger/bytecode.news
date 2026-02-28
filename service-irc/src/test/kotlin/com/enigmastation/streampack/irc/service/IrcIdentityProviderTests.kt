@@ -28,7 +28,7 @@ class IrcIdentityProviderTests {
 
     @Test
     fun `valid hostmask is accepted`() {
-        val result = identityProvider.resolveIdentity("libera", "~dreamreal@about/java/dreamreal")
+        val result = identityProvider.resolveIdentity("libera", "~testuser@example.com/testuser")
         assertInstanceOf(IdentityResolution.Valid::class.java, result)
     }
 
@@ -40,21 +40,21 @@ class IrcIdentityProviderTests {
 
     @Test
     fun `nick-only identifier is rejected`() {
-        val result = identityProvider.resolveIdentity("libera", "dreamreal")
+        val result = identityProvider.resolveIdentity("libera", "testuser")
         assertInstanceOf(IdentityResolution.Invalid::class.java, result)
         assertTrue((result as IdentityResolution.Invalid).reason.contains("ident@host"))
     }
 
     @Test
     fun `missing host part is rejected`() {
-        val result = identityProvider.resolveIdentity("libera", "dreamreal@")
+        val result = identityProvider.resolveIdentity("libera", "testuser@")
         assertInstanceOf(IdentityResolution.Invalid::class.java, result)
         assertTrue((result as IdentityResolution.Invalid).reason.contains("host"))
     }
 
     @Test
     fun `missing ident part is rejected`() {
-        val result = identityProvider.resolveIdentity("libera", "@about/java/dreamreal")
+        val result = identityProvider.resolveIdentity("libera", "@example.com/testuser")
         assertInstanceOf(IdentityResolution.Invalid::class.java, result)
         assertTrue((result as IdentityResolution.Invalid).reason.contains("ident"))
     }
@@ -62,7 +62,7 @@ class IrcIdentityProviderTests {
     @Test
     fun `unknown network is rejected`() {
         val result =
-            identityProvider.resolveIdentity("nonexistent", "~dreamreal@about/java/dreamreal")
+            identityProvider.resolveIdentity("nonexistent", "~testuser@example.com/testuser")
         assertInstanceOf(IdentityResolution.Invalid::class.java, result)
         assertTrue((result as IdentityResolution.Invalid).reason.contains("Unknown"))
     }

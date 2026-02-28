@@ -626,7 +626,7 @@ The mail egress subscriber delivers operation output to users via email.
 Link a user's email for mail delivery:
 
 ```
-link user jottinger mailto "" dreamreal@gmail.com
+link user testuser mailto "" testuser@example.com
 ```
 
 ### Email Deliverability

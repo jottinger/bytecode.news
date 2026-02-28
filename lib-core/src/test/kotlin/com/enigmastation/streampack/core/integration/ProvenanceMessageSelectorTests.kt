@@ -67,7 +67,7 @@ class ProvenanceMessageSelectorTests {
             MessageBuilder.withPayload("Email content")
                 .setHeader(
                     Provenance.HEADER,
-                    Provenance(protocol = Protocol.MAILTO, replyTo = "dreamreal@gmail.com"),
+                    Provenance(protocol = Protocol.MAILTO, replyTo = "user@example.com"),
                 )
                 .build()
         )

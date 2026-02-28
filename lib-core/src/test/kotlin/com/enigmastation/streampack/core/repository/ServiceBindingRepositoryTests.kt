@@ -28,9 +28,9 @@ class ServiceBindingRepositoryTests {
         testUser =
             userRepository.save(
                 User(
-                    username = "dreamreal",
-                    email = "dreamreal@gmail.com",
-                    displayName = "Joe Ottinger",
+                    username = "testuser",
+                    email = "testuser@example.com",
+                    displayName = "Test User",
                 )
             )
     }
@@ -43,7 +43,7 @@ class ServiceBindingRepositoryTests {
                     user = testUser,
                     protocol = Protocol.IRC,
                     serviceId = "ircservice",
-                    externalIdentifier = "~dreamreal@about/java/dreamreal",
+                    externalIdentifier = "~testuser@about/java/testuser",
                     metadata = mapOf("network" to "libera"),
                 )
             )
@@ -52,7 +52,7 @@ class ServiceBindingRepositoryTests {
         assertNotNull(found)
         assertEquals(Protocol.IRC, found.protocol)
         assertEquals("ircservice", found.serviceId)
-        assertEquals("~dreamreal@about/java/dreamreal", found.externalIdentifier)
+        assertEquals("~testuser@about/java/testuser", found.externalIdentifier)
     }
 
     @Test
@@ -62,14 +62,14 @@ class ServiceBindingRepositoryTests {
                 user = testUser,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "~dreamreal@about/java/dreamreal",
+                externalIdentifier = "~testuser@about/java/testuser",
             )
         )
         val found =
             serviceBindingRepository.resolve(
                 Protocol.IRC,
                 "ircservice",
-                "~dreamreal@about/java/dreamreal",
+                "~testuser@about/java/testuser",
             )
 
         assertNotNull(found)
@@ -89,7 +89,7 @@ class ServiceBindingRepositoryTests {
                 user = testUser,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "~dreamreal@about/java/dreamreal",
+                externalIdentifier = "~testuser@about/java/testuser",
             )
         )
         serviceBindingRepository.flush()
@@ -105,7 +105,7 @@ class ServiceBindingRepositoryTests {
                     user = otherUser,
                     protocol = Protocol.IRC,
                     serviceId = "ircservice",
-                    externalIdentifier = "~dreamreal@about/java/dreamreal",
+                    externalIdentifier = "~testuser@about/java/testuser",
                 )
             )
             serviceBindingRepository.flush()
@@ -120,13 +120,13 @@ class ServiceBindingRepositoryTests {
                 user = testUser,
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "dreamreal",
+                externalIdentifier = "testuser",
                 metadata = metadata,
             )
         )
         serviceBindingRepository.flush()
 
-        val found = serviceBindingRepository.resolve(Protocol.HTTP, "blog-service", "dreamreal")
+        val found = serviceBindingRepository.resolve(Protocol.HTTP, "blog-service", "testuser")
 
         assertNotNull(found)
         assertEquals("oidc", found!!.metadata["authMethod"])
@@ -140,7 +140,7 @@ class ServiceBindingRepositoryTests {
                 user = testUser,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "~dreamreal@about/java/dreamreal",
+                externalIdentifier = "~testuser@about/java/testuser",
             )
         )
         serviceBindingRepository.save(
@@ -148,7 +148,7 @@ class ServiceBindingRepositoryTests {
                 user = testUser,
                 protocol = Protocol.DISCORD,
                 serviceId = "jvm-community",
-                externalIdentifier = "dreamreal#1234",
+                externalIdentifier = "testuser#1234",
             )
         )
 
@@ -156,10 +156,10 @@ class ServiceBindingRepositoryTests {
             serviceBindingRepository.resolve(
                 Protocol.IRC,
                 "ircservice",
-                "~dreamreal@about/java/dreamreal",
+                "~testuser@about/java/testuser",
             )
         val discordBinding =
-            serviceBindingRepository.resolve(Protocol.DISCORD, "jvm-community", "dreamreal#1234")
+            serviceBindingRepository.resolve(Protocol.DISCORD, "jvm-community", "testuser#1234")
 
         assertNotNull(ircBinding)
         assertNotNull(discordBinding)

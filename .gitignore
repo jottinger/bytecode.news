@@ -40,6 +40,10 @@ build/
 .env
 .env.properties
 
+### Data dumps ###
+export.json
+factoids.json
+
 ### Frontend ###
 frontend/node_modules/
 frontend/.next/
