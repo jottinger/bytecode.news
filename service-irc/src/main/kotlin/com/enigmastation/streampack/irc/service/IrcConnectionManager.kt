@@ -99,7 +99,6 @@ class IrcConnectionManager(
                 eventGateway = eventGateway,
                 userResolutionService = userResolutionService,
                 channelControlService = channelControlService,
-                stateService = provenanceStateService,
                 networkRepository = networkRepository,
                 channelRepository = channelRepository,
                 client = client,
