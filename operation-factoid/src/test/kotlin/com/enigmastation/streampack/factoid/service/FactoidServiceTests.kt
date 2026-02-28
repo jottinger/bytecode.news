@@ -173,4 +173,47 @@ class FactoidServiceTests {
         val results = factoidService.searchByTag("nonexistent")
         assertTrue(results.isEmpty())
     }
+
+    // -- Access tracking --
+
+    @Test
+    fun `recordAccess increments count and sets lastAccessedAt`() {
+        factoidService.save("tracked", FactoidAttributeType.TEXT, "test value", "user1")
+
+        val before = factoidRepository.findBySelectorIgnoreCase("tracked")!!
+        assertEquals(0, before.accessCount)
+        assertNull(before.lastAccessedAt)
+
+        factoidService.recordAccess("tracked")
+        factoidRepository.flush()
+
+        val after = factoidRepository.findBySelectorIgnoreCase("tracked")!!
+        assertEquals(1, after.accessCount)
+        assertNotNull(after.lastAccessedAt)
+    }
+
+    @Test
+    fun `recordAccess increments count on repeated calls`() {
+        factoidService.save("popular", FactoidAttributeType.TEXT, "hit counter", "user1")
+
+        factoidService.recordAccess("popular")
+        factoidService.recordAccess("popular")
+        factoidService.recordAccess("popular")
+        factoidRepository.flush()
+
+        val factoid = factoidRepository.findBySelectorIgnoreCase("popular")!!
+        assertEquals(3, factoid.accessCount)
+    }
+
+    @Test
+    fun `findFactoid returns entity with access stats`() {
+        factoidService.save("findme", FactoidAttributeType.TEXT, "test value", "user1")
+        factoidService.recordAccess("findme")
+        factoidRepository.flush()
+
+        val factoid = factoidService.findFactoid("findme")
+        assertNotNull(factoid)
+        assertEquals(1, factoid!!.accessCount)
+        assertNotNull(factoid.lastAccessedAt)
+    }
 }

@@ -46,6 +46,8 @@ class FactoidController(private val factoidService: FactoidService) {
         }
 
         val factoid = attributes.first().factoid
+        factoidService.recordAccess(selector)
+
         val attributeResponses =
             attributes
                 .filter { !it.attributeValue.isNullOrEmpty() }
@@ -65,6 +67,8 @@ class FactoidController(private val factoidService: FactoidService) {
                 locked = factoid.locked,
                 updatedBy = factoid.updatedBy,
                 updatedAt = factoid.updatedAt,
+                lastAccessedAt = factoid.lastAccessedAt,
+                accessCount = factoid.accessCount,
                 attributes = attributeResponses,
             )
         )
@@ -76,5 +80,7 @@ class FactoidController(private val factoidService: FactoidService) {
             locked = locked,
             updatedBy = updatedBy,
             updatedAt = updatedAt,
+            lastAccessedAt = lastAccessedAt,
+            accessCount = accessCount,
         )
 }

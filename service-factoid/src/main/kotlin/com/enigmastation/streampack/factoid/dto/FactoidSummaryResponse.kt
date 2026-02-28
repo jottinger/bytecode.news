@@ -9,4 +9,6 @@ data class FactoidSummaryResponse(
     val locked: Boolean,
     val updatedBy: String?,
     val updatedAt: Instant,
+    val lastAccessedAt: Instant?,
+    val accessCount: Long,
 )

@@ -67,7 +67,8 @@ enum class FactoidAttributeType(val mutable: Boolean = true, val includeInSummar
     INFO(mutable = false, includeInSummary = false),
     LITERAL(mutable = false, includeInSummary = false),
     LOCK(mutable = false, includeInSummary = false),
-    UNLOCK(mutable = false, includeInSummary = false);
+    UNLOCK(mutable = false, includeInSummary = false),
+    STATS(mutable = false, includeInSummary = false);
 
     open fun doRender(selector: String, value: String): String = value
 

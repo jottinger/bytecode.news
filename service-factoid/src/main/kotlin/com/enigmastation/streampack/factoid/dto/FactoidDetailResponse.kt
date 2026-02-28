@@ -9,6 +9,8 @@ data class FactoidDetailResponse(
     val locked: Boolean,
     val updatedBy: String?,
     val updatedAt: Instant,
+    val lastAccessedAt: Instant?,
+    val accessCount: Long,
     val attributes: List<FactoidAttributeResponse>,
 )
 
