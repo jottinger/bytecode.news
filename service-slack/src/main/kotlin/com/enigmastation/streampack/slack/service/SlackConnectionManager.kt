@@ -2,7 +2,10 @@
 package com.enigmastation.streampack.slack.service
 
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.model.Protocol
+import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
+import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.slack.config.SlackProperties
 import com.enigmastation.streampack.slack.entity.SlackWorkspace
@@ -28,7 +31,16 @@ class SlackConnectionManager(
     private val slackProperties: SlackProperties,
     private val workspaceRepository: SlackWorkspaceRepository,
     private val channelRepository: SlackChannelRepository,
-) : InitializingBean, DisposableBean {
+) : InitializingBean, DisposableBean, ProtocolAdapter {
+    override val protocol: Protocol = Protocol.SLACK
+    override val serviceName: String = "slack"
+
+    override fun wouldTriggerIngress(text: String): Boolean = false
+
+    override fun sendReply(provenance: Provenance, text: String) {
+        // Individual per-workspace SlackAdapters handle message delivery
+    }
+
     private val logger = LoggerFactory.getLogger(SlackConnectionManager::class.java)
     private val adapters = ConcurrentHashMap<String, SlackAdapter>()
 

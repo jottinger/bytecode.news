@@ -73,6 +73,7 @@
         <module>service-blog</module>
         <module>service-irc</module>
         <module>service-github</module>
+        <module>service-features</module>
         <module>app</module>
     </modules>
 
