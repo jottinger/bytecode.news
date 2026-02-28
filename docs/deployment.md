@@ -557,6 +557,21 @@ The only application properties are the on/off switch and the default signal cha
 
 See [User Guide](user-guide.md#irc-super-admin) for the full set of admin commands.
 
+### Auto-Deop
+
+By default, the bot automatically removes channel operator status (`+o`) from itself when opped.
+A bot should not hold ops - it is unnecessary privilege and a potential abuse vector.
+
+The behavior is per-channel and controlled via `irc allow-ops`:
+
+```
+irc allow-ops libera #java true     allow the bot to stay opped
+irc allow-ops libera #java false    restore default auto-deop behavior
+```
+
+The default is `false` (auto-deop enabled).
+The setting is stored via `ProvenanceStateService` and persists across restarts.
+
 ---
 
 ## Slack Adapter Setup

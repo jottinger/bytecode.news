@@ -227,7 +227,7 @@ class HangmanOperation(
         val ZERO_GUESS_REACTIONS =
             listOf(
                 "Wait, what... how? That's amazing! ... or suspicious.",
-                "Wait, you got it without guessing a single letter? I'm not saying you cheated, but if I had eyebrows...",
+                "Wait, you nailed it without guessing a single letter? I'm not saying you cheated, but if I had eyebrows...",
                 "Zero letters guessed and you nailed it? That's either genius or espionage.",
                 "Impressive! Or suspicious. Let's go with impressively suspicious.",
                 "You solved it cold? I'll just be over here checking the server logs.",
