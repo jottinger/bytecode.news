@@ -19,4 +19,6 @@ data class Factoid(
     @Column(length = 100) val updatedBy: String? = null,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) val updatedAt: Instant = Instant.now(),
+    val lastAccessedAt: Instant? = null,
+    @Column(nullable = false) val accessCount: Long = 0,
 )

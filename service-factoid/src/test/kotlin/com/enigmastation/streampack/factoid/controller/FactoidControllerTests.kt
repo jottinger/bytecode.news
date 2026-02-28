@@ -3,6 +3,7 @@ package com.enigmastation.streampack.factoid.controller
 
 import com.enigmastation.streampack.factoid.config.TestSecurityConfiguration
 import com.enigmastation.streampack.factoid.model.FactoidAttributeType
+import com.enigmastation.streampack.factoid.repository.FactoidRepository
 import com.enigmastation.streampack.factoid.service.FactoidService
 import com.enigmastation.streampack.test.TestChannelConfiguration
 import org.junit.jupiter.api.BeforeEach
@@ -24,6 +25,7 @@ class FactoidControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var factoidService: FactoidService
+    @Autowired lateinit var factoidRepository: FactoidRepository
 
     @BeforeEach
     fun setUp() {
@@ -121,6 +123,43 @@ class FactoidControllerTests {
         mockMvc.get("/factoids/SPRING").andExpect {
             status { isOk() }
             jsonPath("$.selector") { value("spring") }
+        }
+    }
+
+    // -- Access tracking --
+
+    @Test
+    fun `GET factoid detail includes access tracking fields`() {
+        // Response reflects entity state at query time, before the increment
+        mockMvc.get("/factoids/spring").andExpect {
+            status { isOk() }
+            jsonPath("$.accessCount") { value(0) }
+            jsonPath("$.lastAccessedAt") { doesNotExist() }
+        }
+        // Second request sees the first request's increment
+        mockMvc.get("/factoids/spring").andExpect {
+            status { isOk() }
+            jsonPath("$.accessCount") { value(1) }
+            jsonPath("$.lastAccessedAt") { isNotEmpty() }
+        }
+    }
+
+    @Test
+    fun `GET factoid detail increments access count`() {
+        mockMvc.get("/factoids/spring").andExpect { status { isOk() } }
+        factoidRepository.flush()
+
+        val factoid = factoidRepository.findBySelectorIgnoreCase("spring")!!
+        org.junit.jupiter.api.Assertions.assertEquals(1, factoid.accessCount)
+        org.junit.jupiter.api.Assertions.assertNotNull(factoid.lastAccessedAt)
+    }
+
+    @Test
+    fun `GET factoid listing includes access tracking fields`() {
+        mockMvc.get("/factoids").andExpect {
+            status { isOk() }
+            jsonPath("$.content[0].accessCount") { value(0) }
+            jsonPath("$.content[0].lastAccessedAt") { doesNotExist() }
         }
     }
 }

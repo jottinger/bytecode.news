@@ -187,6 +187,18 @@ class FactoidService(
         return factoidRepository.searchBySelector("%${term.lowercase()}%", pageable)
     }
 
+    /** Atomically records a single access for a factoid selector */
+    @Transactional
+    fun recordAccess(selector: String) {
+        factoidRepository.incrementAccessCount(selector)
+    }
+
+    /** Loads the Factoid entity by selector for reading access stats */
+    @Transactional(readOnly = true)
+    fun findFactoid(selector: String): Factoid? {
+        return factoidRepository.findBySelectorIgnoreCase(selector)
+    }
+
     /** Result of a save attempt */
     sealed interface SaveResult {
         data object Ok : SaveResult

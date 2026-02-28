@@ -436,12 +436,20 @@
       },
       "FactoidDetailResponse" : {
         "properties" : {
+          "accessCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
           "attributes" : {
             "items" : {
               "$ref" : "#/components/schemas/FactoidAttributeResponse"
             },
             "type" : "array"
           },
+          "lastAccessedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
           "locked" : {
             "type" : "boolean"
           },
@@ -456,11 +464,19 @@
             "type" : "string"
           }
         },
-        "required" : [ "attributes", "locked", "selector", "updatedAt" ],
+        "required" : [ "accessCount", "attributes", "locked", "selector", "updatedAt" ],
         "type" : "object"
       },
       "FactoidSummaryResponse" : {
         "properties" : {
+          "accessCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "lastAccessedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
           "locked" : {
             "type" : "boolean"
           },
@@ -475,7 +491,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "locked", "selector", "updatedAt" ],
+        "required" : [ "accessCount", "locked", "selector", "updatedAt" ],
         "type" : "object"
       },
       "FeaturesResponse" : {
