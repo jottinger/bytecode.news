@@ -55,6 +55,19 @@ class GetFactoidOperation(
                 }
             }
 
+            // Record access for read queries, not mutations or meta-queries
+            if (
+                payload.attribute !in
+                    setOf(
+                        FactoidAttributeType.FORGET,
+                        FactoidAttributeType.LOCK,
+                        FactoidAttributeType.UNLOCK,
+                        FactoidAttributeType.STATS,
+                    )
+            ) {
+                factoidService.recordAccess(selector)
+            }
+
             when (payload.attribute) {
                 FactoidAttributeType.FORGET -> handleForget(selector, message)
                 FactoidAttributeType.UNKNOWN -> handleSummary(selector, attributes, argument)
@@ -62,6 +75,7 @@ class GetFactoidOperation(
                 FactoidAttributeType.LITERAL -> handleLiteral(selector, attributes)
                 FactoidAttributeType.LOCK -> handleLock(selector, true, message)
                 FactoidAttributeType.UNLOCK -> handleLock(selector, false, message)
+                FactoidAttributeType.STATS -> handleStats(selector)
                 else -> handleSpecificAttribute(selector, payload.attribute, attributes, argument)
             }
         } catch (e: NotEnoughArgumentsException) {
@@ -135,6 +149,18 @@ class GetFactoidOperation(
             }
         }
         return OperationResult.Success(response)
+    }
+
+    /** Returns access statistics for a factoid */
+    private fun handleStats(selector: String): OperationOutcome {
+        val factoid = factoidService.findFactoid(selector)
+        return if (factoid != null && factoid.accessCount > 0) {
+            OperationResult.Success(
+                "$selector has been accessed ${factoid.accessCount} time${if (factoid.accessCount != 1L) "s" else ""}, last accessed at ${factoid.lastAccessedAt}."
+            )
+        } else {
+            OperationResult.Success("$selector has never been accessed.")
+        }
     }
 
     /** Returns the raw TEXT value with no rendering, interpolation, or selection resolution */

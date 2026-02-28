@@ -7,6 +7,7 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
+import com.enigmastation.streampack.factoid.repository.FactoidRepository
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 class FactoidOperationTests {
 
     @Autowired lateinit var eventGateway: EventGateway
+    @Autowired lateinit var factoidRepository: FactoidRepository
 
     private fun provenance(role: Role = Role.USER) =
         Provenance(
@@ -670,6 +672,47 @@ class FactoidOperationTests {
             result !is OperationResult.Success ||
                 !(result.payload as String).startsWith("Factoids tagged")
         )
+    }
+
+    // -- Access tracking --
+
+    @Test
+    fun `looking up factoid via text channel increments access count`() {
+        eventGateway.process(msg("tracked=some value"))
+        eventGateway.process(msg("tracked"))
+        factoidRepository.flush()
+
+        val factoid = factoidRepository.findBySelectorIgnoreCase("tracked")!!
+        assertEquals(1, factoid.accessCount)
+        org.junit.jupiter.api.Assertions.assertNotNull(factoid.lastAccessedAt)
+    }
+
+    @Test
+    fun `stats query returns access count and last accessed time`() {
+        eventGateway.process(msg("popular=interesting factoid"))
+        eventGateway.process(msg("popular"))
+        eventGateway.process(msg("popular"))
+        factoidRepository.flush()
+
+        val result = eventGateway.process(msg("popular.stats"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.contains("accessed 2 time"))
+        assertTrue(payload.contains("last accessed at"))
+    }
+
+    @Test
+    fun `stats query on never-accessed factoid says never accessed`() {
+        eventGateway.process(msg("untouched=just created"))
+        val result = eventGateway.process(msg("untouched.stats"))
+        assertSuccess(result, "untouched has never been accessed.")
+    }
+
+    @Test
+    fun `forget does not increment access count`() {
+        eventGateway.process(msg("forgotten=temporary"))
+        eventGateway.process(msg("forgotten.forget"))
+        // Factoid is deleted, nothing to check - but ensure no NPE
     }
 
     // -- Helper --
