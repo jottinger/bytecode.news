@@ -312,9 +312,55 @@ curl -s -o /dev/null -w "%{http_code}" https://bytecode.news/api/v3/api-docs   #
 
 Nevet supports "Sign in with Google" and "Sign in with GitHub" via OIDC / OAuth2.
 Both are optional and independent - configure one, both, or neither.
-When neither is configured, the app works with OTP-only authentication.
+When OIDC is not enabled, the app works with OTP-only authentication.
 
-### Google
+OIDC is gated behind the `oidc` Spring profile.
+Without the profile active, the OAuth2 client auto-configuration is not loaded and no OIDC endpoints are registered.
+The app starts and runs normally with OTP as the sole authentication method.
+
+### Activating the OIDC Profile
+
+There are several ways to activate the profile, depending on how you run the application.
+
+**From the command line** (local development or manual launch):
+
+```bash
+java -jar app/target/app-1.0.jar --spring.profiles.active=oidc
+```
+
+Multiple profiles can be comma-separated:
+
+```bash
+java -jar app/target/app-1.0.jar --spring.profiles.active=oidc,someotherprofile
+```
+
+**Via environment variable** (Docker, systemd, CI):
+
+```bash
+export SPRING_PROFILES_ACTIVE=oidc
+java -jar app/target/app-1.0.jar
+```
+
+**In the `.env` file**:
+
+```
+SPRING_PROFILES_ACTIVE=oidc
+```
+
+**In a systemd unit** (production):
+
+```ini
+[Service]
+Environment=SPRING_PROFILES_ACTIVE=oidc
+ExecStart=/opt/java/jdk-25/bin/java -jar app/target/app-1.0.jar
+```
+
+### Provider Setup
+
+When the `oidc` profile is active, the following environment variables are required.
+You can configure one provider or both.
+
+#### Google
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) and create a project (no billing required)
 2. Navigate to **APIs & Services > OAuth consent screen**, choose **External**, add scopes: `openid`, `email`, `profile`
@@ -324,14 +370,14 @@ When neither is configured, the app works with OTP-only authentication.
    - For local dev: `http://localhost:8080/login/oauth2/code/google`
 6. Copy the **Client ID** and **Client Secret**
 
-Configure:
+Add to your `.env`:
 
-```bash
-export GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
-export GOOGLE_CLIENT_SECRET="your-client-secret"
+```
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
 ```
 
-### GitHub
+#### GitHub
 
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers), click **OAuth Apps > New OAuth App**
 2. Homepage URL: `https://your-domain.com`
@@ -339,11 +385,11 @@ export GOOGLE_CLIENT_SECRET="your-client-secret"
    - For local dev: `http://localhost:8080/login/oauth2/code/github`
 4. Copy the **Client ID** and generate a **Client Secret**
 
-Configure:
+Add to your `.env`:
 
-```bash
-export GITHUB_CLIENT_ID="your-client-id"
-export GITHUB_CLIENT_SECRET="your-client-secret"
+```
+GITHUB_CLIENT_ID=your-client-id
+GITHUB_CLIENT_SECRET=your-client-secret
 ```
 
 ### Split-Domain Deployment
@@ -562,6 +608,7 @@ After=network.target postgresql.service
 Type=simple
 User=nevet
 WorkingDirectory=/opt/nevet
+# Add SPRING_PROFILES_ACTIVE=oidc to enable OIDC authentication (see OIDC Setup)
 ExecStart=/opt/java/jdk-25/bin/java -jar app/target/app-1.0.jar
 Restart=on-failure
 RestartSec=10
@@ -663,10 +710,10 @@ Rotate: `find /backups -name "nevet-*.dump" -mtime +30 -delete`.
 | `ANTHROPIC_API_KEY` | (empty) | Anthropic API key |
 | `OPENWEATHERMAP_API_KEY` | | OpenWeatherMap API key |
 | `KARMA_IMMUNE_SUBJECTS` | `nevet` | Comma-separated karma-immune names |
-| `GOOGLE_CLIENT_ID` | | Google OAuth2 client ID |
-| `GOOGLE_CLIENT_SECRET` | | Google OAuth2 client secret |
-| `GITHUB_CLIENT_ID` | | GitHub OAuth2 client ID |
-| `GITHUB_CLIENT_SECRET` | | GitHub OAuth2 client secret |
+| `GOOGLE_CLIENT_ID` | | Google OAuth2 client ID (requires `oidc` profile) |
+| `GOOGLE_CLIENT_SECRET` | | Google OAuth2 client secret (requires `oidc` profile) |
+| `GITHUB_CLIENT_ID` | | GitHub OAuth2 client ID (requires `oidc` profile) |
+| `GITHUB_CLIENT_SECRET` | | GitHub OAuth2 client secret (requires `oidc` profile) |
 | `RSS_POLL_INTERVAL` | `PT60M` | RSS polling interval (ISO-8601) |
 | `GITHUB_POLL_INTERVAL` | `PT60M` | GitHub polling interval (ISO-8601) |
 | `API_URL` | `http://localhost:8080` | Backend URL for frontend rewrites |
