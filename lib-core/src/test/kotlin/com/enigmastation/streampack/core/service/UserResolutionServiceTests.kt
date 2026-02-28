@@ -29,9 +29,9 @@ class UserResolutionServiceTests {
         val user =
             userRepository.saveAndFlush(
                 User(
-                    username = "dreamreal",
-                    email = "dreamreal@gmail.com",
-                    displayName = "Joe Ottinger",
+                    username = "testuser",
+                    email = "testuser@example.com",
+                    displayName = "Test User",
                 )
             )
         serviceBindingRepository.saveAndFlush(
@@ -39,7 +39,7 @@ class UserResolutionServiceTests {
                 user = user,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "~dreamreal@about/java/dreamreal",
+                externalIdentifier = "~testuser@example.com/testuser",
             )
         )
 
@@ -47,12 +47,12 @@ class UserResolutionServiceTests {
             userResolutionService.resolve(
                 Protocol.IRC,
                 "ircservice",
-                "~dreamreal@about/java/dreamreal",
+                "~testuser@example.com/testuser",
             )
 
         assertNotNull(principal)
-        assertEquals("dreamreal", principal!!.username)
-        assertEquals("Joe Ottinger", principal.displayName)
+        assertEquals("testuser", principal!!.username)
+        assertEquals("Test User", principal.displayName)
         assertEquals(Role.USER, principal.role)
         assertEquals(user.id, principal.id)
     }
@@ -129,9 +129,9 @@ class UserResolutionServiceTests {
         val user =
             userRepository.saveAndFlush(
                 User(
-                    username = "dreamreal",
-                    email = "dreamreal@gmail.com",
-                    displayName = "Joe Ottinger",
+                    username = "testuser",
+                    email = "testuser@example.com",
+                    displayName = "Test User",
                 )
             )
         serviceBindingRepository.saveAndFlush(
@@ -139,7 +139,7 @@ class UserResolutionServiceTests {
                 user = user,
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "~dreamreal@about/java/dreamreal",
+                externalIdentifier = "~testuser@example.com/testuser",
             )
         )
         serviceBindingRepository.saveAndFlush(
@@ -147,7 +147,7 @@ class UserResolutionServiceTests {
                 user = user,
                 protocol = Protocol.DISCORD,
                 serviceId = "jvm-community",
-                externalIdentifier = "dreamreal#1234",
+                externalIdentifier = "testuser#1234",
             )
         )
 
@@ -155,10 +155,10 @@ class UserResolutionServiceTests {
             userResolutionService.resolve(
                 Protocol.IRC,
                 "ircservice",
-                "~dreamreal@about/java/dreamreal",
+                "~testuser@example.com/testuser",
             )
         val fromDiscord =
-            userResolutionService.resolve(Protocol.DISCORD, "jvm-community", "dreamreal#1234")
+            userResolutionService.resolve(Protocol.DISCORD, "jvm-community", "testuser#1234")
 
         assertNotNull(fromIrc)
         assertNotNull(fromDiscord)
