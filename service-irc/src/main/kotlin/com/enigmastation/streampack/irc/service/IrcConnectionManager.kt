@@ -2,7 +2,10 @@
 package com.enigmastation.streampack.irc.service
 
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.model.Protocol
+import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
+import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.irc.config.IrcProperties
@@ -32,7 +35,16 @@ class IrcConnectionManager(
     private val ircProperties: IrcProperties,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
-) : InitializingBean, DisposableBean {
+) : InitializingBean, DisposableBean, ProtocolAdapter {
+    override val protocol: Protocol = Protocol.IRC
+    override val serviceName: String = "irc"
+
+    override fun wouldTriggerIngress(text: String): Boolean = false
+
+    override fun sendReply(provenance: Provenance, text: String) {
+        // Individual per-network IrcAdapters handle message delivery
+    }
+
     private val logger = LoggerFactory.getLogger(IrcConnectionManager::class.java)
     private val adapters = ConcurrentHashMap<String, IrcAdapter>()
 

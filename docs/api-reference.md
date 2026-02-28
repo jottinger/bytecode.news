@@ -1177,3 +1177,55 @@ Single factoid with all rendered attributes.
 **404** when no factoid exists for the selector.
 
 Only attributes with non-empty values that are marked `includeInSummary` are returned.
+
+---
+
+## Feature Discovery
+
+### `GET /features`
+
+Returns backend capabilities and build identity.
+Unauthenticated - open to all clients.
+Response is cacheable (`Cache-Control: public, max-age=3600`).
+
+Exposes only build identity and classpath-detected capabilities.
+No runtime environment details (usernames, channels, OIDC keys, OS info, paths, connection state).
+
+**Response:**
+
+```json
+{
+  "version": {
+    "name": "nevet",
+    "version": "1.0",
+    "commit": "abc1234",
+    "branch": "main",
+    "buildTime": "2026-02-28T14:23:45Z"
+  },
+  "authentication": {
+    "otp": true,
+    "oidc": {
+      "google": true,
+      "github": false
+    }
+  },
+  "operationGroups": ["21-matches", "ask", "calc", "cal", "factoid", "hangman"],
+  "adapters": ["blog", "console", "discord", "irc", "mail", "slack"],
+  "ai": false
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `version.name` | string | Application name |
+| `version.version` | string? | Build version, null in development |
+| `version.commit` | string? | Short git commit hash |
+| `version.branch` | string? | Git branch name |
+| `version.buildTime` | string? | ISO 8601 UTC build timestamp |
+| `authentication.otp` | boolean | True when OTP operations are on the classpath |
+| `authentication.oidc` | object? | Null when OIDC profile is inactive |
+| `authentication.oidc.google` | boolean | True when Google OIDC is configured |
+| `authentication.oidc.github` | boolean | True when GitHub OIDC is configured |
+| `operationGroups` | string[] | Sorted, deduplicated list of operation group names |
+| `adapters` | string[] | Sorted list of protocol adapter names |
+| `ai` | boolean | True when AI service is available |
