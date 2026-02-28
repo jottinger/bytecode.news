@@ -7,14 +7,17 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.core.service.ProtocolAdapter
+import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
 import com.enigmastation.streampack.irc.repository.IrcNetworkRepository
 import net.engio.mbassy.listener.Handler
 import org.kitteh.irc.client.library.Client
+import org.kitteh.irc.client.library.element.mode.ModeStatus
 import org.kitteh.irc.client.library.event.channel.ChannelCtcpEvent
 import org.kitteh.irc.client.library.event.channel.ChannelJoinEvent
 import org.kitteh.irc.client.library.event.channel.ChannelMessageEvent
+import org.kitteh.irc.client.library.event.channel.ChannelModeEvent
 import org.kitteh.irc.client.library.event.channel.ChannelPartEvent
 import org.kitteh.irc.client.library.event.channel.ChannelTopicEvent
 import org.kitteh.irc.client.library.event.channel.RequestedChannelJoinCompleteEvent
@@ -34,6 +37,7 @@ class IrcAdapter(
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,
+    private val stateService: ProvenanceStateService,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
     private val client: Client,
@@ -95,6 +99,36 @@ class IrcAdapter(
             if (options?.autojoin == true) {
                 logger.info("Auto-joining {} on {}", channel.name, networkName)
                 client.addChannel(channel.name)
+            }
+        }
+    }
+
+    /** Auto-deops the bot when it receives +o, unless allow-ops is enabled for the channel */
+    @Handler
+    fun onChannelMode(event: ChannelModeEvent) {
+        val opChanges = event.statusList.getByMode('o')
+        for (change in opChanges) {
+            if (
+                change.action == ModeStatus.Action.ADD &&
+                    change.parameter.orElse(null) == client.nick
+            ) {
+                val channelName = event.channel.name
+                val provenanceUri =
+                    Provenance(
+                            protocol = Protocol.IRC,
+                            serviceId = networkName,
+                            replyTo = channelName,
+                        )
+                        .encode()
+                val state = stateService.getState(provenanceUri, ALLOW_OPS_KEY)
+                if (state == null) {
+                    stateService.setState(provenanceUri, ALLOW_OPS_KEY, mapOf("enabled" to false))
+                }
+                val allowOps = state?.get("enabled") as? Boolean ?: false
+                if (!allowOps) {
+                    client.sendRawLine("MODE $channelName -o ${client.nick}")
+                    logger.info("Auto-deopping in {} on {}", channelName, networkName)
+                }
             }
         }
     }
@@ -269,6 +303,7 @@ class IrcAdapter(
     }
 
     companion object {
+        const val ALLOW_OPS_KEY = "irc-allow-ops"
         private const val MAX_IRC_MESSAGE_LENGTH = 400
         private const val TRUNCATION_SUFFIX = " [...more]"
 

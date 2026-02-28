@@ -6,6 +6,7 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.core.service.ProtocolAdapter
+import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.irc.config.IrcProperties
 import com.enigmastation.streampack.irc.entity.IrcNetwork
@@ -30,6 +31,7 @@ class IrcConnectionManager(
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,
+    private val provenanceStateService: ProvenanceStateService,
     private val ircProperties: IrcProperties,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
@@ -97,6 +99,7 @@ class IrcConnectionManager(
                 eventGateway = eventGateway,
                 userResolutionService = userResolutionService,
                 channelControlService = channelControlService,
+                stateService = provenanceStateService,
                 networkRepository = networkRepository,
                 channelRepository = channelRepository,
                 client = client,
