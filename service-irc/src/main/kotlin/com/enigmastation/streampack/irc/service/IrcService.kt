@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.irc.service
 
 import com.enigmastation.streampack.core.service.ChannelControlService
+import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.irc.entity.IrcChannel
 import com.enigmastation.streampack.irc.entity.IrcNetwork
 import com.enigmastation.streampack.irc.repository.IrcChannelRepository
@@ -20,6 +21,7 @@ class IrcService(
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
     private val channelControlService: ChannelControlService,
+    private val provenanceStateService: ProvenanceStateService,
     private val connectionManager: ObjectProvider<IrcConnectionManager>,
 ) {
     private val logger = LoggerFactory.getLogger(IrcService::class.java)
@@ -169,6 +171,15 @@ class IrcService(
                 ?: return channelNotFoundError(networkName, channelName)
         channelControlService.setFlag(uri, "logged", logged)
         return "Channel '$channelName' on '$networkName' logged set to $logged"
+    }
+
+    /** Configures whether the bot is allowed to hold ops in a channel */
+    fun setAllowOps(networkName: String, channelName: String, enabled: Boolean): String {
+        val uri =
+            resolveChannelUri(networkName, channelName)
+                ?: return channelNotFoundError(networkName, channelName)
+        provenanceStateService.setState(uri, IrcAdapter.ALLOW_OPS_KEY, mapOf("enabled" to enabled))
+        return "Channel '$channelName' on '$networkName' allow-ops set to $enabled"
     }
 
     /** Soft-deletes a network and its channels, disconnecting the runtime adapter if active */

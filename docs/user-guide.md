@@ -640,6 +640,7 @@ See [Deployment Guide](deployment.md#irc-adapter-setup) for initial setup.
 | `irc automute <network> <#channel> <true\|false>` | Start muted |
 | `irc visible <network> <#channel> <true\|false>` | Show in UI |
 | `irc logged <network> <#channel> <true\|false>` | Log messages to database |
+| `irc allow-ops <network> <#channel> <true\|false>` | Allow bot to hold ops (default: false, auto-deops) |
 | `irc mute <network> <#channel>` | Mute channel now (session only) |
 | `irc unmute <network> <#channel>` | Unmute channel now (session only) |
 
