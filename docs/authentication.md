@@ -55,7 +55,9 @@ OTP verification implies email verification, so no separate email verification s
 ## OIDC Flow
 
 OIDC uses Spring Security's OAuth2 Client with Google and GitHub as providers.
-See [Deployment Guide](deployment.md#oidc-setup) for configuration instructions.
+OIDC is activated by enabling the `oidc` Spring profile.
+Without the profile, the app runs OTP-only and no OAuth2 endpoints are registered.
+See [Deployment Guide](deployment.md#oidc-setup) for activation instructions and provider setup.
 
 ### How it works
 
@@ -72,11 +74,6 @@ See [Deployment Guide](deployment.md#oidc-setup) for configuration instructions.
 - **GitHub**: Returns email via the `email` attribute on the OAuth2 user profile
 
 Both are handled transparently by the success handler.
-
-### Conditional activation
-
-OIDC is only enabled when OAuth2 client registrations are configured.
-If `GOOGLE_CLIENT_ID` and `GITHUB_CLIENT_ID` are both empty, OIDC endpoints are not registered and the app runs OTP-only.
 
 ## JWT Tokens
 
