@@ -26,24 +26,24 @@ class UserRegistrationServiceTests {
     fun `register creates user with USER role and initial binding`() {
         val principal =
             userRegistrationService.register(
-                username = "dreamreal",
-                email = "dreamreal@gmail.com",
-                displayName = "Joe Ottinger",
+                username = "testuser",
+                email = "testuser@example.com",
+                displayName = "Test User",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "dreamreal",
+                externalIdentifier = "testuser",
                 metadata = mapOf("authMethod" to "otp"),
             )
 
-        assertEquals("dreamreal", principal.username)
-        assertEquals("Joe Ottinger", principal.displayName)
+        assertEquals("testuser", principal.username)
+        assertEquals("Test User", principal.displayName)
         assertEquals(Role.USER, principal.role)
 
-        val user = userRepository.findByUsername("dreamreal")
+        val user = userRepository.findByUsername("testuser")
         assertNotNull(user)
-        assertEquals("dreamreal@gmail.com", user!!.email)
+        assertEquals("testuser@example.com", user!!.email)
 
-        val binding = serviceBindingRepository.resolve(Protocol.HTTP, "blog-service", "dreamreal")
+        val binding = serviceBindingRepository.resolve(Protocol.HTTP, "blog-service", "testuser")
         assertNotNull(binding)
         assertEquals(user.id, binding!!.user.id)
         assertEquals("otp", binding.metadata["authMethod"])
@@ -55,12 +55,12 @@ class UserRegistrationServiceTests {
             userRegistrationService.registerGuest(
                 protocol = Protocol.IRC,
                 serviceId = "ircservice",
-                externalIdentifier = "dreamreal",
+                externalIdentifier = "testuser",
             )
 
         assertEquals(Role.GUEST, principal.role)
 
-        val binding = serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "dreamreal")
+        val binding = serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "testuser")
         assertNotNull(binding)
     }
 
@@ -81,22 +81,22 @@ class UserRegistrationServiceTests {
     fun `linkProtocol adds binding to existing user`() {
         val principal =
             userRegistrationService.register(
-                username = "dreamreal",
-                email = "dreamreal@gmail.com",
-                displayName = "Joe Ottinger",
+                username = "testuser",
+                email = "testuser@example.com",
+                displayName = "Test User",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "dreamreal",
+                externalIdentifier = "testuser",
             )
 
         userRegistrationService.linkProtocol(
             userId = principal.id,
             protocol = Protocol.IRC,
             serviceId = "ircservice",
-            externalIdentifier = "dreamreal",
+            externalIdentifier = "testuser",
         )
 
-        val binding = serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "dreamreal")
+        val binding = serviceBindingRepository.resolve(Protocol.IRC, "ircservice", "testuser")
         assertNotNull(binding)
         assertEquals(principal.id, binding!!.user.id)
     }
@@ -105,24 +105,24 @@ class UserRegistrationServiceTests {
     fun `linkProtocol supports metadata`() {
         val principal =
             userRegistrationService.register(
-                username = "dreamreal",
-                email = "dreamreal@gmail.com",
-                displayName = "Joe Ottinger",
+                username = "testuser",
+                email = "testuser@example.com",
+                displayName = "Test User",
                 protocol = Protocol.HTTP,
                 serviceId = "blog-service",
-                externalIdentifier = "dreamreal",
+                externalIdentifier = "testuser",
             )
 
         userRegistrationService.linkProtocol(
             userId = principal.id,
             protocol = Protocol.DISCORD,
             serviceId = "jvm-community",
-            externalIdentifier = "dreamreal#1234",
+            externalIdentifier = "testuser#1234",
             metadata = mapOf("oauthToken" to "tok_abc"),
         )
 
         val binding =
-            serviceBindingRepository.resolve(Protocol.DISCORD, "jvm-community", "dreamreal#1234")
+            serviceBindingRepository.resolve(Protocol.DISCORD, "jvm-community", "testuser#1234")
         assertNotNull(binding)
         assertEquals("tok_abc", binding!!.metadata["oauthToken"])
     }
@@ -142,17 +142,17 @@ class UserRegistrationServiceTests {
     @Test
     fun `register with duplicate username throws`() {
         userRegistrationService.register(
-            username = "dreamreal",
-            email = "dreamreal@gmail.com",
-            displayName = "Joe Ottinger",
+            username = "testuser",
+            email = "testuser@example.com",
+            displayName = "Test User",
             protocol = Protocol.HTTP,
             serviceId = "blog-service",
-            externalIdentifier = "dreamreal",
+            externalIdentifier = "testuser",
         )
 
         assertThrows(Exception::class.java) {
             userRegistrationService.register(
-                username = "dreamreal",
+                username = "testuser",
                 email = "other@gmail.com",
                 displayName = "Other Person",
                 protocol = Protocol.DISCORD,
@@ -216,14 +216,14 @@ class UserRegistrationServiceTests {
         userRegistrationService.registerGuest(
             protocol = Protocol.IRC,
             serviceId = "ircservice",
-            externalIdentifier = "dreamreal",
+            externalIdentifier = "testuser",
         )
 
         assertThrows(Exception::class.java) {
             userRegistrationService.registerGuest(
                 protocol = Protocol.DISCORD,
                 serviceId = "jvm-community",
-                externalIdentifier = "dreamreal",
+                externalIdentifier = "testuser",
             )
         }
     }

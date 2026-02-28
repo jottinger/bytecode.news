@@ -261,7 +261,7 @@ Provenance encodes to and decodes from URIs for storage and cross-protocol routi
 - `discord://jvm-community/%23java-help` - Discord guild and channel
 - `slack://jvm-news/%23general` - Slack workspace and channel
 - `console:///local` - console adapter
-- `mailto:///dreamreal@gmail.com` - email, no service intermediary (triple-slash)
+- `mailto:///user@example.com` - email, no service intermediary (triple-slash)
 
 The subscription system uses these URIs as destination addresses.
 An RSS subscription stores `irc://libera/%23java` as its destination, and the polling service decodes it back to a Provenance for egress delivery.

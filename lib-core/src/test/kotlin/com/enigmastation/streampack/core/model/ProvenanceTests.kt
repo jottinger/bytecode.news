@@ -10,8 +10,8 @@ class ProvenanceTests {
 
     @Test
     fun `encode mailto with no serviceId`() {
-        val provenance = Provenance(protocol = Protocol.MAILTO, replyTo = "dreamreal@gmail.com")
-        assertEquals("mailto:///dreamreal@gmail.com", provenance.encode())
+        val provenance = Provenance(protocol = Protocol.MAILTO, replyTo = "user@example.com")
+        assertEquals("mailto:///user@example.com", provenance.encode())
     }
 
     @Test
@@ -34,10 +34,10 @@ class ProvenanceTests {
 
     @Test
     fun `decode mailto URI`() {
-        val provenance = Provenance.decode("mailto:///dreamreal@gmail.com")
+        val provenance = Provenance.decode("mailto:///user@example.com")
         assertEquals(Protocol.MAILTO, provenance.protocol)
         assertNull(provenance.serviceId)
-        assertEquals("dreamreal@gmail.com", provenance.replyTo)
+        assertEquals("user@example.com", provenance.replyTo)
     }
 
     @Test
@@ -75,7 +75,7 @@ class ProvenanceTests {
 
     @Test
     fun `round trip mailto decode then encode preserves URI`() {
-        val uri = "mailto:///dreamreal@gmail.com"
+        val uri = "mailto:///user@example.com"
         val provenance = Provenance.decode(uri)
         assertEquals(uri, provenance.encode())
     }
@@ -100,8 +100,8 @@ class ProvenanceTests {
         val principal =
             UserPrincipal(
                 id = UUID.randomUUID(),
-                username = "dreamreal",
-                displayName = "Joe Ottinger",
+                username = "testuser",
+                displayName = "Test User",
                 role = Role.USER,
             )
         val provenance =
@@ -112,7 +112,7 @@ class ProvenanceTests {
                 user = principal,
             )
         assertEquals(principal, provenance.user)
-        assertEquals("dreamreal", provenance.user?.username)
+        assertEquals("testuser", provenance.user?.username)
         assertEquals(Role.USER, provenance.user?.role)
     }
 }

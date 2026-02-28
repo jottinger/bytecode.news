@@ -25,18 +25,18 @@ class UserRepositoryTests {
     fun `save and retrieve user`() {
         val user =
             User(
-                username = "dreamreal",
-                email = "dreamreal@gmail.com",
-                displayName = "Joe Ottinger",
+                username = "testuser",
+                email = "testuser@example.com",
+                displayName = "Test User",
                 role = Role.USER,
             )
         val saved = userRepository.save(user)
         val found = userRepository.findById(saved.id).orElse(null)
 
         assertNotNull(found)
-        assertEquals("dreamreal", found.username)
-        assertEquals("dreamreal@gmail.com", found.email)
-        assertEquals("Joe Ottinger", found.displayName)
+        assertEquals("testuser", found.username)
+        assertEquals("testuser@example.com", found.email)
+        assertEquals("Test User", found.displayName)
         assertEquals(Role.USER, found.role)
     }
 

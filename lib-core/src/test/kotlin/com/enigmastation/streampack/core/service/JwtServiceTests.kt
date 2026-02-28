@@ -27,8 +27,8 @@ class JwtServiceTests {
     private val testPrincipal =
         UserPrincipal(
             id = UUID.fromString("01234567-89ab-7def-8123-456789abcdef"),
-            username = "dreamreal",
-            displayName = "Joe Ottinger",
+            username = "testuser",
+            displayName = "Test User",
             role = Role.USER,
         )
 
