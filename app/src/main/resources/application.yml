@@ -23,6 +23,15 @@ spring:
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:25}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_AUTH:false}
+          starttls:
+            enabled: ${MAIL_STARTTLS:false}
+            required: ${MAIL_STARTTLS:false}
   ai: {}
   application:
     name: nevet

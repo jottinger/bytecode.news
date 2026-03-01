@@ -619,16 +619,34 @@ See [User Guide](user-guide.md#slack-super-admin) for the full set of admin comm
 
 ## Mail Configuration
 
-### Transactional Email (OTP, password reset)
+### Transactional Email (OTP, verification)
 
-Configure SMTP for account verification and OTP delivery:
+Configure SMTP for OTP login codes and account verification emails.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `MAIL_HOST` | `localhost` | SMTP server host |
 | `MAIL_PORT` | `25` | SMTP server port |
+| `MAIL_USERNAME` | (empty) | SMTP authentication username |
+| `MAIL_PASSWORD` | (empty) | SMTP authentication password |
+| `MAIL_AUTH` | `false` | Enable SMTP authentication |
+| `MAIL_STARTTLS` | `false` | Enable STARTTLS encryption |
 
-The default (`localhost:25`) assumes a local MTA.
+**Local development** - the defaults (`localhost:25`, no auth) work with a local MTA like Mailpit or Postfix.
+
+**Production with an authenticated MTA** - set the auth variables to connect to a relay that requires TLS and credentials (SES, Postmark, standard SMTP relay):
+
+```
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=apikey
+MAIL_PASSWORD=secret
+MAIL_AUTH=true
+MAIL_STARTTLS=true
+```
+
+Port 587 with STARTTLS is the standard for authenticated SMTP submission.
+If your provider uses implicit TLS on port 465, you will need to override `spring.mail.properties.mail.smtp.ssl.enable=true` instead of the STARTTLS properties.
 
 ### Mail Egress Service
 
@@ -804,6 +822,10 @@ Rotate: `find /backups -name "nevet-*.dump" -mtime +30 -delete`.
 | `FRONTEND_URL` | (same as BASE_URL) | Frontend URL for OIDC redirect |
 | `MAIL_HOST` | `localhost` | SMTP server host |
 | `MAIL_PORT` | `25` | SMTP server port |
+| `MAIL_USERNAME` | (empty) | SMTP authentication username |
+| `MAIL_PASSWORD` | (empty) | SMTP authentication password |
+| `MAIL_AUTH` | `false` | Enable SMTP authentication |
+| `MAIL_STARTTLS` | `false` | Enable STARTTLS encryption |
 | `MAIL_ENABLED` | `false` | Enable mail egress subscriber |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3003` | Comma-separated allowed origins |
 | `CONSOLE_ENABLED` | `false` | Enable stdin console adapter |
