@@ -67,6 +67,23 @@ class BeOperationTests {
     }
 
     @Test
+    fun `be is case-insensitive on username`() {
+        val prov = provenance()
+        val uri = prov.encode()
+        repeat(20) { i ->
+            messageLogService.logInbound(uri, "MixedCase", "the quick brown fox number $i jumps")
+        }
+        repeat(20) { i ->
+            messageLogService.logInbound(uri, "MixedCase", "over the lazy dog number $i today")
+        }
+
+        val result = eventGateway.process(beMessage("be mixedcase"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.startsWith("* channeling mixedcase:"))
+    }
+
+    @Test
     fun `be with blank username is not handled`() {
         val result = eventGateway.process(beMessage("be "))
         assertInstanceOf(OperationResult.NotHandled::class.java, result)

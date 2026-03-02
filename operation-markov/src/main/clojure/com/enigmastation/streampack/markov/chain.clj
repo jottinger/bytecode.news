@@ -9,11 +9,18 @@
   [text]
   (-> text str/lower-case str/trim (str/split #"\s+") (->> (remove str/blank?))))
 
-(defn- build-chain
-  "Builds a trigram transition map from a sequence of tokenized words.
-   Keys are [w1 w2] pairs, values are vectors of possible next words."
+(defn- trigrams-from
+  "Extracts trigram transitions from a single sequence of words."
   [words]
-  (->> (partition 3 1 words)
+  (partition 3 1 words))
+
+(defn- build-chain
+  "Builds a trigram transition map from a sequence of messages.
+   Each message is tokenized independently so transitions never cross message boundaries.
+   Keys are [w1 w2] pairs, values are vectors of possible next words."
+  [token-seqs]
+  (->> token-seqs
+       (mapcat trigrams-from)
        (reduce (fn [chain [w1 w2 w3]]
                  (update chain [w1 w2] (fnil conj []) w3))
                {})))
@@ -35,9 +42,10 @@
 
 (defn generate
   "Generates a sentence from a list of message strings.
+   Each message is tokenized independently to preserve message boundaries.
    Returns nil if the corpus is too small to build a chain."
   [messages max-words]
-  (let [words (mapcat tokenize messages)
-        chain (build-chain words)]
+  (let [token-seqs (map tokenize messages)
+        chain (build-chain token-seqs)]
     (when (seq chain)
       (walk-chain chain max-words))))

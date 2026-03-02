@@ -24,11 +24,11 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
         pageable: Pageable,
     ): Page<MessageLog>
 
-    /** Returns recent messages by a sender on a given protocol */
+    /** Returns recent messages by a sender on a given protocol, case-insensitive */
     @Query(
         """
         SELECT m FROM MessageLog m
-        WHERE m.sender = :sender
+        WHERE LOWER(m.sender) = LOWER(:sender)
           AND m.direction = :direction
           AND m.provenanceUri LIKE :protocolPrefix
         ORDER BY m.timestamp DESC
