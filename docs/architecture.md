@@ -416,9 +416,10 @@ Streampack modules fall into three categories:
 They have no operations or protocol adapters.
 Everything depends on `lib-core`.
 
-**Operation modules** (`operation-calc`, `operation-karma`, `operation-factoid`, `operation-specs`, `operation-dictionary`, `operation-weather`, `operation-poetry`, `operation-ask`, `operation-sentiment`, `operation-hangman`, `operation-21`, `operation-cal`, `operation-tell`) contain operations and their supporting services.
+**Operation modules** (`operation-calc`, `operation-karma`, `operation-factoid`, `operation-specs`, `operation-dictionary`, `operation-weather`, `operation-poetry`, `operation-ask`, `operation-sentiment`, `operation-hangman`, `operation-21`, `operation-cal`, `operation-tell`, `operation-markov`) contain operations and their supporting services.
 They depend on `lib-core` and nothing else.
 They are protocol-agnostic - an operation module has no idea IRC exists.
+`operation-markov` is the first polyglot module: a Kotlin shim delegates chain building and generation to a Clojure namespace, demonstrating JVM language interop without framework coupling.
 
 **Service modules** (`service-irc`, `service-slack`, `service-console`, `service-blog`, `service-factoid`, `service-rss`, `service-github`, `service-bridge`) contain protocol adapters, egress subscribers, and protocol-specific logic.
 They may also contain operations when the operation is tightly coupled to the service (like RSS feed management commands or IRC admin commands).

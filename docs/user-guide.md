@@ -489,6 +489,38 @@ hangman unblock <word>    allow a previously blocked word
 
 ---
 
+## Markov Impersonation
+
+### Be
+
+Generates a sentence in the style of a given user by building a Markov chain from their message history on the current protocol.
+
+The output is obviously machine-generated nonsense - the humor comes from the uncanny valley between recognizable speech patterns and gibberish.
+
+**Command** (addressed):
+
+```
+be <username>       generate a sentence in the style of that user
+```
+
+**Examples:**
+
+```
+!be jsmith
+* channeling jsmith: the problem with gradle is that turtles never actually compile on tuesdays
+
+!be ghostuser
+No message history found for ghostuser.
+```
+
+The corpus is protocol-scoped: on IRC, only IRC messages are used; on Discord, only Discord messages.
+The chain is built on the fly from the user's most recent messages and discarded after generation.
+
+**Technical note:** This is the first polyglot operation in Nevet.
+The Kotlin operation handles Spring integration and message log access; the actual Markov chain logic is implemented in Clojure, called through a thin Kotlin shim.
+
+---
+
 ## Content Feeds
 
 ### RSS Feeds
@@ -744,6 +776,7 @@ When `for <pattern>` is omitted, the current channel's provenance is used.
 | `21 matches/take/concede` | addressed | all | 21 Matches game |
 | `hangman` / `hangman <letter>` | addressed | all | Hangman game |
 | `hangman block/unblock` | addressed | admin | Hangman word blocklist |
+| `be <username>` | addressed | all | Markov chain impersonation |
 | `feed add/remove/list` | addressed | admin | Manage RSS feeds |
 | `feed subscribe/unsubscribe` | addressed | admin | Manage feed subscriptions |
 | `github add/remove/list` | addressed | admin | Manage GitHub repos |
