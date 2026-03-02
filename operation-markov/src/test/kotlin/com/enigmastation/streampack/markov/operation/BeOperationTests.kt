@@ -6,7 +6,6 @@ import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.MessageLogService
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
