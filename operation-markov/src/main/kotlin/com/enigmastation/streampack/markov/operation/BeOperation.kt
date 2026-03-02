@@ -8,7 +8,6 @@ import com.enigmastation.streampack.core.service.MessageLogService
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.markov.model.MarkovRequest
 import com.enigmastation.streampack.markov.service.MarkovChainService
-import org.slf4j.LoggerFactory
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
@@ -32,8 +31,9 @@ class BeOperation(
     }
 
     override fun handle(payload: MarkovRequest, message: Message<*>): OperationOutcome {
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-            ?: return OperationResult.Error("No provenance available")
+        val provenance =
+            message.headers[Provenance.HEADER] as? Provenance
+                ?: return OperationResult.Error("No provenance available")
 
         val protocolPrefix = "${provenance.protocol.name.lowercase()}://"
 
@@ -43,16 +43,12 @@ class BeOperation(
                 .map { it.content }
 
         if (messages.isEmpty()) {
-            return OperationResult.Success(
-                "No message history found for ${payload.username}."
-            )
+            return OperationResult.Success("No message history found for ${payload.username}.")
         }
 
         val generated = markovChainService.generate(messages)
         if (generated == null) {
-            return OperationResult.Success(
-                "Not enough data to channel ${payload.username}."
-            )
+            return OperationResult.Success("Not enough data to channel ${payload.username}.")
         }
 
         logger.debug(
@@ -60,9 +56,7 @@ class BeOperation(
             payload.username,
             messages.size,
         )
-        return OperationResult.Success(
-            "* channeling ${payload.username}: $generated"
-        )
+        return OperationResult.Success("* channeling ${payload.username}: $generated")
     }
 
     companion object {
