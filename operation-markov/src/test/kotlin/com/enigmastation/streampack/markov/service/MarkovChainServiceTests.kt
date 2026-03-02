@@ -24,6 +24,11 @@ class MarkovChainServiceTests {
     }
 
     @Test
+    fun `two-word corpus returns null`() {
+        assertNull(markovChainService.generate(listOf("hello world")))
+    }
+
+    @Test
     fun `corpus with enough data generates output`() {
         val messages =
             listOf(
