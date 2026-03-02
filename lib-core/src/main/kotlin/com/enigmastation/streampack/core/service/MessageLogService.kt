@@ -41,6 +41,22 @@ class MessageLogService(private val repository: MessageLogRepository) {
             .content
     }
 
+    /** Returns recent inbound messages from a sender on a given protocol */
+    fun findRecentMessagesBySender(
+        sender: String,
+        protocolPrefix: String,
+        limit: Int,
+    ): List<MessageLog> {
+        return repository
+            .findRecentBySenderOnProtocol(
+                sender,
+                MessageDirection.INBOUND,
+                "$protocolPrefix%",
+                PageRequest.of(0, limit),
+            )
+            .content
+    }
+
     private fun log(
         provenanceUri: String,
         direction: MessageDirection,

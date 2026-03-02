@@ -2,11 +2,13 @@
 package com.enigmastation.streampack.core.repository
 
 import com.enigmastation.streampack.core.entity.MessageLog
+import com.enigmastation.streampack.core.model.MessageDirection
 import java.time.Instant
 import java.util.UUID
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 
 interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
     fun findByProvenanceUriOrderByTimestampDesc(
@@ -19,6 +21,23 @@ interface MessageLogRepository : JpaRepository<MessageLog, UUID> {
         provenanceUri: String,
         from: Instant,
         to: Instant,
+        pageable: Pageable,
+    ): Page<MessageLog>
+
+    /** Returns recent messages by a sender on a given protocol */
+    @Query(
+        """
+        SELECT m FROM MessageLog m
+        WHERE m.sender = :sender
+          AND m.direction = :direction
+          AND m.provenanceUri LIKE :protocolPrefix
+        ORDER BY m.timestamp DESC
+        """
+    )
+    fun findRecentBySenderOnProtocol(
+        sender: String,
+        direction: MessageDirection,
+        protocolPrefix: String,
         pageable: Pageable,
     ): Page<MessageLog>
 }
