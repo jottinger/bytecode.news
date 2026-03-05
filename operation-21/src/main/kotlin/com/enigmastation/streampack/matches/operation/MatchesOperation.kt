@@ -100,13 +100,14 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         val botTake = 4 - playerTake
         val afterBot = afterPlayer - botTake
 
-        var reaction = REACTIONS.random()
-        reaction =
-            if (reaction.startsWith("--DERIVED--")) {
-                val otherChoice = listOf(1, 2, 3).filter({ it != playerTake }).random()
-                "I see $playerName picked $playerTake. I'd expected $playerName to pick $otherChoice."
-            } else {
-                reaction
+        val reaction =
+            REACTIONS.random().let { picked ->
+                if (picked.startsWith("--DERIVED--")) {
+                    val otherChoice = listOf(1, 2, 3).filter { it != playerTake }.random()
+                    DERIVED_REACTIONS.random()(playerName, playerTake, otherChoice)
+                } else {
+                    picked
+                }
             }
         val consideration = CONSIDERATIONS.random()
 
@@ -140,7 +141,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             listOf(
                 "Excellent choice!",
                 "Interesting move.",
-                "interesting.",
+                "Interesting.",
                 "A bold strategy, Cotton!",
                 "Hmm, curious.",
                 "A fine selection.",
@@ -162,6 +163,17 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
                 "Still using the Fischbacher strategy?",
                 "We might as well be playing rock, paper, scissors!",
                 "--DERIVED--",
+            )
+
+        val DERIVED_REACTIONS: List<(String, Int, Int) -> String> =
+            listOf(
+                { name, took, other ->
+                    "I see $name picked $took. I'd expected $name to pick $other."
+                },
+                { name, took, other ->
+                    "Hah, I thought $name would take $took. Therefore, I take $other."
+                },
+                { _, took, other -> "$took, really? Child's play. I choose $other." },
             )
 
         val CONSIDERATIONS =
