@@ -104,7 +104,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             REACTIONS.random().let { picked ->
                 if (picked.startsWith("--DERIVED--")) {
                     val otherChoice = listOf(1, 2, 3).filter { it != playerTake }.random()
-                    DERIVED_REACTIONS.random()(playerName, playerTake, otherChoice, 2 - playerTake)
+                    DERIVED_REACTIONS.random()(playerName, playerTake, otherChoice, 4 - playerTake)
                 } else {
                     picked
                 }
