@@ -100,7 +100,7 @@ class IdeasBrowseOperation(
         return deliverIdeaList(filtered, "Ideas matching \"$term\" (${filtered.size}):", message)
     }
 
-    /** Sends each idea as a separate DM via egress, returns the header with DM provenance */
+    /** Sends header then each idea as separate DMs via egress */
     private fun deliverIdeaList(
         ideas: List<Post>,
         header: String,
@@ -111,13 +111,17 @@ class IdeasBrowseOperation(
                 ?: return OperationResult.Error("No provenance available.")
         val dmProvenance = buildDmProvenance(sourceProvenance, message)
 
+        sendToEgress(header, dmProvenance)
         for ((index, post) in ideas.withIndex()) {
             val authorName = extractSubmitter(post)
             val line = "#${index + 1} \"${post.title}\" by $authorName"
             sendToEgress(line, dmProvenance)
         }
 
-        return OperationResult.Success(header, provenance = dmProvenance)
+        return OperationResult.Success(
+            "Use '{{ref:ideas remove #N}}' to remove an idea.",
+            provenance = dmProvenance,
+        )
     }
 
     /** Builds a provenance targeting the requesting user's DM */

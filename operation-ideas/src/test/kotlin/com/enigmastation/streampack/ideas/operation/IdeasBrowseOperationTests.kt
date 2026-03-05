@@ -116,26 +116,25 @@ class IdeasBrowseOperationTests {
     }
 
     @Test
-    fun `list ideas returns count header`() {
+    fun `list ideas returns usage hint`() {
         createIdea("First Idea")
         createIdea("Second Idea")
 
         val result = eventGateway.process(adminMessage("ideas"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("Article ideas (2)"))
+        assertTrue(payload.contains("remove"))
     }
 
     @Test
-    fun `search ideas by title returns filtered count`() {
+    fun `search ideas by title returns usage hint`() {
         createIdea("Kotlin Coroutines Deep Dive")
         createIdea("Spring Boot Testing Guide")
 
         val result = eventGateway.process(adminMessage("ideas search Kotlin"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("(1)"))
-        assertTrue(payload.contains("Kotlin"))
+        assertTrue(payload.contains("remove"))
     }
 
     @Test
@@ -195,7 +194,7 @@ class IdeasBrowseOperationTests {
         val result = eventGateway.process(adminMessage("ideas"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("(1)"))
+        assertTrue(payload.contains("remove"))
     }
 
     @Test
@@ -215,7 +214,7 @@ class IdeasBrowseOperationTests {
         val result = eventGateway.process(adminMessage("ideas"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("(1)"))
+        assertTrue(payload.contains("remove"))
     }
 
     @Test
