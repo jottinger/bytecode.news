@@ -7,13 +7,12 @@ import javax.swing.table.AbstractTableModel
 
 class PriceTableModel : AbstractTableModel() {
     private var state: UniverseState? = null
-    private var previousPrices: Map<String, Map<Commodity, Double>> = emptyMap()
+    private var averagePrices: Map<Commodity, Double> = emptyMap()
     private val commodities = Commodity.entries.toList()
 
     fun updateState(newState: UniverseState) {
-        // Capture previous prices before updating
-        state?.let { prev -> previousPrices = prev.planets.associate { it.name to it.prices } }
         state = newState
+        averagePrices = computeAveragePrices(newState)
         fireTableDataChanged()
     }
 
@@ -32,14 +31,26 @@ class PriceTableModel : AbstractTableModel() {
         return String.format("%.1f", price)
     }
 
-    /** Returns price change direction: positive if price rose, negative if fell, 0 if unchanged */
-    fun priceChange(row: Int, col: Int): Double {
+    /**
+     * Returns fractional deviation from universe average price. Negative means cheaper than average
+     * (good buy), positive means more expensive (good sell target).
+     */
+    fun priceDeviation(row: Int, col: Int): Double {
         if (col == 0) return 0.0
         val planet = state?.planets?.get(row) ?: return 0.0
         val commodity = commodities[col - 1]
-        val currentPrice = planet.prices[commodity] ?: 0.0
-        val previousPrice = previousPrices[planet.name]?.get(commodity) ?: currentPrice
-        return currentPrice - previousPrice
+        val localPrice = planet.prices[commodity] ?: 0.0
+        val avgPrice = averagePrices[commodity] ?: return 0.0
+        if (avgPrice <= 0.0) return 0.0
+        return (localPrice - avgPrice) / avgPrice
+    }
+
+    private fun computeAveragePrices(state: UniverseState): Map<Commodity, Double> {
+        val planetCount = state.planets.size.toDouble()
+        if (planetCount == 0.0) return emptyMap()
+        return Commodity.entries.associateWith { commodity ->
+            state.planets.sumOf { it.prices[commodity] ?: 0.0 } / planetCount
+        }
     }
 
     override fun getColumnClass(columnIndex: Int): Class<*> = String::class.java

@@ -3,14 +3,13 @@ package com.enigmastation.streampack.startrader.engine
 
 import com.enigmastation.streampack.startrader.config.ConfigLoader
 import com.enigmastation.streampack.startrader.model.Commodity
-import com.fasterxml.jackson.databind.ObjectMapper
 import kotlin.math.sqrt
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class UniverseSeederTests {
-    private val config = ConfigLoader(ObjectMapper()).load()
+    private val config = ConfigLoader().load()
     private val seeder = UniverseSeeder()
 
     @Test

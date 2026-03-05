@@ -34,7 +34,7 @@ class PriceEngine {
         const val REFERENCE_SUPPLY = 50.0
 
         /** How much the exchange (market) price influences local price vs pure local supply */
-        const val EXCHANGE_INFLUENCE = 0.6
+        const val EXCHANGE_INFLUENCE = 0.2
     }
 
     /**

@@ -7,6 +7,7 @@ import com.enigmastation.streampack.startrader.model.Planet
 import com.enigmastation.streampack.startrader.model.UniverseState
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -63,9 +64,9 @@ class ProductionEngine {
     }
 
     /**
-     * Calculate how much production is constrained by input availability. Returns a factor between
-     * 0.0 (no inputs available) and 1.0 (all inputs fully available). If a commodity has no inputs,
-     * production is unconstrained.
+     * Calculate how much production is constrained by input availability using a geometric mean.
+     * Returns a factor between 0.0 and 1.0. Every scarce input drags production down proportionally
+     * rather than only the single worst bottleneck mattering.
      */
     private fun calculateConstraintFactor(
         inputs: Map<Commodity, Double>,
@@ -73,14 +74,17 @@ class ProductionEngine {
     ): Double {
         if (inputs.isEmpty()) return 1.0
 
-        var minFactor = 1.0
+        var product = 1.0
+        var count = 0
         for ((input, requiredRate) in inputs) {
             if (requiredRate <= 0.0) continue
             val available = supply[input] ?: 0.0
             val factor = min(1.0, available / requiredRate)
-            minFactor = min(minFactor, factor)
+            product *= factor
+            count++
         }
-        return minFactor
+        if (count == 0) return 1.0
+        return product.pow(1.0 / count)
     }
 
     private fun consumePlanet(planet: Planet, config: SimulationConfig): Planet {

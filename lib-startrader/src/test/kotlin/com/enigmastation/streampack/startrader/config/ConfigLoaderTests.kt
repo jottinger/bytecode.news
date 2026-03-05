@@ -2,14 +2,13 @@
 package com.enigmastation.streampack.startrader.config
 
 import com.enigmastation.streampack.startrader.model.Commodity
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ConfigLoaderTests {
-    private val loader = ConfigLoader(ObjectMapper())
+    private val loader = ConfigLoader()
 
     @Test
     fun `loads all 12 commodity base prices`() {
