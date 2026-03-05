@@ -48,6 +48,7 @@
         <module>lib-slack</module>
         <module>lib-polling</module>
         <module>lib-ai</module>
+        <module>lib-startrader</module>
         <module>operation-calc</module>
         <module>operation-cal</module>
         <module>operation-karma</module>
