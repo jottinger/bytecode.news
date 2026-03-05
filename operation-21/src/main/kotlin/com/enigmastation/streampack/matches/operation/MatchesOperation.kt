@@ -104,7 +104,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             REACTIONS.random().let { picked ->
                 if (picked.startsWith("--DERIVED--")) {
                     val otherChoice = listOf(1, 2, 3).filter { it != playerTake }.random()
-                    DERIVED_REACTIONS.random()(playerName, playerTake, otherChoice)
+                    DERIVED_REACTIONS.random()(playerName, playerTake, otherChoice, 2 - playerTake)
                 } else {
                     picked
                 }
@@ -165,15 +165,19 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
                 "--DERIVED--",
             )
 
-        val DERIVED_REACTIONS: List<(String, Int, Int) -> String> =
+        val DERIVED_REACTIONS: List<(String, Int, Int, Int) -> String> =
             listOf(
-                { name, took, other ->
-                    "I see $name picked $took. I'd expected $name to pick $other."
+                { name, took, other, _ -> "I see $name picked $took. I'd expected $other." },
+                { name, took, _, move ->
+                    "Hah, I thought $name would take $took. Therefore, I take $move${
+                        if (move == took) {
+                            ", too"
+                        } else ""
+                    }."
                 },
-                { name, took, other ->
-                    "Hah, I thought $name would take $took. Therefore, I take $other."
+                { _, took, _, move ->
+                    "$took, really? Child's play. I choose $move${if (move==took) {", too"} else ""}."
                 },
-                { _, took, other -> "$took, really? Child's play. I choose $other." },
             )
 
         val CONSIDERATIONS =
