@@ -4,6 +4,7 @@ package com.enigmastation.streampack.startrader.engine
 import com.enigmastation.streampack.startrader.config.SimulationConfig
 import com.enigmastation.streampack.startrader.model.ActiveEvent
 import com.enigmastation.streampack.startrader.model.Commodity
+import com.enigmastation.streampack.startrader.model.EconomicEvent
 import com.enigmastation.streampack.startrader.model.UniverseState
 import java.util.Random
 import org.slf4j.LoggerFactory
@@ -32,7 +33,7 @@ class EventEngine(private val random: Random = Random()) {
         return updatedState
     }
 
-    /** Apply active event modifiers to consumption on affected planets */
+    /** Apply active event modifiers to supply on affected planets */
     private fun applyActiveEvents(state: UniverseState, config: SimulationConfig): UniverseState {
         if (state.activeEvents.isEmpty()) return state
 
@@ -48,19 +49,24 @@ class EventEngine(private val random: Random = Random()) {
             val supply = planet.supply.toMutableMap()
             val currentSupply = supply[commodity] ?: 0.0
 
-            // Event increases consumption of the affected commodity
+            // Demand shock: extra consumption drains supply
             val baseConsumptionRate = config.populationConsumptionRates[commodity] ?: 0.0
             val extraConsumption =
                 planet.population * baseConsumptionRate * (event.event.consumptionMultiplier - 1.0)
 
-            supply[commodity] = maxOf(0.0, currentSupply - extraConsumption)
+            // Supply boost: extra production adds supply
+            val baseProductionRate = planet.production[commodity] ?: 0.0
+            val extraProduction = baseProductionRate * (event.event.productionMultiplier - 1.0)
+
+            supply[commodity] = maxOf(0.0, currentSupply - extraConsumption + extraProduction)
             planets[planetIndex] = planet.copy(supply = supply)
 
             logger.debug(
-                "Event {} at {}: extra consumption of {:.2f} {} ({} ticks remaining)",
+                "Event {} at {}: consumption delta {:.2f}, production delta {:.2f} {} ({} ticks remaining)",
                 event.event.id,
                 event.planet,
                 extraConsumption,
+                extraProduction,
                 commodity.displayName,
                 event.remainingTicks,
             )
@@ -94,7 +100,7 @@ class EventEngine(private val random: Random = Random()) {
         if (config.events.isEmpty()) return state
         if (random.nextDouble() > EVENT_SPAWN_PROBABILITY) return state
 
-        val event = config.events[random.nextInt(config.events.size)]
+        val event = weightedRandomEvent(config.events)
         val planet = state.planets[random.nextInt(state.planets.size)]
 
         // Check if this event type is already active on this planet
@@ -113,6 +119,17 @@ class EventEngine(private val random: Random = Random()) {
             activeEvents = state.activeEvents + activeEvent,
             eventLog = state.eventLog + msg,
         )
+    }
+
+    /** Select an event using weighted random selection */
+    private fun weightedRandomEvent(events: List<EconomicEvent>): EconomicEvent {
+        val totalWeight = events.sumOf { it.weight }
+        var roll = random.nextDouble() * totalWeight
+        for (event in events) {
+            roll -= event.weight
+            if (roll <= 0.0) return event
+        }
+        return events.last()
     }
 
     /** Compute the total consumption multiplier for a commodity on a specific planet */

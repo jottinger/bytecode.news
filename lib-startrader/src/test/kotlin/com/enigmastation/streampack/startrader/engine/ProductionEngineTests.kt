@@ -5,12 +5,11 @@ import com.enigmastation.streampack.startrader.config.ConfigLoader
 import com.enigmastation.streampack.startrader.model.Commodity
 import com.enigmastation.streampack.startrader.model.Planet
 import com.enigmastation.streampack.startrader.model.UniverseState
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ProductionEngineTests {
-    private val config = ConfigLoader(ObjectMapper()).load()
+    private val config = ConfigLoader().load()
     private val engine = ProductionEngine()
 
     @Test

@@ -13,20 +13,3 @@ data class SimulationConfig(
     val events: List<EconomicEvent>,
     val populationConsumptionRates: Map<Commodity, Double>,
 )
-
-data class PlanetConfig(
-    val name: String,
-    val fixed: Boolean = false,
-    val x: Double? = null,
-    val y: Double? = null,
-    val z: Double? = null,
-    val production: Map<Commodity, Double>,
-    val population: Double,
-)
-
-data class NpcDampeningConfig(
-    val baseFireProbability: Double,
-    val priceDeviationMultiplier: Double,
-    val maxAdjustmentFraction: Double,
-    val minimumReferenceSupply: Double = 25.0,
-)

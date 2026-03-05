@@ -7,13 +7,12 @@ import com.enigmastation.streampack.startrader.model.Commodity
 import com.enigmastation.streampack.startrader.model.EconomicEvent
 import com.enigmastation.streampack.startrader.model.Planet
 import com.enigmastation.streampack.startrader.model.UniverseState
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class EventEngineTests {
-    private val config = ConfigLoader(ObjectMapper()).load()
+    private val config = ConfigLoader().load()
 
     @Test
     fun `active events decrement remaining ticks`() {

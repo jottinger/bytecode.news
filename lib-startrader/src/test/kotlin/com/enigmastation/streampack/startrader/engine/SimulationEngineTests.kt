@@ -5,13 +5,12 @@ import com.enigmastation.streampack.startrader.config.ConfigLoader
 import com.enigmastation.streampack.startrader.model.BuyOrder
 import com.enigmastation.streampack.startrader.model.Commodity
 import com.enigmastation.streampack.startrader.model.SellOrder
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class SimulationEngineTests {
-    private val config = ConfigLoader(ObjectMapper()).load()
+    private val config = ConfigLoader().load()
     private val seeder = UniverseSeeder(java.util.Random(42))
 
     private fun createEngine(): SimulationEngine {
