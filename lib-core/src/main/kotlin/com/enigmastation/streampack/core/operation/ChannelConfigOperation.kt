@@ -38,9 +38,8 @@ class ChannelConfigOperation(
         if (subcommand == "config") return handleConfig(tokens.drop(1), provenance)
 
         // Mutations require ADMIN
-        val role = provenance?.user?.role ?: Role.GUEST
-        if (role < Role.ADMIN) {
-            return OperationResult.Error("Channel config commands require ADMIN role")
+        requireRole(message, Role.ADMIN)?.let {
+            return it
         }
 
         return when (subcommand) {

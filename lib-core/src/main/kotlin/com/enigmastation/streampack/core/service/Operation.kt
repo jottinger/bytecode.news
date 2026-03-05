@@ -6,6 +6,7 @@ import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.RedactionRule
+import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.ThrottlePolicy
 import java.time.Duration
 import org.slf4j.Logger
@@ -101,6 +102,24 @@ interface Operation {
 
     /** Quick pre-flight check: is this operation relevant for this message? */
     fun canHandle(message: Message<*>): Boolean = true
+
+    /** Checks whether the message sender has at least the given role */
+    fun hasRole(message: Message<*>, role: Role): Boolean {
+        val provenance = message.headers[Provenance.HEADER] as? Provenance
+        return (provenance?.user?.role ?: Role.GUEST) >= role
+    }
+
+    /**
+     * Returns an error result if the sender lacks the required role, or null if authorized.
+     *
+     * Typical usage in handle(): `requireRole(message, Role.ADMIN)?.let { return it }`
+     */
+    fun requireRole(message: Message<*>, role: Role): OperationResult.Error? {
+        if (!hasRole(message, role)) {
+            return OperationResult.Error("Insufficient privileges: requires $role")
+        }
+        return null
+    }
 
     /**
      * Process the message and produce a result.

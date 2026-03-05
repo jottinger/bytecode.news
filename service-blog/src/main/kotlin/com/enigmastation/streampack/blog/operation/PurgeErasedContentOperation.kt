@@ -5,7 +5,6 @@ import com.enigmastation.streampack.blog.model.PurgeErasedContentRequest
 import com.enigmastation.streampack.blog.repository.CommentRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.Operation
@@ -33,13 +32,8 @@ class PurgeErasedContentOperation(
     @Transactional
     override fun execute(message: Message<*>): OperationResult {
         val request = message.payload as PurgeErasedContentRequest
-        val provenance =
-            message.headers[Provenance.HEADER] as? Provenance
-                ?: return OperationResult.Error("No provenance")
-        val principal = provenance.user ?: return OperationResult.Error("Not authenticated")
-
-        if (principal.role != Role.ADMIN && principal.role != Role.SUPER_ADMIN) {
-            return OperationResult.Error("Insufficient privileges")
+        requireRole(message, Role.ADMIN)?.let {
+            return it
         }
 
         val sentinel =

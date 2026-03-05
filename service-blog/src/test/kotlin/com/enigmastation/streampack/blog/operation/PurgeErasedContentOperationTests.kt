@@ -138,7 +138,10 @@ class PurgeErasedContentOperationTests {
         val result = eventGateway.process(purgeMessage(sentinel.id, regularUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Insufficient privileges", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test
@@ -146,6 +149,9 @@ class PurgeErasedContentOperationTests {
         val result = eventGateway.process(purgeMessage(sentinel.id, null))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Not authenticated", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 }

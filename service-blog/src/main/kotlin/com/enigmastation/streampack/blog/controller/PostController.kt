@@ -274,7 +274,7 @@ class PostController(
             when {
                 message.contains("Authentication required") -> HttpStatus.UNAUTHORIZED
                 message.contains("Not authorized") -> HttpStatus.FORBIDDEN
-                message.contains("Admin access required") -> HttpStatus.FORBIDDEN
+                message.contains("Insufficient privileges") -> HttpStatus.FORBIDDEN
                 message.contains("not found", ignoreCase = true) -> HttpStatus.NOT_FOUND
                 else -> HttpStatus.BAD_REQUEST
             }

@@ -93,7 +93,7 @@ class AdminCategoryControllerTests {
             }
             .andExpect {
                 status { isForbidden() }
-                jsonPath("$.detail") { value("Admin access required") }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
             }
     }
 
@@ -172,7 +172,7 @@ class AdminCategoryControllerTests {
             }
             .andExpect {
                 status { isForbidden() }
-                jsonPath("$.detail") { value("Admin access required") }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
             }
     }
 

@@ -159,7 +159,10 @@ class ApproveContentOperationTests {
         val result = eventGateway.process(approveMessage(request, author))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Admin access required", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test
@@ -186,6 +189,9 @@ class ApproveContentOperationTests {
         val result = eventGateway.process(approveMessage(request, null))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Authentication required", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 }

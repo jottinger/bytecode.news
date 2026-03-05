@@ -119,7 +119,7 @@ class AdminUserControllerTests {
             }
             .andExpect {
                 status { isForbidden() }
-                jsonPath("$.detail") { value("Insufficient privileges") }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
             }
     }
 

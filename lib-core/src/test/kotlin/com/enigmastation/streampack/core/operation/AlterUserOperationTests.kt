@@ -178,7 +178,10 @@ class AlterUserOperationTests {
         val result = eventGateway.process(alterUserMessage(request, regularUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Insufficient privileges", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test
@@ -274,7 +277,10 @@ class AlterUserOperationTests {
             eventGateway.process(textMessage("alter user adminuser role user", regularUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Insufficient privileges", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test

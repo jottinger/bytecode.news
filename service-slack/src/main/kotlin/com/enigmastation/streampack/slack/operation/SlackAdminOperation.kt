@@ -3,7 +3,6 @@ package com.enigmastation.streampack.slack.operation
 
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.slack.service.SlackService
@@ -21,11 +20,8 @@ class SlackAdminOperation(private val slackService: SlackService) :
     }
 
     override fun handle(payload: String, message: Message<*>): OperationOutcome {
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-
-        if (role < Role.SUPER_ADMIN) {
-            return OperationResult.Error("Slack admin commands require SUPER_ADMIN role")
+        requireRole(message, Role.SUPER_ADMIN)?.let {
+            return it
         }
 
         val args = payload.trim().removePrefix("slack").trim()

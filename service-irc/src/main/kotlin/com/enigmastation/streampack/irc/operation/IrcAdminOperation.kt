@@ -3,7 +3,6 @@ package com.enigmastation.streampack.irc.operation
 
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.RedactionRule
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
@@ -24,11 +23,8 @@ class IrcAdminOperation(private val ircService: IrcService) :
     }
 
     override fun handle(payload: String, message: Message<*>): OperationOutcome {
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-
-        if (role < Role.SUPER_ADMIN) {
-            return OperationResult.Error("IRC admin commands require SUPER_ADMIN role")
+        requireRole(message, Role.SUPER_ADMIN)?.let {
+            return it
         }
 
         val args = payload.trim().removePrefix("irc").trim()
