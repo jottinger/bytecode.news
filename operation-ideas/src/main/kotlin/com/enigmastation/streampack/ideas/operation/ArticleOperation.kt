@@ -36,9 +36,7 @@ class ArticleOperation(
         val cmd = payload.compress().lowercase()
         if (cmd == "article" || cmd.startsWith("article ")) return true
 
-        val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return false
-        val provenanceUri = provenance.encode()
-        if (!timerService.hasActiveSession(provenanceUri)) return false
+        if (!timerService.hasActiveSession(userStateKey(message))) return false
 
         return cmd.startsWith("content ") || cmd == "done" || cmd == "cancel"
     }
@@ -47,31 +45,32 @@ class ArticleOperation(
         val provenance =
             message.headers[Provenance.HEADER] as? Provenance
                 ?: return OperationResult.Error("No provenance available.")
-        val provenanceUri = provenance.encode()
+        val userKey = userStateKey(message)
         val compressed = payload.compress()
         val cmd = compressed.lowercase()
 
         return when {
             cmd == "article" || cmd.startsWith("article ") -> {
                 val args = compressed.substringAfter("article", "").trim()
-                startSession(args, provenanceUri, message)
+                startSession(args, userKey, provenance.encode(), message)
             }
             cmd.startsWith("content ") -> {
                 val text = compressed.substringAfter("content", "").trim()
-                addContent(text, provenanceUri)
+                addContent(text, userKey)
             }
-            cmd == "done" -> finalize(provenanceUri)
-            cmd == "cancel" -> cancel(provenanceUri)
+            cmd == "done" -> finalize(userKey)
+            cmd == "cancel" -> cancel(userKey)
             else -> null
         }
     }
 
     private fun startSession(
         args: String,
-        provenanceUri: String,
+        userKey: String,
+        channelUri: String,
         message: Message<*>,
     ): OperationOutcome {
-        val existing = stateService.getState(provenanceUri, IdeaSessionState.STATE_KEY)
+        val existing = stateService.getState(userKey, IdeaSessionState.STATE_KEY)
         if (existing != null) {
             val state = objectMapper.convertValue<IdeaSessionState>(existing)
             return OperationResult.Error(
@@ -87,9 +86,6 @@ class ArticleOperation(
             )
         }
 
-        val provenance =
-            message.headers[Provenance.HEADER] as? Provenance
-                ?: return OperationResult.Error("No provenance available.")
         val playerName = senderName(message)
         val now = Instant.now()
 
@@ -97,16 +93,16 @@ class ArticleOperation(
             IdeaSessionState(
                 title = title,
                 submitterName = playerName,
-                sourceProvenance = provenanceUri,
+                sourceProvenance = channelUri,
                 startedAt = now.epochSecond,
             )
 
         stateService.setState(
-            provenanceUri,
+            userKey,
             IdeaSessionState.STATE_KEY,
             objectMapper.convertValue<Map<String, Any>>(state),
         )
-        timerService.registerSession(provenanceUri, now)
+        timerService.registerSession(userKey, now)
 
         return OperationResult.Success(
             "Idea session started: \"$title\". " +
@@ -115,9 +111,9 @@ class ArticleOperation(
         )
     }
 
-    private fun addContent(text: String, provenanceUri: String): OperationOutcome {
+    private fun addContent(text: String, userKey: String): OperationOutcome {
         val data =
-            stateService.getState(provenanceUri, IdeaSessionState.STATE_KEY)
+            stateService.getState(userKey, IdeaSessionState.STATE_KEY)
                 ?: return OperationResult.Error(
                     "No idea session in progress. Use '{{ref:article \"title\"}}' to start one."
                 )
@@ -130,11 +126,11 @@ class ArticleOperation(
         val updated = state.copy(contentBlocks = state.contentBlocks + text)
 
         stateService.setState(
-            provenanceUri,
+            userKey,
             IdeaSessionState.STATE_KEY,
             objectMapper.convertValue<Map<String, Any>>(updated),
         )
-        timerService.resetSession(provenanceUri)
+        timerService.resetSession(userKey)
 
         val count = updated.contentBlocks.size
         return OperationResult.Success(
@@ -143,9 +139,9 @@ class ArticleOperation(
         )
     }
 
-    private fun finalize(provenanceUri: String): OperationOutcome {
+    private fun finalize(userKey: String): OperationOutcome {
         val data =
-            stateService.getState(provenanceUri, IdeaSessionState.STATE_KEY)
+            stateService.getState(userKey, IdeaSessionState.STATE_KEY)
                 ?: return OperationResult.Error(
                     "No idea session in progress. Use '{{ref:article \"title\"}}' to start one."
                 )
@@ -153,8 +149,8 @@ class ArticleOperation(
         val state = objectMapper.convertValue<IdeaSessionState>(data)
         dispatchDraftPost(state)
 
-        stateService.clearState(provenanceUri, IdeaSessionState.STATE_KEY)
-        timerService.unregisterSession(provenanceUri)
+        stateService.clearState(userKey, IdeaSessionState.STATE_KEY)
+        timerService.unregisterSession(userKey)
 
         val blockCount = state.contentBlocks.size
         return OperationResult.Success(
@@ -163,15 +159,15 @@ class ArticleOperation(
         )
     }
 
-    private fun cancel(provenanceUri: String): OperationOutcome {
-        val data = stateService.getState(provenanceUri, IdeaSessionState.STATE_KEY)
+    private fun cancel(userKey: String): OperationOutcome {
+        val data = stateService.getState(userKey, IdeaSessionState.STATE_KEY)
         if (data == null) {
             return OperationResult.Success("No idea session in progress.")
         }
 
         val state = objectMapper.convertValue<IdeaSessionState>(data)
-        stateService.clearState(provenanceUri, IdeaSessionState.STATE_KEY)
-        timerService.unregisterSession(provenanceUri)
+        stateService.clearState(userKey, IdeaSessionState.STATE_KEY)
+        timerService.unregisterSession(userKey)
 
         return OperationResult.Success("Idea session cancelled. \"${state.title}\" was discarded.")
     }
@@ -194,5 +190,14 @@ class ArticleOperation(
             return trimmed.substring(1, trimmed.length - 1).trim()
         }
         return trimmed
+    }
+
+    /** Derives a per-user state key by appending the sender nick to the channel provenance */
+    private fun userStateKey(message: Message<*>): String {
+        val provenance = message.headers[Provenance.HEADER] as? Provenance
+        val channelUri = provenance?.encode() ?: "unknown"
+        val nick =
+            message.headers["nick"] as? String ?: provenance?.user?.username ?: return channelUri
+        return "$channelUri/$nick"
     }
 }
