@@ -11,6 +11,7 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.FlowLayout
+import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -32,6 +33,7 @@ class StarTraderFrame(
     private val priceTable = JTable(priceTableModel)
     private val eventLog = JTextArea(8, 80)
     private val statusLabel = JLabel("Tick: 0 | GDP: 0")
+    private val tradePanel = TradePanel()
     private val mapPanel = UniverseMapPanel()
     private val mapFrame = JFrame("Star Trader - Universe Map")
     private lateinit var config: SimulationConfig
@@ -150,7 +152,13 @@ class StarTraderFrame(
         controlPanel.add(mapButton)
         controlPanel.add(statusLabel)
 
-        add(controlPanel, BorderLayout.NORTH)
+        // Stack controls and trade panel vertically at the top
+        val topPanel = JPanel()
+        topPanel.layout = BoxLayout(topPanel, BoxLayout.Y_AXIS)
+        topPanel.add(controlPanel)
+        topPanel.add(tradePanel)
+
+        add(topPanel, BorderLayout.NORTH)
     }
 
     private fun initializeUniverse() {
@@ -168,11 +176,15 @@ class StarTraderFrame(
         lastEventLogSize = 0
         eventLog.text = "Universe seeded with ${state.planets.size} planets\n"
         mapPanel.updateState(state)
+        tradePanel.updateState(state)
         updateDisplay()
     }
 
     private fun doTick(count: Int) {
-        for (i in 1..count) {
+        // Apply pending trade orders on the first tick, then run remaining ticks clean
+        val orders = tradePanel.drainOrders()
+        state = engine.tick(state, config, orders)
+        for (i in 2..count) {
             state = engine.tick(state, config)
         }
         updateDisplay()
