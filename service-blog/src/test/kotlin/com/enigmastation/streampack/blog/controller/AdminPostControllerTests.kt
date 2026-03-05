@@ -106,7 +106,7 @@ class AdminPostControllerTests {
             .get("/admin/posts/pending") { header("Authorization", "Bearer $regularUserToken") }
             .andExpect {
                 status { isForbidden() }
-                jsonPath("$.detail") { value("Admin access required") }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
             }
     }
 
@@ -147,7 +147,7 @@ class AdminPostControllerTests {
             }
             .andExpect {
                 status { isForbidden() }
-                jsonPath("$.detail") { value("Admin access required") }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
             }
     }
 
@@ -227,7 +227,7 @@ class AdminPostControllerTests {
             }
             .andExpect {
                 status { isForbidden() }
-                jsonPath("$.detail") { value("Admin access required") }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
             }
     }
 

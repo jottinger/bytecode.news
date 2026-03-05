@@ -3,7 +3,6 @@ package com.enigmastation.streampack.blog.operation
 
 import com.enigmastation.streampack.blog.model.SuspendAccountRequest
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserStatus
 import com.enigmastation.streampack.core.repository.UserRepository
@@ -20,13 +19,8 @@ class SuspendAccountOperation(private val userRepository: UserRepository) : Oper
 
     override fun execute(message: Message<*>): OperationResult {
         val request = message.payload as SuspendAccountRequest
-        val provenance =
-            message.headers[Provenance.HEADER] as? Provenance
-                ?: return OperationResult.Error("No provenance")
-        val principal = provenance.user ?: return OperationResult.Error("Not authenticated")
-
-        if (principal.role != Role.ADMIN && principal.role != Role.SUPER_ADMIN) {
-            return OperationResult.Error("Insufficient privileges")
+        requireRole(message, Role.ADMIN)?.let {
+            return it
         }
 
         val targetUser =

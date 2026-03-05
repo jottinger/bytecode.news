@@ -3,7 +3,6 @@ package com.enigmastation.streampack.rss.operation
 
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.rss.model.AddFeedOutcome
@@ -30,9 +29,7 @@ class AddFeedOperation(private val feedService: RssSubscriptionService) :
     }
 
     override fun canHandle(payload: AddFeedRequest, message: Message<*>): Boolean {
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-        return role >= Role.ADMIN
+        return hasRole(message, Role.ADMIN)
     }
 
     override fun handle(payload: AddFeedRequest, message: Message<*>): OperationOutcome {

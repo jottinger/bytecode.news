@@ -3,7 +3,6 @@ package com.enigmastation.streampack.core.operation
 
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.OperationConfigService
 import com.enigmastation.streampack.core.service.TypedOperation
@@ -31,10 +30,8 @@ class ServiceAdminOperation(private val configService: OperationConfigService) :
         if (subcommand == "list") return handleList()
 
         // Mutations require SUPER_ADMIN
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-        if (role < Role.SUPER_ADMIN) {
-            return OperationResult.Error("Service commands require SUPER_ADMIN role")
+        requireRole(message, Role.SUPER_ADMIN)?.let {
+            return it
         }
 
         return when (subcommand) {

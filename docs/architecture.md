@@ -125,12 +125,43 @@ This is for operations that monitor ambient conversation, like karma tracking (`
 
 ### Authorization
 
-Authorization checks belong in `canHandle` for simple role gating, or in `handle` when the operation has mixed access (some commands public, some admin-only).
+Roles are hierarchical: `GUEST < USER < ADMIN < SUPER_ADMIN`.
+
+The `Operation` interface provides two utility methods for role checks:
+
+- **`hasRole(message, role): Boolean`** - returns true if the sender has at least the given role.
+  Use in `canHandle` when unauthorized users should silently fall through to the next operation.
+- **`requireRole(message, role): OperationResult.Error?`** - returns an error if unauthorized, null if OK.
+  Use in `handle` when unauthorized users should receive an explicit error.
+
+For simple uniform gates where the entire operation requires a role:
+
+```kotlin
+// In canHandle: silently skip if unauthorized (chain continues)
+override fun canHandle(payload: AddFeedRequest, message: Message<*>): Boolean {
+    return hasRole(message, Role.ADMIN)
+}
+
+// In handle: return an error if unauthorized (chain stops)
+override fun handle(payload: String, message: Message<*>): OperationOutcome {
+    requireRole(message, Role.ADMIN)?.let { return it }
+    // ... business logic
+}
+```
+
+For operations with mixed access (some subcommands public, some admin-only), use `requireRole` after dispatching public subcommands:
+
+```kotlin
+override fun handle(payload: String, message: Message<*>): OperationOutcome {
+    val subcommand = parseSubcommand(payload)
+    if (subcommand == "list") return handleList() // public
+    requireRole(message, Role.ADMIN)?.let { return it }
+    // ... admin-only subcommands
+}
+```
 
 When `canHandle` returns `false`, the operation is skipped and the chain continues.
 This means an unauthorized user's message falls through to the next operation rather than producing an error.
-
-Roles are hierarchical: `GUEST < USER < ADMIN < SUPER_ADMIN`.
 
 ### The handle Method
 

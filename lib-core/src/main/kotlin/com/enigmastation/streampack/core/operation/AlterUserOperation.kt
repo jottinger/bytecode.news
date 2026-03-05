@@ -64,8 +64,8 @@ class AlterUserOperation(private val userRepository: UserRepository) :
                 ?: return OperationResult.Error("No provenance")
         val principal = provenance.user ?: return OperationResult.Error("Not authenticated")
 
-        if (principal.role < Role.ADMIN) {
-            return OperationResult.Error("Insufficient privileges")
+        requireRole(message, Role.ADMIN)?.let {
+            return it
         }
 
         val targetUser =

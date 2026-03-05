@@ -46,12 +46,10 @@ class SentimentOperation(
     }
 
     override fun handle(payload: SentimentRequest, message: Message<*>): OperationOutcome {
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-
-        if (role < Role.ADMIN) {
-            return OperationResult.Error("Sentiment analysis requires ADMIN role")
+        requireRole(message, Role.ADMIN)?.let {
+            return it
         }
+        val provenance = message.headers[Provenance.HEADER] as? Provenance
 
         val botNick = message.headers[Provenance.BOT_NICK] as? String ?: "bot"
         val now = Instant.now()

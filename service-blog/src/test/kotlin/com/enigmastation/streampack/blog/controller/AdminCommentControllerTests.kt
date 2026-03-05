@@ -148,7 +148,7 @@ class AdminCommentControllerTests {
             }
             .andExpect {
                 status { isForbidden() }
-                jsonPath("$.detail") { value("Admin access required") }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
             }
     }
 

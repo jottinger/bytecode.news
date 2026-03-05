@@ -579,6 +579,70 @@ Watch GitHub repositories for new issues, pull requests, and releases.
 
 ---
 
+## Article Ideas
+
+Capture article ideas through a conversational flow from any protocol.
+Ideas are saved as draft blog posts tagged `_idea` for later review.
+
+### Capture Flow
+
+Start an idea session, add body content, then save or discard.
+The session is scoped to the current channel - other channels are unaffected.
+
+**Start a session** (addressed):
+
+```
+article "My Article Title"
+article My Article Title
+```
+
+Quoted or unquoted titles both work.
+Only one idea session can be active per channel at a time.
+
+**Add body content** (addressed):
+
+```
+content This is the first paragraph of my idea.
+content Here is another paragraph with more detail.
+```
+
+Each `content` command appends a new paragraph.
+You can add as many blocks as you like.
+
+**Save the idea** (addressed):
+
+```
+done
+```
+
+Creates a draft blog post with the title and collected body text.
+An attribution footer records who submitted the idea and from which channel.
+
+**Discard without saving** (addressed):
+
+```
+cancel
+```
+
+Clears the session without creating a draft.
+
+**Timeout behavior**: if no interaction occurs for 5 minutes (configurable), the session auto-saves as a draft and notifies the channel.
+Every `content`, `done`, or `cancel` command resets the inactivity timer.
+
+### Browse Ideas (Admin)
+
+Admins can list, search, and remove captured ideas.
+
+**Commands** (addressed, Admin):
+
+| Command | Effect |
+|---------|--------|
+| `ideas` | List all draft ideas |
+| `ideas search <term>` | Filter ideas by title |
+| `ideas remove #N` | Soft-delete the Nth idea from the list |
+
+---
+
 ## User Management
 
 ### Edit Profile
@@ -781,6 +845,12 @@ When `for <pattern>` is omitted, the current channel's provenance is used.
 | `feed subscribe/unsubscribe` | addressed | admin | Manage feed subscriptions |
 | `github add/remove/list` | addressed | admin | Manage GitHub repos |
 | `github subscribe/unsubscribe` | addressed | admin | Manage repo subscriptions |
+| `article "<title>"` | addressed | all | Start an idea capture session |
+| `content <text>` | addressed | all | Add body to active idea session |
+| `done` | addressed | all | Save idea as draft post |
+| `cancel` | addressed | all | Discard active idea session |
+| `ideas` / `ideas search` | addressed | admin | Browse/search ideas |
+| `ideas remove #N` | addressed | admin | Soft-delete an idea |
 | `url ignore add/delete/list` | addressed | admin | Manage URL title ignore list |
 | `create user ...` | addressed | super-admin | Create a user |
 | `alter user ...` | addressed | admin | Modify a user |

@@ -3,7 +3,6 @@ package com.enigmastation.streampack.github.operation
 
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.RedactionRule
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TranslatingOperation
@@ -35,9 +34,7 @@ class GitHubAddOperation(private val subscriptionService: GitHubSubscriptionServ
     }
 
     override fun canHandle(payload: AddRepoRequest, message: Message<*>): Boolean {
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-        return role >= Role.ADMIN
+        return hasRole(message, Role.ADMIN)
     }
 
     override fun handle(payload: AddRepoRequest, message: Message<*>): OperationOutcome {

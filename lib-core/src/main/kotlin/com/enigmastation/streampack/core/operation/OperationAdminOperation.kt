@@ -4,7 +4,6 @@ package com.enigmastation.streampack.core.operation
 import com.enigmastation.streampack.core.integration.EgressTransformer
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.Operation
 import com.enigmastation.streampack.core.service.OperationConfigService
@@ -37,10 +36,8 @@ class OperationAdminOperation(
         if (subcommand == "config") return handleConfig()
 
         // Mutations require ADMIN
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-        if (role < Role.ADMIN) {
-            return OperationResult.Error("Operation commands require ADMIN role")
+        requireRole(message, Role.ADMIN)?.let {
+            return it
         }
 
         return when (subcommand) {
