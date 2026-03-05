@@ -102,7 +102,10 @@ class SoftDeleteCategoryOperationTests {
         val result = eventGateway.process(createMessage(request, regularUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Admin access required", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test

@@ -8,7 +8,6 @@ import com.enigmastation.streampack.blog.repository.CategoryRepository
 import com.enigmastation.streampack.blog.service.SlugGenerationService
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import org.springframework.messaging.Message
@@ -24,14 +23,8 @@ class CreateCategoryOperation(
     override val priority = 50
 
     override fun handle(payload: CreateCategoryRequest, message: Message<*>): OperationOutcome {
-        val provenance =
-            message.headers[Provenance.HEADER] as? Provenance
-                ?: return OperationResult.Error("No provenance context")
-
-        val principal = provenance.user ?: return OperationResult.Error("Authentication required")
-
-        if (principal.role != Role.ADMIN && principal.role != Role.SUPER_ADMIN) {
-            return OperationResult.Error("Admin access required")
+        requireRole(message, Role.ADMIN)?.let {
+            return it
         }
 
         val name = payload.name.trim()

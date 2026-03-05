@@ -86,7 +86,7 @@ class HangmanAdminOperationTests {
         val result = eventGateway.process(message("hangman block badword", userPrincipal()))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val errorMessage = (result as OperationResult.Error).message
-        assertTrue(errorMessage.contains("admin"))
+        assertTrue(errorMessage.contains("ADMIN"))
     }
 
     @Test
@@ -94,7 +94,7 @@ class HangmanAdminOperationTests {
         val result = eventGateway.process(message("hangman unblock badword", userPrincipal()))
         assertInstanceOf(OperationResult.Error::class.java, result)
         val errorMessage = (result as OperationResult.Error).message
-        assertTrue(errorMessage.contains("admin"))
+        assertTrue(errorMessage.contains("ADMIN"))
     }
 
     @Test

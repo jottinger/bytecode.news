@@ -95,7 +95,10 @@ class SuspendAccountOperationTests {
         val result = eventGateway.process(suspendMessage("adminuser", regularUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Insufficient privileges", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test
@@ -128,6 +131,9 @@ class SuspendAccountOperationTests {
         val result = eventGateway.process(suspendMessage("regularuser", null))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Not authenticated", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 }

@@ -4,7 +4,6 @@ package com.enigmastation.streampack.hangman.operation
 import com.enigmastation.streampack.core.extensions.compress
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.hangman.service.HangmanService
@@ -26,10 +25,8 @@ class HangmanAdminOperation(private val hangmanService: HangmanService) :
     }
 
     override fun handle(payload: String, message: Message<*>): OperationOutcome? {
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-        if (role < Role.ADMIN) {
-            return OperationResult.Error("Only admins can manage the hangman blocklist.")
+        requireRole(message, Role.ADMIN)?.let {
+            return it
         }
 
         val compressed = payload.compress().lowercase()

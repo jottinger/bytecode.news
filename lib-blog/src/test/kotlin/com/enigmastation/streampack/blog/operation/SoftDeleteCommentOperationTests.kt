@@ -163,7 +163,10 @@ class SoftDeleteCommentOperationTests {
         val result = eventGateway.process(softDeleteMessage(request, regularUser))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Admin access required", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test
@@ -172,7 +175,10 @@ class SoftDeleteCommentOperationTests {
         val result = eventGateway.process(softDeleteMessage(request, null))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
-        assertEquals("Authentication required", (result as OperationResult.Error).message)
+        assertEquals(
+            "Insufficient privileges: requires ADMIN",
+            (result as OperationResult.Error).message,
+        )
     }
 
     @Test

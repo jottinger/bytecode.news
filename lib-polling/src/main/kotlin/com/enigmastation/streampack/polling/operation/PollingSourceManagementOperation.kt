@@ -45,11 +45,9 @@ abstract class PollingSourceManagementOperation : TypedOperation<String>(String:
             return false
         }
 
-        val provenance = message.headers[Provenance.HEADER] as? Provenance
-        val role = provenance?.user?.role ?: Role.GUEST
-        val allowed = role >= Role.ADMIN
+        val allowed = hasRole(message, Role.ADMIN)
         if (!allowed) {
-            logger.debug("Mutation '{}' denied for role {} (need ADMIN+)", lower, role)
+            logger.debug("Mutation '{}' denied (need ADMIN+)", lower)
         }
         return allowed
     }
