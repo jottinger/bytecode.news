@@ -64,6 +64,7 @@
         <module>operation-21</module>
         <module>operation-hangman</module>
         <module>operation-safecracker</module>
+        <module>operation-ideas</module>
         <module>operation-markov</module>
         <module>service-factoid</module>
         <module>service-rss</module>
