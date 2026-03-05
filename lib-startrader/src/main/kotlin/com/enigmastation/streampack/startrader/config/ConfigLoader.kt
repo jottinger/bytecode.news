@@ -44,10 +44,10 @@ class ConfigLoader(private val objectMapper: ObjectMapper) {
 
     private fun parseProductionMatrix(node: JsonNode): ProductionMatrix {
         val inputs = mutableMapOf<Commodity, Map<Commodity, Double>>()
-        node.fields().forEach { (outputName, inputNode) ->
+        node.properties().forEach { (outputName, inputNode) ->
             val output = Commodity.valueOf(outputName)
             val inputMap = mutableMapOf<Commodity, Double>()
-            inputNode.fields().forEach { (inputName, rate) ->
+            inputNode.properties().forEach { (inputName, rate) ->
                 inputMap[Commodity.valueOf(inputName)] = rate.asDouble()
             }
             inputs[output] = inputMap
@@ -58,7 +58,7 @@ class ConfigLoader(private val objectMapper: ObjectMapper) {
     private fun parsePlanets(node: JsonNode): List<PlanetConfig> =
         node.map { planet ->
             val production = mutableMapOf<Commodity, Double>()
-            planet["production"].fields().forEach { (name, rate) ->
+            planet["production"].properties().forEach { (name, rate) ->
                 production[Commodity.valueOf(name)] = rate.asDouble()
             }
             PlanetConfig(
@@ -92,7 +92,9 @@ class ConfigLoader(private val objectMapper: ObjectMapper) {
 
     private fun parseConsumptionRates(node: JsonNode): Map<Commodity, Double> {
         val rates = mutableMapOf<Commodity, Double>()
-        node.fields().forEach { (name, rate) -> rates[Commodity.valueOf(name)] = rate.asDouble() }
+        node.properties().forEach { (name, rate) ->
+            rates[Commodity.valueOf(name)] = rate.asDouble()
+        }
         return rates
     }
 }
