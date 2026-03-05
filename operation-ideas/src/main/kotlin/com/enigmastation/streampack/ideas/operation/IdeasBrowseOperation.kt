@@ -161,7 +161,7 @@ class IdeasBrowseOperation(
         return postRepository
             .findAllById(postIds)
             .filter { it.status == PostStatus.DRAFT && !it.deleted }
-            .sortedByDescending { it.createdAt }
+            .sortedBy { it.createdAt }
     }
 
     private fun sendToEgress(text: String, provenance: Provenance) {
