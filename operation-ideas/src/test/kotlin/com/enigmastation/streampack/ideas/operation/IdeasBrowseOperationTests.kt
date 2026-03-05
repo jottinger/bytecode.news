@@ -116,7 +116,7 @@ class IdeasBrowseOperationTests {
     }
 
     @Test
-    fun `list ideas shows all ideas`() {
+    fun `list ideas returns count header`() {
         createIdea("First Idea")
         createIdea("Second Idea")
 
@@ -124,20 +124,18 @@ class IdeasBrowseOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("Article ideas (2)"))
-        assertTrue(payload.contains("First Idea"))
-        assertTrue(payload.contains("Second Idea"))
     }
 
     @Test
-    fun `search ideas by title`() {
+    fun `search ideas by title returns filtered count`() {
         createIdea("Kotlin Coroutines Deep Dive")
         createIdea("Spring Boot Testing Guide")
 
         val result = eventGateway.process(adminMessage("ideas search Kotlin"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("Kotlin Coroutines"))
-        assertTrue(!payload.contains("Spring Boot"))
+        assertTrue(payload.contains("(1)"))
+        assertTrue(payload.contains("Kotlin"))
     }
 
     @Test
@@ -189,7 +187,7 @@ class IdeasBrowseOperationTests {
     }
 
     @Test
-    fun `deleted ideas are not listed`() {
+    fun `deleted ideas are not counted`() {
         val idea = createIdea("Deleted Idea")
         postRepository.save(idea.copy(deleted = true))
         createIdea("Visible Idea")
@@ -197,12 +195,11 @@ class IdeasBrowseOperationTests {
         val result = eventGateway.process(adminMessage("ideas"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("Visible Idea"))
-        assertTrue(!payload.contains("Deleted Idea"))
+        assertTrue(payload.contains("(1)"))
     }
 
     @Test
-    fun `approved posts with idea tag are not listed`() {
+    fun `approved posts with idea tag are not counted`() {
         val post =
             postRepository.save(
                 Post(
@@ -218,8 +215,7 @@ class IdeasBrowseOperationTests {
         val result = eventGateway.process(adminMessage("ideas"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
-        assertTrue(payload.contains("Draft Idea"))
-        assertTrue(!payload.contains("Approved Not An Idea"))
+        assertTrue(payload.contains("(1)"))
     }
 
     @Test

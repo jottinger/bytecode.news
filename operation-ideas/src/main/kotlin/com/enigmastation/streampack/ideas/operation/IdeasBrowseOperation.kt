@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.ideas.operation
 
+import com.enigmastation.streampack.blog.entity.Post
 import com.enigmastation.streampack.blog.model.PostStatus
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.blog.repository.PostTagRepository
@@ -8,9 +9,14 @@ import com.enigmastation.streampack.blog.repository.TagRepository
 import com.enigmastation.streampack.core.extensions.compress
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.service.TransformerChainService
 import com.enigmastation.streampack.core.service.TypedOperation
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.messaging.Message
+import org.springframework.messaging.MessageChannel
+import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
 /** Admin operation for browsing, searching, and removing article ideas */
@@ -19,6 +25,8 @@ class IdeasBrowseOperation(
     private val tagRepository: TagRepository,
     private val postTagRepository: PostTagRepository,
     private val postRepository: PostRepository,
+    @Qualifier("egressChannel") private val egressChannel: MessageChannel,
+    private val transformerChain: TransformerChainService,
 ) : TypedOperation<String>(String::class) {
 
     override val priority: Int = 50
@@ -40,10 +48,10 @@ class IdeasBrowseOperation(
         val cmd = args.lowercase()
 
         return when {
-            args.isEmpty() -> listIdeas()
+            args.isEmpty() -> listIdeas(message)
             cmd == "search" || cmd.startsWith("search ") -> {
                 val term = args.substringAfter("search", "").trim()
-                searchIdeas(term)
+                searchIdeas(term, message)
             }
             cmd.startsWith("remove #") -> {
                 val numberStr = cmd.substringAfter("remove #").trim()
@@ -72,15 +80,15 @@ class IdeasBrowseOperation(
         }
     }
 
-    private fun listIdeas(): OperationOutcome {
+    private fun listIdeas(message: Message<*>): OperationOutcome {
         val ideas = findIdeaPosts()
         if (ideas.isEmpty()) {
             return OperationResult.Success("No article ideas found.")
         }
-        return OperationResult.Success(formatIdeaList(ideas))
+        return deliverIdeaList(ideas, "Article ideas (${ideas.size}):", message)
     }
 
-    private fun searchIdeas(term: String): OperationOutcome {
+    private fun searchIdeas(term: String, message: Message<*>): OperationOutcome {
         if (term.isBlank()) {
             return OperationResult.Error("Search term is required.")
         }
@@ -89,7 +97,43 @@ class IdeasBrowseOperation(
         if (filtered.isEmpty()) {
             return OperationResult.Success("No ideas matching \"$term\".")
         }
-        return OperationResult.Success(formatIdeaList(filtered))
+        return deliverIdeaList(filtered, "Ideas matching \"$term\" (${filtered.size}):", message)
+    }
+
+    /** Sends each idea as a separate DM via egress, returns the header with DM provenance */
+    private fun deliverIdeaList(
+        ideas: List<Post>,
+        header: String,
+        message: Message<*>,
+    ): OperationOutcome {
+        val sourceProvenance =
+            message.headers[Provenance.HEADER] as? Provenance
+                ?: return OperationResult.Error("No provenance available.")
+        val dmProvenance = buildDmProvenance(sourceProvenance, message)
+
+        for ((index, post) in ideas.withIndex()) {
+            val authorName = extractSubmitter(post)
+            val line = "#${index + 1} \"${post.title}\" by $authorName"
+            sendToEgress(line, dmProvenance)
+        }
+
+        return OperationResult.Success(header, provenance = dmProvenance)
+    }
+
+    /** Builds a provenance targeting the requesting user's DM */
+    private fun buildDmProvenance(source: Provenance, message: Message<*>): Provenance {
+        val userNick = message.headers["nick"] as? String ?: source.user?.username ?: source.replyTo
+        return Provenance(
+            protocol = source.protocol,
+            serviceId = source.serviceId,
+            replyTo = userNick,
+        )
+    }
+
+    /** Extracts the submitter name from the attribution footer in the post markdown */
+    private fun extractSubmitter(post: Post): String {
+        val match = CONTRIBUTOR_REGEX.find(post.markdownSource)
+        return match?.groupValues?.get(1) ?: post.author?.displayName ?: "Anonymous"
     }
 
     private fun removeIdea(number: Int): OperationOutcome {
@@ -106,7 +150,7 @@ class IdeasBrowseOperation(
     }
 
     /** Finds all draft posts tagged with _idea that are not deleted */
-    private fun findIdeaPosts(): List<com.enigmastation.streampack.blog.entity.Post> {
+    private fun findIdeaPosts(): List<Post> {
         val tag = tagRepository.findByName("_idea") ?: return emptyList()
         val postTags = postTagRepository.findByTag(tag.id)
         val postIds = postTags.map { it.post.id }.toSet()
@@ -116,13 +160,17 @@ class IdeasBrowseOperation(
             .sortedByDescending { it.createdAt }
     }
 
-    private fun formatIdeaList(ideas: List<com.enigmastation.streampack.blog.entity.Post>): String {
-        val header = "Article ideas (${ideas.size}):"
-        val lines =
-            ideas.mapIndexed { index, post ->
-                val authorName = post.author?.displayName ?: "Anonymous"
-                "#${index + 1} \"${post.title}\" by $authorName"
-            }
-        return (listOf(header) + lines).joinToString("\n")
+    private fun sendToEgress(text: String, provenance: Provenance) {
+        val raw = OperationResult.Success(text)
+        val transformed = transformerChain.apply(raw, provenance)
+        val message =
+            MessageBuilder.withPayload(transformed as Any)
+                .setHeader(Provenance.HEADER, provenance)
+                .build()
+        egressChannel.send(message)
+    }
+
+    companion object {
+        private val CONTRIBUTOR_REGEX = Regex("""\*Contributed by (.+?) via .+\*""")
     }
 }
