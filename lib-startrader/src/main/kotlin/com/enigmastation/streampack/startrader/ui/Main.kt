@@ -8,14 +8,12 @@ import com.enigmastation.streampack.startrader.engine.PriceEngine
 import com.enigmastation.streampack.startrader.engine.ProductionEngine
 import com.enigmastation.streampack.startrader.engine.SimulationEngine
 import com.enigmastation.streampack.startrader.engine.UniverseSeeder
-import com.fasterxml.jackson.databind.ObjectMapper
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 
 fun main() {
     // Wire up components manually (no Spring context needed for the UI harness)
-    val objectMapper = ObjectMapper()
-    val configLoader = ConfigLoader(objectMapper)
+    val configLoader = ConfigLoader()
     val productionEngine = ProductionEngine()
     val npcDampeningEngine = NpcDampeningEngine()
     val eventEngine = EventEngine()

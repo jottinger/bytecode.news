@@ -22,6 +22,8 @@ import javax.swing.JTextArea
 import javax.swing.SwingConstants
 import javax.swing.WindowConstants
 import javax.swing.table.DefaultTableCellRenderer
+import kotlin.math.abs
+import kotlin.math.min
 
 class StarTraderFrame(
     private val engine: SimulationEngine,
@@ -87,11 +89,13 @@ class StarTraderFrame(
 
                     if (column > 0) {
                         horizontalAlignment = SwingConstants.RIGHT
-                        val change = priceTableModel.priceChange(row, column)
+                        val deviation = priceTableModel.priceDeviation(row, column)
+                        // Scale color intensity: full saturation at 30% deviation from average
+                        val intensity = (min(1.0, abs(deviation) / 0.3) * 55).toInt()
                         background =
                             when {
-                                change > 0.5 -> Color(255, 200, 200)
-                                change < -0.5 -> Color(200, 255, 200)
+                                deviation > 0.02 -> Color(255, 200 - intensity, 200 - intensity)
+                                deviation < -0.02 -> Color(200 - intensity, 255, 200 - intensity)
                                 else -> Color.WHITE
                             }
                     } else {
