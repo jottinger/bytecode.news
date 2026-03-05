@@ -73,7 +73,7 @@ class IdeaTimerService(
         val blockCount = state.contentBlocks.size
         sendToEgress(
             "Idea session timed out. Saved draft: \"${state.title}\" ($blockCount content block${if (blockCount != 1) "s" else ""})",
-            session.provenanceUri,
+            state.sourceProvenance,
         )
         logger.info(
             "Idea session timed out for {}, saved draft: {}",
