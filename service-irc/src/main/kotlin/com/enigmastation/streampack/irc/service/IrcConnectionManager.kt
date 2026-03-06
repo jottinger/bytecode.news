@@ -101,6 +101,7 @@ class IrcConnectionManager(
                 channelControlService = channelControlService,
                 networkRepository = networkRepository,
                 channelRepository = channelRepository,
+                stateService = provenanceStateService,
                 client = client,
                 signalCharacter = effectiveSignal,
             )

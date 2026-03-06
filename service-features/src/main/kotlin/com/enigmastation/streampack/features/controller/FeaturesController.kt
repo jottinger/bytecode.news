@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.features.controller
 
+import com.enigmastation.streampack.blog.config.BlogProperties
 import com.enigmastation.streampack.core.service.Operation
 import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.features.model.AuthenticationFeatures

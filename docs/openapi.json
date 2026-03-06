@@ -95,6 +95,9 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "markdownSource" : {
+            "type" : "string"
+          },
           "renderedHtml" : {
             "type" : "string"
           },
@@ -127,59 +130,79 @@
         "type" : "object"
       },
       "ContentDetail" : {
+        "description" : "Full post detail including rendered HTML and metadata",
         "properties" : {
           "authorDisplayName" : {
+            "description" : "Display name of the author",
             "type" : "string"
           },
           "authorId" : {
+            "description" : "Author UUIDv7, or null for anonymous submissions",
             "format" : "uuid",
             "type" : "string"
           },
           "categories" : {
+            "description" : "Category names",
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "commentCount" : {
+            "description" : "Number of non-deleted comments on this post",
             "format" : "int32",
             "type" : "integer"
           },
           "createdAt" : {
+            "description" : "ISO 8601 creation timestamp",
             "format" : "date-time",
             "type" : "string"
           },
           "excerpt" : {
+            "description" : "First ~200 characters of rendered text",
             "type" : "string"
           },
           "id" : {
+            "description" : "Post UUIDv7",
             "format" : "uuid",
             "type" : "string"
           },
+          "markdownSource" : {
+            "description" : "Raw Markdown source. Only included when the requester is the author or an admin.",
+            "type" : "string"
+          },
           "publishedAt" : {
+            "description" : "Scheduled or actual publication timestamp, null for unpublished drafts",
             "format" : "date-time",
             "type" : "string"
           },
           "renderedHtml" : {
+            "description" : "Post content rendered as HTML from Markdown source",
             "type" : "string"
           },
           "slug" : {
+            "description" : "URL slug path",
+            "example" : "2026/03/understanding-virtual-threads",
             "type" : "string"
           },
           "status" : {
+            "description" : "DRAFT or APPROVED",
             "enum" : [ "DRAFT", "APPROVED" ],
             "type" : "string"
           },
           "tags" : {
+            "description" : "Tag names",
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "title" : {
+            "description" : "Post title",
             "type" : "string"
           },
           "updatedAt" : {
+            "description" : "ISO 8601 last-modified timestamp",
             "format" : "date-time",
             "type" : "string"
           }
@@ -188,22 +211,30 @@
         "type" : "object"
       },
       "ContentListResponse" : {
+        "description" : "Paginated list of post summaries",
         "properties" : {
           "page" : {
+            "description" : "Current zero-based page index",
+            "example" : 0,
             "format" : "int32",
             "type" : "integer"
           },
           "posts" : {
+            "description" : "Post summaries for the current page",
             "items" : {
               "$ref" : "#/components/schemas/ContentSummary"
             },
             "type" : "array"
           },
           "totalCount" : {
+            "description" : "Total number of matching posts across all pages",
+            "example" : 42,
             "format" : "int64",
             "type" : "integer"
           },
           "totalPages" : {
+            "description" : "Total number of pages available",
+            "example" : 3,
             "format" : "int32",
             "type" : "integer"
           }
@@ -225,41 +256,56 @@
         "type" : "object"
       },
       "ContentSummary" : {
+        "description" : "Post summary for listing and search result pages",
         "properties" : {
           "authorDisplayName" : {
+            "description" : "Display name of the author",
             "type" : "string"
           },
           "categories" : {
+            "description" : "Category names",
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
+          "commentCount" : {
+            "description" : "Number of non-deleted comments",
+            "format" : "int32",
+            "type" : "integer"
+          },
           "excerpt" : {
+            "description" : "First ~200 characters of rendered text",
             "type" : "string"
           },
           "id" : {
+            "description" : "Post UUIDv7",
             "format" : "uuid",
             "type" : "string"
           },
           "publishedAt" : {
+            "description" : "Publication timestamp, null for unpublished drafts",
             "format" : "date-time",
             "type" : "string"
           },
           "slug" : {
+            "description" : "URL slug path",
+            "example" : "2026/03/understanding-virtual-threads",
             "type" : "string"
           },
           "tags" : {
+            "description" : "Tag names",
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "title" : {
+            "description" : "Post title",
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "id", "slug", "tags", "title" ],
+        "required" : [ "authorDisplayName", "categories", "commentCount", "id", "slug", "tags", "title" ],
         "type" : "object"
       },
       "CreateCategoryRequest" : {
@@ -308,70 +354,96 @@
         "type" : "object"
       },
       "CreateContentHttpRequest" : {
+        "description" : "Request body for creating a new blog post draft",
         "properties" : {
           "categoryIds" : {
+            "description" : "Category UUIDv7s to associate. Non-existent or deleted IDs are skipped.",
             "items" : {
               "format" : "uuid",
               "type" : "string"
             },
             "type" : "array"
           },
+          "formLoadedAt" : {
+            "description" : "Epoch milliseconds when the form was rendered (Date.now()). Required. Submissions arriving less than 3 seconds after this timestamp are silently rejected.",
+            "example" : 1709740800000,
+            "format" : "int64",
+            "type" : "integer"
+          },
           "markdownSource" : {
+            "description" : "Post content in Markdown. No raw HTML allowed.",
+            "example" : "Virtual threads change the concurrency model...",
             "type" : "string"
           },
           "tags" : {
+            "description" : "Tag names to associate with the post. Created automatically if new.",
+            "example" : [ "java", "concurrency" ],
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "title" : {
+            "description" : "Post title",
+            "example" : "Understanding Virtual Threads",
             "type" : "string"
           }
         },
-        "required" : [ "markdownSource", "title" ],
+        "required" : [ "formLoadedAt", "markdownSource", "title" ],
         "type" : "object"
       },
       "CreateContentResponse" : {
+        "description" : "Confirmation of a newly created blog post draft",
         "properties" : {
           "authorDisplayName" : {
+            "description" : "Display name of the author, or 'Anonymous'",
             "type" : "string"
           },
           "authorId" : {
+            "description" : "Author UUIDv7, or null for anonymous submissions",
             "format" : "uuid",
             "type" : "string"
           },
           "categories" : {
+            "description" : "Category names associated with the post",
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "createdAt" : {
+            "description" : "ISO 8601 creation timestamp",
             "format" : "date-time",
             "type" : "string"
           },
           "excerpt" : {
+            "description" : "First ~200 characters of rendered text, or null if empty",
             "type" : "string"
           },
           "id" : {
+            "description" : "Post UUIDv7",
             "format" : "uuid",
             "type" : "string"
           },
           "slug" : {
+            "description" : "Generated URL slug",
+            "example" : "2026/03/understanding-virtual-threads",
             "type" : "string"
           },
           "status" : {
+            "description" : "Always DRAFT for newly created posts",
             "enum" : [ "DRAFT", "APPROVED" ],
             "type" : "string"
           },
           "tags" : {
+            "description" : "Tag names associated with the post",
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "title" : {
+            "description" : "Post title as submitted",
             "type" : "string"
           }
         },
@@ -396,8 +468,10 @@
         "type" : "object"
       },
       "EditContentHttpRequest" : {
+        "description" : "Request body for editing an existing post. All fields replace current values.",
         "properties" : {
           "categoryIds" : {
+            "description" : "Replacement category UUIDv7 list. Replaces all existing associations.",
             "items" : {
               "format" : "uuid",
               "type" : "string"
@@ -405,15 +479,21 @@
             "type" : "array"
           },
           "markdownSource" : {
+            "description" : "Updated post content in Markdown. No raw HTML allowed.",
+            "example" : "Updated content...",
             "type" : "string"
           },
           "tags" : {
+            "description" : "Replacement tag list. Replaces all existing tag associations.",
+            "example" : [ "java", "concurrency", "loom" ],
             "items" : {
               "type" : "string"
             },
             "type" : "array"
           },
           "title" : {
+            "description" : "Updated post title",
+            "example" : "Updated Title",
             "type" : "string"
           }
         },
@@ -505,6 +585,9 @@
           "ai" : {
             "type" : "boolean"
           },
+          "anonymousSubmission" : {
+            "type" : "boolean"
+          },
           "authentication" : {
             "$ref" : "#/components/schemas/AuthenticationFeatures"
           },
@@ -518,7 +601,7 @@
             "$ref" : "#/components/schemas/VersionInfo"
           }
         },
-        "required" : [ "adapters", "ai", "authentication", "operationGroups", "version" ],
+        "required" : [ "adapters", "ai", "anonymousSubmission", "authentication", "operationGroups", "version" ],
         "type" : "object"
       },
       "LoginResponse" : {
@@ -698,6 +781,15 @@
         "required" : [ "token" ],
         "type" : "object"
       },
+      "UpdateProfileRequest" : {
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "displayName" ],
+        "type" : "object"
+      },
       "UserPrincipal" : {
         "properties" : {
           "displayName" : {
@@ -750,7 +842,7 @@
   },
   "info" : {
     "description" : "Content hub and knowledge management for the JVM ecosystem",
-    "title" : "jvm.news API",
+    "title" : "bytecode.news API",
     "version" : "0.1.0"
   },
   "openapi" : "3.1.0",
@@ -771,7 +863,7 @@
         "responses" : {
           "201" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CreateCategoryResponse"
                 }
@@ -781,7 +873,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -791,7 +883,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -822,7 +914,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentOperationConfirmation"
                 }
@@ -832,7 +924,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -842,7 +934,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -852,7 +944,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -891,7 +983,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentOperationConfirmation"
                 }
@@ -901,7 +993,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -911,7 +1003,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -921,7 +1013,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -962,7 +1054,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentListResponse"
                 }
@@ -972,7 +1064,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -982,7 +1074,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1021,7 +1113,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentOperationConfirmation"
                 }
@@ -1031,7 +1123,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1041,7 +1133,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1051,7 +1143,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1090,7 +1182,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentDetail"
                 }
@@ -1100,7 +1192,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1110,7 +1202,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1120,7 +1212,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1161,7 +1253,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentDetail"
                 }
@@ -1171,7 +1263,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1181,7 +1273,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1191,7 +1283,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1222,7 +1314,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1252,7 +1344,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1282,7 +1374,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1312,7 +1404,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1352,7 +1444,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/UserPrincipal"
                 }
@@ -1362,7 +1454,7 @@
           },
           "400" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1372,7 +1464,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1382,7 +1474,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1412,7 +1504,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1442,7 +1534,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1474,7 +1566,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1496,7 +1588,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1540,7 +1632,7 @@
         "responses" : {
           "202" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "type" : "object"
                 }
@@ -1569,7 +1661,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/LoginResponse"
                 }
@@ -1579,7 +1671,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1589,6 +1681,38 @@
           }
         },
         "summary" : "Verify a one-time sign-in code",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/profile" : {
+      "put" : {
+        "operationId" : "updateProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Profile updated"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Update the authenticated user's profile",
         "tags" : [ "Authentication" ]
       }
     },
@@ -1608,7 +1732,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/LoginResponse"
                 }
@@ -1618,7 +1742,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1655,7 +1779,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "items" : {
                     "$ref" : "#/components/schemas/CategorySummary"
@@ -1696,7 +1820,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CommentDetail"
                 }
@@ -1706,7 +1830,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1716,7 +1840,7 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1726,7 +1850,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1774,7 +1898,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PageFactoidSummaryResponse"
                 }
@@ -1800,7 +1924,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/FactoidDetailResponse"
                 }
@@ -1818,7 +1942,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/FeaturesResponse"
                 }
@@ -1832,8 +1956,11 @@
     },
     "/posts" : {
       "get" : {
+        "description" : "Returns a paginated list of posts that are approved, not deleted, and have a publishedAt date in the past. Authenticated users also see their own drafts interleaved in the results.",
         "operationId" : "listPosts",
         "parameters" : [ {
+          "description" : "Zero-based page index",
+          "example" : 0,
           "in" : "query",
           "name" : "page",
           "required" : false,
@@ -1843,6 +1970,8 @@
             "type" : "integer"
           }
         }, {
+          "description" : "Number of posts per page",
+          "example" : 20,
           "in" : "query",
           "name" : "size",
           "required" : false,
@@ -1855,7 +1984,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentListResponse"
                 }
@@ -1868,6 +1997,7 @@
         "tags" : [ "Posts" ]
       },
       "post" : {
+        "description" : "Submits a new post as a DRAFT awaiting admin approval. Authentication is required unless anonymous submission is enabled (see GET /features for the anonymousSubmission flag). Authenticated users must have a verified email. Includes honeypot and timing-based spam prevention - frontends should include the 'website' field as a CSS-hidden input (left empty) and set 'formLoadedAt' to Date.now() when the form renders.",
         "operationId" : "createPost",
         "requestBody" : {
           "content" : {
@@ -1882,23 +2012,33 @@
         "responses" : {
           "201" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CreateContentResponse"
                 }
               }
             },
-            "description" : "Post created"
+            "description" : "Post created as draft"
           },
-          "401" : {
+          "400" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
-            "description" : "Not authenticated"
+            "description" : "Validation error (blank title, blank content, or unverified email)"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Authentication required (when anonymous submission is disabled)"
           }
         },
         "security" : [ {
@@ -1910,8 +2050,11 @@
     },
     "/posts/search" : {
       "get" : {
+        "description" : "Full-text search across post titles (weighted higher) and excerpts. Only published, non-deleted posts are searched. Results are ranked by relevance. Blank queries return an empty list.",
         "operationId" : "searchPosts",
         "parameters" : [ {
+          "description" : "Search query",
+          "example" : "virtual threads",
           "in" : "query",
           "name" : "q",
           "required" : true,
@@ -1919,6 +2062,8 @@
             "type" : "string"
           }
         }, {
+          "description" : "Zero-based page index",
+          "example" : 0,
           "in" : "query",
           "name" : "page",
           "required" : false,
@@ -1928,6 +2073,8 @@
             "type" : "integer"
           }
         }, {
+          "description" : "Number of results per page",
+          "example" : 20,
           "in" : "query",
           "name" : "size",
           "required" : false,
@@ -1940,13 +2087,13 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentListResponse"
                 }
               }
             },
-            "description" : "Search results"
+            "description" : "Search results ranked by relevance"
           }
         },
         "summary" : "Search published posts",
@@ -1954,9 +2101,49 @@
       }
     },
     "/posts/{id}" : {
+      "get" : {
+        "description" : "Returns full post detail by its UUIDv7 identifier. Draft posts are only visible to their author and admins.",
+        "operationId" : "getPostById",
+        "parameters" : [ {
+          "description" : "Post UUIDv7",
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "uuid",
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ContentDetail"
+                }
+              }
+            },
+            "description" : "Post detail"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description" : "Post not found"
+          }
+        },
+        "summary" : "Get a post by ID",
+        "tags" : [ "Posts" ]
+      },
       "put" : {
+        "description" : "Updates an existing post's title, content, tags, and/or categories. Authors can edit their own drafts. Only admins can edit approved posts. Edits re-render HTML from the updated markdown source.",
         "operationId" : "editPost",
         "parameters" : [ {
+          "description" : "Post UUIDv7",
           "in" : "path",
           "name" : "id",
           "required" : true,
@@ -1978,7 +2165,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentDetail"
                 }
@@ -1988,7 +2175,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -1998,23 +2185,23 @@
           },
           "403" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
-            "description" : "Not authorized to edit this post"
+            "description" : "Not the post author and not an admin"
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
               }
             },
-            "description" : "Post not found"
+            "description" : "Post not found or deleted"
           }
         },
         "security" : [ {
@@ -2026,8 +2213,11 @@
     },
     "/posts/{year}/{month}/{slug}" : {
       "get" : {
-        "operationId" : "getPost",
+        "description" : "Returns full post detail including rendered HTML, tags, categories, and comment count. Draft posts are only visible to their author and admins.",
+        "operationId" : "getPostBySlug",
         "parameters" : [ {
+          "description" : "Publication year",
+          "example" : 2026,
           "in" : "path",
           "name" : "year",
           "required" : true,
@@ -2038,6 +2228,8 @@
             "type" : "integer"
           }
         }, {
+          "description" : "Publication month (1-12)",
+          "example" : 3,
           "in" : "path",
           "name" : "month",
           "required" : true,
@@ -2048,6 +2240,8 @@
             "type" : "integer"
           }
         }, {
+          "description" : "URL-safe slug derived from the post title",
+          "example" : "my-post",
           "in" : "path",
           "name" : "slug",
           "required" : true,
@@ -2058,7 +2252,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ContentDetail"
                 }
@@ -2068,7 +2262,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -2115,7 +2309,7 @@
         "responses" : {
           "200" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CommentThreadResponse"
                 }
@@ -2125,7 +2319,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -2180,7 +2374,7 @@
         "responses" : {
           "201" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/CommentDetail"
                 }
@@ -2190,7 +2384,7 @@
           },
           "401" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
@@ -2200,7 +2394,7 @@
           },
           "404" : {
             "content" : {
-              "*/*" : {
+              "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ProblemDetail"
                 }
