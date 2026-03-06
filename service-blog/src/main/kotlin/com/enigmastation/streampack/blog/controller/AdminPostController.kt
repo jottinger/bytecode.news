@@ -69,7 +69,7 @@ class AdminPostController(
         description = "Admin access required",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @GetMapping("/pending")
+    @GetMapping("/pending", produces = ["application/json"])
     fun listPending(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
@@ -101,7 +101,7 @@ class AdminPostController(
         description = "Post not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PutMapping("/{id}/approve")
+    @PutMapping("/{id}/approve", produces = ["application/json"], consumes = ["application/json"])
     fun approvePost(
         @PathVariable id: UUID,
         @RequestBody request: ApproveContentHttpRequest,
@@ -133,7 +133,7 @@ class AdminPostController(
         description = "Post not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PutMapping("/{id}")
+    @PutMapping("/{id}", produces = ["application/json"], consumes = ["application/json"])
     fun editPost(
         @PathVariable id: UUID,
         @RequestBody request: EditContentHttpRequest,
@@ -172,7 +172,7 @@ class AdminPostController(
         description = "Post not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}", produces = ["application/json"])
     fun deletePost(
         @PathVariable id: UUID,
         @RequestParam(defaultValue = "false") hard: Boolean,

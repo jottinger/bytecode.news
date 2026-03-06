@@ -36,11 +36,13 @@ class FeaturesController(
     @Autowired(required = false)
     private val clientRegistrationRepository: ClientRegistrationRepository?,
     @Value("\${spring.application.name:}") private val applicationName: String,
+    @Value("\${streampack.blog.anonymous-submission:false}")
+    private val anonymousSubmission: Boolean,
 ) {
 
     private val cachedResponse: FeaturesResponse = buildResponse()
 
-    @GetMapping("/features")
+    @GetMapping("/features", produces = ["application/json"])
     fun getFeatures(): ResponseEntity<FeaturesResponse> =
         ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
@@ -59,6 +61,7 @@ class FeaturesController(
             operationGroups = operationGroups,
             adapters = adapters,
             ai = ai,
+            anonymousSubmission = anonymousSubmission,
         )
     }
 

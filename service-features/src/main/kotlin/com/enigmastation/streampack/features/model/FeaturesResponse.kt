@@ -8,6 +8,7 @@ data class FeaturesResponse(
     val operationGroups: List<String>,
     val adapters: List<String>,
     val ai: Boolean,
+    val anonymousSubmission: Boolean,
 )
 
 /** Build identity from BuildProperties and GitProperties */

@@ -72,7 +72,11 @@ class AdminUserController(
         description = "Invalid request",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PutMapping("/{username}/role")
+    @PutMapping(
+        "/{username}/role",
+        produces = ["application/json"],
+        consumes = ["application/json"],
+    )
     fun changeRole(
         @PathVariable username: String,
         @RequestBody request: RoleUpdateRequest,
@@ -86,7 +90,7 @@ class AdminUserController(
 
     @Operation(summary = "Suspend a user account")
     @ApiResponse(responseCode = "200", description = "Account suspended")
-    @PutMapping("/{username}/suspend")
+    @PutMapping("/{username}/suspend", produces = ["application/json"])
     fun suspendAccount(
         @PathVariable username: String,
         httpRequest: HttpServletRequest,
@@ -99,7 +103,7 @@ class AdminUserController(
 
     @Operation(summary = "Unsuspend a user account")
     @ApiResponse(responseCode = "200", description = "Account unsuspended")
-    @PutMapping("/{username}/unsuspend")
+    @PutMapping("/{username}/unsuspend", produces = ["application/json"])
     fun unsuspendAccount(
         @PathVariable username: String,
         httpRequest: HttpServletRequest,
@@ -113,7 +117,7 @@ class AdminUserController(
 
     @Operation(summary = "Erase a user account (admin-initiated)")
     @ApiResponse(responseCode = "200", description = "Account erased")
-    @DeleteMapping("/{username}")
+    @DeleteMapping("/{username}", produces = ["application/json"])
     fun eraseAccount(
         @PathVariable username: String,
         httpRequest: HttpServletRequest,
@@ -126,7 +130,7 @@ class AdminUserController(
 
     @Operation(summary = "Purge all content from an erased user sentinel")
     @ApiResponse(responseCode = "200", description = "Content purged")
-    @DeleteMapping("/{username}/purge")
+    @DeleteMapping("/{username}/purge", produces = ["application/json"])
     fun purgeErasedContent(
         @PathVariable username: String,
         httpRequest: HttpServletRequest,
@@ -144,7 +148,7 @@ class AdminUserController(
 
     @Operation(summary = "List erased user sentinels")
     @ApiResponse(responseCode = "200", description = "Erased user sentinels")
-    @GetMapping(params = ["status"])
+    @GetMapping(params = ["status"], produces = ["application/json"])
     fun listByStatus(
         @RequestParam status: UserStatus,
         httpRequest: HttpServletRequest,
@@ -165,7 +169,7 @@ class AdminUserController(
 
     @Operation(summary = "Export a user's data for admin review")
     @ApiResponse(responseCode = "200", description = "User data export")
-    @GetMapping("/{username}/export")
+    @GetMapping("/{username}/export", produces = ["application/json"])
     fun exportUserData(
         @PathVariable username: String,
         httpRequest: HttpServletRequest,

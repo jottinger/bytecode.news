@@ -47,7 +47,7 @@ class AuthController(
 
     @Operation(summary = "Request a one-time sign-in code")
     @ApiResponse(responseCode = "202", description = "Code sent if email is valid")
-    @PostMapping("/otp/request")
+    @PostMapping("/otp/request", produces = ["application/json"], consumes = ["application/json"])
     fun requestOtp(@RequestBody request: OtpRequest): ResponseEntity<*> {
         return dispatch(request, "auth/otp/request", successStatus = HttpStatus.ACCEPTED) { result
             ->
@@ -66,7 +66,7 @@ class AuthController(
         description = "Invalid or expired code",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PostMapping("/otp/verify")
+    @PostMapping("/otp/verify", produces = ["application/json"], consumes = ["application/json"])
     fun verifyOtp(@RequestBody request: OtpVerifyRequest): ResponseEntity<*> {
         return dispatch(request, "auth/otp/verify") { result ->
             mapError(result, HttpStatus.UNAUTHORIZED)
@@ -91,7 +91,7 @@ class AuthController(
         description = "Invalid or expired refresh token",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PostMapping("/refresh")
+    @PostMapping("/refresh", produces = ["application/json"], consumes = ["application/json"])
     fun refresh(@RequestBody request: TokenRefreshRequest): ResponseEntity<*> {
         return dispatch(request, "auth/refresh") { result ->
             mapError(result, HttpStatus.UNAUTHORIZED)
@@ -100,7 +100,7 @@ class AuthController(
 
     @Operation(summary = "Erase the authenticated user's account")
     @SecurityRequirement(name = "bearerAuth")
-    @DeleteMapping("/account")
+    @DeleteMapping("/account", produces = ["application/json"], consumes = ["application/json"])
     fun deleteAccount(
         @RequestBody request: DeleteAccountRequest,
         httpRequest: HttpServletRequest,
@@ -121,7 +121,7 @@ class AuthController(
     @Operation(summary = "Export the authenticated user's data")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(responseCode = "200", description = "User data export")
-    @GetMapping("/export")
+    @GetMapping("/export", produces = ["application/json"])
     fun exportUserData(httpRequest: HttpServletRequest): ResponseEntity<*> {
         val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
 

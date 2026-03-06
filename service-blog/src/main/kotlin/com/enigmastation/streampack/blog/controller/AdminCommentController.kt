@@ -64,7 +64,7 @@ class AdminCommentController(
         description = "Comment not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}", produces = ["application/json"])
     fun deleteComment(
         @PathVariable id: UUID,
         @RequestParam(defaultValue = "false") hard: Boolean,

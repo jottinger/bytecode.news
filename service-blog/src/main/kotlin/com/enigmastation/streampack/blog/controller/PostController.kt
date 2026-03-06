@@ -10,6 +10,7 @@ import com.enigmastation.streampack.blog.model.CreateContentResponse
 import com.enigmastation.streampack.blog.model.EditContentHttpRequest
 import com.enigmastation.streampack.blog.model.EditContentRequest
 import com.enigmastation.streampack.blog.model.FindContentRequest
+import com.enigmastation.streampack.blog.model.PostStatus
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
@@ -17,12 +18,14 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.service.JwtService
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import java.time.Instant
 import java.util.UUID
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -43,21 +46,32 @@ import org.springframework.web.bind.annotation.RestController
 class PostController(
     private val eventGateway: EventGateway,
     private val jwtService: JwtService,
-    blogProperties: BlogProperties,
+    private val blogProperties: BlogProperties,
 ) {
     private val serviceId = blogProperties.serviceId
     private val logger = LoggerFactory.getLogger(PostController::class.java)
 
-    @Operation(summary = "List published posts")
+    @Operation(
+        summary = "List published posts",
+        description =
+            "Returns a paginated list of posts that are approved, not deleted, " +
+                "and have a publishedAt date in the past. Authenticated users also see " +
+                "their own drafts interleaved in the results.",
+        operationId = "listPosts",
+    )
     @ApiResponse(
         responseCode = "200",
         description = "Paginated list of published posts",
         content = [Content(schema = Schema(implementation = ContentListResponse::class))],
     )
-    @GetMapping("/posts")
+    @GetMapping("/posts", produces = ["application/json"])
     fun listPosts(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
+        @Parameter(description = "Zero-based page index", example = "0")
+        @RequestParam(defaultValue = "0")
+        page: Int,
+        @Parameter(description = "Number of posts per page", example = "20")
+        @RequestParam(defaultValue = "20")
+        size: Int,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
@@ -65,7 +79,13 @@ class PostController(
         return dispatch(payload, "posts/list", user) { result -> mapError(result) }
     }
 
-    @Operation(summary = "Get a published post by slug")
+    @Operation(
+        summary = "Get a published post by slug",
+        description =
+            "Returns full post detail including rendered HTML, tags, categories, and " +
+                "comment count. Draft posts are only visible to their author and admins.",
+        operationId = "getPostBySlug",
+    )
     @ApiResponse(
         responseCode = "200",
         description = "Post detail",
@@ -76,11 +96,19 @@ class PostController(
         description = "Post not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @GetMapping("/posts/{year}/{month}/{slug}")
+    @GetMapping("/posts/{year}/{month}/{slug}", produces = ["application/json"])
     fun getPost(
-        @PathVariable @Schema(minimum = "2007", maximum = "3000") year: Int,
-        @PathVariable @Schema(minimum = "1", maximum = "12") month: Int,
-        @PathVariable slug: String,
+        @Parameter(description = "Publication year", example = "2026")
+        @PathVariable
+        @Schema(minimum = "2007", maximum = "3000")
+        year: Int,
+        @Parameter(description = "Publication month (1-12)", example = "3")
+        @PathVariable
+        @Schema(minimum = "1", maximum = "12")
+        month: Int,
+        @Parameter(description = "URL-safe slug derived from the post title", example = "my-post")
+        @PathVariable
+        slug: String,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
@@ -88,17 +116,57 @@ class PostController(
         return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
     }
 
-    @Operation(summary = "Search published posts")
+    @Operation(
+        summary = "Get a post by ID",
+        description =
+            "Returns full post detail by its UUIDv7 identifier. " +
+                "Draft posts are only visible to their author and admins.",
+        operationId = "getPostById",
+    )
     @ApiResponse(
         responseCode = "200",
-        description = "Search results",
+        description = "Post detail",
+        content = [Content(schema = Schema(implementation = ContentDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "404",
+        description = "Post not found",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/posts/{id}", produces = ["application/json"])
+    fun getPostById(
+        @Parameter(description = "Post UUIDv7") @PathVariable id: UUID,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest)
+        val payload = FindContentRequest.FindById(id)
+        return dispatch(payload, "posts/detail", user) { result -> mapError(result) }
+    }
+
+    @Operation(
+        summary = "Search published posts",
+        description =
+            "Full-text search across post titles (weighted higher) and excerpts. " +
+                "Only published, non-deleted posts are searched. " +
+                "Results are ranked by relevance. Blank queries return an empty list.",
+        operationId = "searchPosts",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Search results ranked by relevance",
         content = [Content(schema = Schema(implementation = ContentListResponse::class))],
     )
-    @GetMapping("/posts/search")
+    @GetMapping("/posts/search", produces = ["application/json"])
     fun searchPosts(
-        @RequestParam q: String,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
+        @Parameter(description = "Search query", example = "virtual threads", required = true)
+        @RequestParam
+        q: String,
+        @Parameter(description = "Zero-based page index", example = "0")
+        @RequestParam(defaultValue = "0")
+        page: Int,
+        @Parameter(description = "Number of results per page", example = "20")
+        @RequestParam(defaultValue = "20")
+        size: Int,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
@@ -106,24 +174,65 @@ class PostController(
         return dispatch(payload, "posts/search", user) { result -> mapError(result) }
     }
 
-    @Operation(summary = "Create a new blog post draft")
+    @Operation(
+        summary = "Create a new blog post draft",
+        description =
+            "Submits a new post as a DRAFT awaiting admin approval. " +
+                "Authentication is required unless anonymous submission is enabled " +
+                "(see GET /features for the anonymousSubmission flag). " +
+                "Authenticated users must have a verified email. " +
+                "Includes honeypot and timing-based spam prevention - frontends should " +
+                "include the 'website' field as a CSS-hidden input (left empty) and set " +
+                "'formLoadedAt' to Date.now() when the form renders.",
+        operationId = "createPost",
+    )
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
         responseCode = "201",
-        description = "Post created",
+        description = "Post created as draft",
         content = [Content(schema = Schema(implementation = CreateContentResponse::class))],
     )
     @ApiResponse(
-        responseCode = "401",
-        description = "Not authenticated",
+        responseCode = "400",
+        description = "Validation error (blank title, blank content, or unverified email)",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PostMapping("/posts")
+    @ApiResponse(
+        responseCode = "401",
+        description = "Authentication required (when anonymous submission is disabled)",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @PostMapping("/posts", produces = ["application/json"], consumes = ["application/json"])
     fun createPost(
         @RequestBody request: CreateContentHttpRequest,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
+        // Honeypot check - bots auto-fill hidden fields; return fake success to avoid tipping
+        // them off
+        if (!request.website.isNullOrBlank()) {
+            logger.debug("Honeypot field populated, rejecting silently")
+            return fakeCreatedResponse()
+        }
+
+        // Timing check - formLoadedAt is mandatory; reject if missing or too fast
+        val loadedAt = request.formLoadedAt
+        if (loadedAt == null) {
+            logger.debug("Missing formLoadedAt, rejecting silently")
+            return fakeCreatedResponse()
+        }
+        val elapsed = Instant.now().toEpochMilli() - loadedAt
+        if (elapsed < MINIMUM_FORM_DURATION_MS) {
+            logger.debug("Form submitted too quickly ({}ms), rejecting silently", elapsed)
+            return fakeCreatedResponse()
+        }
+
         val user = resolveUser(httpRequest)
+
+        // Gate anonymous submissions behind feature flag
+        if (user == null && !blogProperties.anonymousSubmission) {
+            return unauthorized("Authentication required")
+        }
+
         val payload =
             CreateContentRequest(
                 title = request.title,
@@ -134,7 +243,14 @@ class PostController(
         return dispatchCreated(payload, "posts/create", user) { result -> mapError(result) }
     }
 
-    @Operation(summary = "Edit a post")
+    @Operation(
+        summary = "Edit a post",
+        description =
+            "Updates an existing post's title, content, tags, and/or categories. " +
+                "Authors can edit their own drafts. Only admins can edit approved posts. " +
+                "Edits re-render HTML from the updated markdown source.",
+        operationId = "editPost",
+    )
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(
         responseCode = "200",
@@ -148,17 +264,17 @@ class PostController(
     )
     @ApiResponse(
         responseCode = "403",
-        description = "Not authorized to edit this post",
+        description = "Not the post author and not an admin",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
     @ApiResponse(
         responseCode = "404",
-        description = "Post not found",
+        description = "Post not found or deleted",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PutMapping("/posts/{id}")
+    @PutMapping("/posts/{id}", produces = ["application/json"], consumes = ["application/json"])
     fun editPost(
-        @PathVariable id: UUID,
+        @Parameter(description = "Post UUIDv7") @PathVariable id: UUID,
         @RequestBody request: EditContentHttpRequest,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
@@ -264,8 +380,28 @@ class PostController(
         return ResponseEntity.status(status).body(ProblemDetail.forStatusAndDetail(status, message))
     }
 
+    /** Returns a plausible 201 to avoid revealing spam detection to bots */
+    private fun fakeCreatedResponse(): ResponseEntity<*> {
+        val fake =
+            CreateContentResponse(
+                id = UUID.randomUUID(),
+                title = "Submitted",
+                slug = "pending",
+                excerpt = null,
+                status = PostStatus.DRAFT,
+                authorId = null,
+                authorDisplayName = "Anonymous",
+                createdAt = Instant.now(),
+            )
+        return ResponseEntity.status(HttpStatus.CREATED).body(fake)
+    }
+
     private fun unauthorized(message: String): ResponseEntity<*> {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, message))
+    }
+
+    companion object {
+        private const val MINIMUM_FORM_DURATION_MS = 3000L
     }
 }
