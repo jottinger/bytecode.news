@@ -157,9 +157,8 @@ class MatchesOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(
-            payload.contains("win") ||
-                payload.contains("victory", ignoreCase = true) ||
-                payload.contains("last match")
+            MatchesOperation.VICTORY_LINES.any { payload.contains(it) },
+            "Expected payload to contain a victory line, but was: $payload",
         )
 
         // State should be cleared after victory

@@ -61,7 +61,7 @@ class AdminCategoryController(
         description = "Admin access required",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PostMapping
+    @PostMapping(produces = ["application/json"], consumes = ["application/json"])
     fun createCategory(
         @RequestBody request: CreateCategoryRequest,
         httpRequest: HttpServletRequest,
@@ -93,7 +93,7 @@ class AdminCategoryController(
         description = "Category not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}", produces = ["application/json"])
     fun deleteCategory(@PathVariable id: UUID, httpRequest: HttpServletRequest): ResponseEntity<*> {
         val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
         val payload = SoftDeleteCategoryRequest(id)

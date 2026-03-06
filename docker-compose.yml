@@ -25,11 +25,22 @@ services:
       - db
     restart: unless-stopped
 
+  mailpit:
+    image: axllent/mailpit
+    profiles: ["mail"]
+    ports:
+      - "3025:1025"
+      - "8025:8025"
+    restart: unless-stopped
+
   backend:
     build: .
     profiles: ["backend"]
     ports:
       - "8080:8080"
+    env_file:
+      - path: .env
+        required: false
     environment:
       - DB_URL=jdbc:postgresql://db:5432/nevet
       - DB_USERNAME=${DB_USERNAME:-nevet}
@@ -39,7 +50,9 @@ services:
       - DISCORD_ENABLED=${DISCORD_ENABLED:-false}
       - SLACK_ENABLED=${SLACK_ENABLED:-false}
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:3003}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:3003}
+      - MAIL_HOST=mailpit
+      - MAIL_PORT=1025
     depends_on:
       - db
     restart: unless-stopped

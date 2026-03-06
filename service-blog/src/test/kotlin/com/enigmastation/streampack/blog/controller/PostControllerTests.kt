@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional
 @AutoConfigureMockMvc
 @Transactional
 @Import(TestChannelConfiguration::class)
+@TestPropertySource(properties = ["streampack.blog.anonymous-submission=true"])
 class PostControllerTests {
 
     @Autowired lateinit var mockMvc: MockMvc
@@ -145,7 +147,8 @@ class PostControllerTests {
             .post("/posts") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", "Bearer $verifiedUserToken")
-                content = """{"title":"My New Post","markdownSource":"Hello world."}"""
+                content =
+                    """{"title":"My New Post","markdownSource":"Hello world.","formLoadedAt":${System.currentTimeMillis() - 5000}}"""
             }
             .andExpect {
                 status { isCreated() }
@@ -162,7 +165,8 @@ class PostControllerTests {
         mockMvc
             .post("/posts") {
                 contentType = MediaType.APPLICATION_JSON
-                content = """{"title":"Community Post","markdownSource":"Anonymous content."}"""
+                content =
+                    """{"title":"Community Post","markdownSource":"Anonymous content.","formLoadedAt":${System.currentTimeMillis() - 5000}}"""
             }
             .andExpect {
                 status { isCreated() }
@@ -179,7 +183,8 @@ class PostControllerTests {
             .post("/posts") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", "Bearer $unverifiedUserToken")
-                content = """{"title":"My Post","markdownSource":"Content."}"""
+                content =
+                    """{"title":"My Post","markdownSource":"Content.","formLoadedAt":${System.currentTimeMillis() - 5000}}"""
             }
             .andExpect {
                 status { isBadRequest() }
@@ -193,7 +198,8 @@ class PostControllerTests {
             .post("/posts") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", "Bearer $verifiedUserToken")
-                content = """{"title":"","markdownSource":"Content."}"""
+                content =
+                    """{"title":"","markdownSource":"Content.","formLoadedAt":${System.currentTimeMillis() - 5000}}"""
             }
             .andExpect {
                 status { isBadRequest() }
@@ -241,6 +247,50 @@ class PostControllerTests {
             .andExpect {
                 status { isUnauthorized() }
                 jsonPath("$.detail") { value("Authentication required") }
+            }
+    }
+
+    // --- Honeypot and timing checks ---
+
+    @Test
+    fun `POST with honeypot field populated returns fake 201`() {
+        mockMvc
+            .post("/posts") {
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """{"title":"Spam Post","markdownSource":"Buy stuff.","website":"http://spam.example.com","formLoadedAt":${System.currentTimeMillis() - 5000}}"""
+            }
+            .andExpect {
+                status { isCreated() }
+                jsonPath("$.title") { value("Submitted") }
+            }
+    }
+
+    @Test
+    fun `POST submitted too quickly returns fake 201`() {
+        val justNow = System.currentTimeMillis()
+        mockMvc
+            .post("/posts") {
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """{"title":"Fast Post","markdownSource":"Content.","formLoadedAt":$justNow}"""
+            }
+            .andExpect {
+                status { isCreated() }
+                jsonPath("$.title") { value("Submitted") }
+            }
+    }
+
+    @Test
+    fun `POST with null formLoadedAt returns fake 201`() {
+        mockMvc
+            .post("/posts") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"title":"No Timing","markdownSource":"Content."}"""
+            }
+            .andExpect {
+                status { isCreated() }
+                jsonPath("$.title") { value("Submitted") }
             }
     }
 }

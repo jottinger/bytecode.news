@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.features.controller
 
+import com.enigmastation.streampack.blog.config.BlogProperties
 import com.enigmastation.streampack.core.service.Operation
 import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.features.model.AuthenticationFeatures
@@ -36,11 +37,12 @@ class FeaturesController(
     @Autowired(required = false)
     private val clientRegistrationRepository: ClientRegistrationRepository?,
     @Value("\${spring.application.name:}") private val applicationName: String,
+    private val blogProperties: BlogProperties,
 ) {
 
     private val cachedResponse: FeaturesResponse = buildResponse()
 
-    @GetMapping("/features")
+    @GetMapping("/features", produces = ["application/json"])
     fun getFeatures(): ResponseEntity<FeaturesResponse> =
         ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
@@ -59,6 +61,7 @@ class FeaturesController(
             operationGroups = operationGroups,
             adapters = adapters,
             ai = ai,
+            anonymousSubmission = blogProperties.anonymousSubmission,
         )
     }
 

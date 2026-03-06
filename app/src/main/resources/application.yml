@@ -46,6 +46,8 @@ streampack:
     enabled: ${MAIL_ENABLED:false}
   irc:
     enabled: ${IRC_ENABLED:false}
+  blog:
+    anonymous-submission: ${ANONYMOUS_SUBMISSION:false}
   karma:
     immune-subjects: ${KARMA_IMMUNE_SUBJECTS:nevet}
   weather:

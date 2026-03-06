@@ -73,4 +73,12 @@ class FeaturesControllerTests {
             jsonPath("$.ai") { isBoolean() }
         }
     }
+
+    @Test
+    fun `GET features includes anonymousSubmission flag`() {
+        mockMvc.get("/features").andExpect {
+            status { isOk() }
+            jsonPath("$.anonymousSubmission") { isBoolean() }
+        }
+    }
 }
