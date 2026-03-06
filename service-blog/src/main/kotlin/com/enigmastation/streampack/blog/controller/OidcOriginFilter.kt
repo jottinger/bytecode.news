@@ -32,6 +32,7 @@ class OidcOriginFilter(private val corsConfigurationSource: CorsConfigurationSou
                 cookie.maxAge = 600
                 cookie.isHttpOnly = true
                 cookie.path = "/"
+                cookie.secure = true
                 response.addCookie(cookie)
                 logger.debug("Set OIDC origin cookie for {}", origin)
             } else {

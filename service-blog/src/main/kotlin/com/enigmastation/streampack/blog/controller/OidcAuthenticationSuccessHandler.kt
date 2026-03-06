@@ -60,6 +60,7 @@ class OidcAuthenticationSuccessHandler(
         deleteCookie.maxAge = 0
         deleteCookie.isHttpOnly = true
         deleteCookie.path = "/"
+        deleteCookie.secure = true
         response.addCookie(deleteCookie)
 
         logger.debug("Using OIDC origin cookie for redirect: {}", origin)
