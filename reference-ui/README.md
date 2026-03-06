@@ -132,8 +132,8 @@ Start with `api.js` to see how every backend call works, then `auth.js` for toke
 Views are in `src/views/` - each exports a single `render(container, params, search)` function.
 
 Key patterns:
-- `api.js` prepends `/api/` to every path, so `get('/posts')` becomes `fetch('/api/posts')`.
-  The Vite proxy (dev) or nginx (production) strips `/api` before forwarding to the backend.
+- `api.js` prepends the API base URL to every path, so `get('/posts')` becomes `fetch('{API_BASE}/posts')`.
+  The base URL is set at build time via `VITE_API_BASE` (defaults to `/api` for local dev, set to `https://api.bytecode.news` for production).
 - JWT is stored in localStorage and injected automatically by `api.js`.
 - 401 responses clear auth state and redirect to `/login`.
 - Route guards in `router.js` check `auth: true` or `role: 'ADMIN'` before rendering views.
