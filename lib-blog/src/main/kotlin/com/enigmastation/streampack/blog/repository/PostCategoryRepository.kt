@@ -6,6 +6,7 @@ import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 
 /** Manages post-to-category assignments */
 interface PostCategoryRepository : JpaRepository<PostCategory, UUID> {
@@ -16,6 +17,7 @@ interface PostCategoryRepository : JpaRepository<PostCategory, UUID> {
     fun findByCategory(categoryId: UUID): List<PostCategory>
 
     @Modifying
+    @Transactional
     @Query("DELETE FROM PostCategory pc WHERE pc.post.id = :postId")
     fun deleteByPost(postId: UUID)
 }

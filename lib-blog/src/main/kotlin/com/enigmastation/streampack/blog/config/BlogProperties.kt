@@ -8,4 +8,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 data class BlogProperties(
     val serviceId: String = "blog-service",
     val anonymousSubmission: Boolean = false,
+    val siteName: String = "Nevet",
+    val baseUrl: String = "http://localhost:3001",
 )

@@ -236,4 +236,34 @@ class CreateContentOperationTests {
         val response = (result as OperationResult.Success).payload as CreateContentResponse
         assertTrue(response.categories.isEmpty())
     }
+
+    @Test
+    fun `post in system category gets bare slug without date prefix`() {
+        val pagesCategory = categoryRepository.findByName("_pages")!!
+        val request =
+            CreateContentRequest(
+                "About",
+                "About this site.",
+                categoryIds = listOf(pagesCategory.id),
+            )
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals("about", response.slug)
+    }
+
+    @Test
+    fun `post in normal category gets dated slug`() {
+        val category = categoryRepository.save(Category(name = "News", slug = "news"))
+        val request =
+            CreateContentRequest(
+                "Big News",
+                "Something happened.",
+                categoryIds = listOf(category.id),
+            )
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertTrue(response.slug.matches(Regex("\\d{4}/\\d{2}/big-news")))
+    }
 }

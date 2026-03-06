@@ -81,4 +81,12 @@ class FeaturesControllerTests {
             jsonPath("$.anonymousSubmission") { isBoolean() }
         }
     }
+
+    @Test
+    fun `GET features includes siteName`() {
+        mockMvc.get("/features").andExpect {
+            status { isOk() }
+            jsonPath("$.siteName") { isNotEmpty() }
+        }
+    }
 }

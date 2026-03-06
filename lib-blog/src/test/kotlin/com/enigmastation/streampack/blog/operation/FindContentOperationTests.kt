@@ -32,6 +32,7 @@ import java.time.temporal.ChronoUnit
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -437,11 +438,193 @@ class FindContentOperationTests {
     }
 
     @Test
+    fun `anonymous user does not receive markdownSource`() {
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"))
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertNull(detail.markdownSource)
+    }
+
+    @Test
+    fun `other user does not receive markdownSource`() {
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), otherUser)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertNull(detail.markdownSource)
+    }
+
+    @Test
+    fun `author receives markdownSource for own post`() {
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), author)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("# Published", detail.markdownSource)
+    }
+
+    @Test
+    fun `admin receives markdownSource for any post`() {
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), admin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("# Published", detail.markdownSource)
+    }
+
+    @Test
+    fun `FindById as author includes markdownSource`() {
+        val result =
+            eventGateway.process(findMessage(FindContentRequest.FindById(publishedPost.id), author))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("# Published", detail.markdownSource)
+    }
+
+    @Test
+    fun `FindById as anonymous excludes markdownSource`() {
+        val result =
+            eventGateway.process(findMessage(FindContentRequest.FindById(publishedPost.id)))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertNull(detail.markdownSource)
+    }
+
+    @Test
     fun `Search with blank query returns empty`() {
         val result = eventGateway.process(findMessage(FindContentRequest.Search("  ")))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val response = (result as OperationResult.Success).payload as ContentListResponse
         assertEquals(0, response.posts.size)
+    }
+
+    @Test
+    fun `FindByCategory returns posts in named category`() {
+        val category = categoryRepository.save(Category(name = "kotlin", slug = "kotlin"))
+        postCategoryRepository.save(PostCategory(post = publishedPost, category = category))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindByCategory("kotlin")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(1, response.posts.size)
+        assertEquals("Published Post", response.posts[0].title)
+    }
+
+    @Test
+    fun `FindByCategory returns empty for category with no posts`() {
+        categoryRepository.save(Category(name = "empty-cat", slug = "empty-cat"))
+
+        val result =
+            eventGateway.process(findMessage(FindContentRequest.FindByCategory("empty-cat")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(0, response.posts.size)
+        assertEquals(0, response.totalCount)
+    }
+
+    @Test
+    fun `FindPage returns system page by slug`() {
+        val pagesCategory = categoryRepository.findByName("_pages")!!
+        val now = Instant.now()
+        val aboutPost =
+            postRepository.save(
+                Post(
+                    title = "About",
+                    markdownSource = "# About Us",
+                    renderedHtml = "<h1>About Us</h1>",
+                    excerpt = "About this site",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(1, ChronoUnit.HOURS),
+                    author = admin,
+                )
+            )
+        slugRepository.save(Slug(path = "about", post = aboutPost, canonical = true))
+        postCategoryRepository.save(PostCategory(post = aboutPost, category = pagesCategory))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindPage("about")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("About", detail.title)
+        assertEquals("<h1>About Us</h1>", detail.renderedHtml)
+    }
+
+    @Test
+    fun `FindPage returns page from any system category`() {
+        val sidebarCategory = categoryRepository.findByName("_sidebar")!!
+        val now = Instant.now()
+        val sidebarPost =
+            postRepository.save(
+                Post(
+                    title = "Sidebar Page",
+                    markdownSource = "# Sidebar",
+                    renderedHtml = "<h1>Sidebar</h1>",
+                    excerpt = "Sidebar content",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(1, ChronoUnit.HOURS),
+                    author = admin,
+                )
+            )
+        slugRepository.save(Slug(path = "sidebar-page", post = sidebarPost, canonical = true))
+        postCategoryRepository.save(PostCategory(post = sidebarPost, category = sidebarCategory))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindPage("sidebar-page")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("Sidebar Page", detail.title)
+    }
+
+    @Test
+    fun `FindPage returns error for nonexistent page`() {
+        val result = eventGateway.process(findMessage(FindContentRequest.FindPage("no-such-page")))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Page not found", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `FindPublished excludes posts in system categories`() {
+        val sidebarCategory = categoryRepository.findByName("_sidebar")!!
+        val now = Instant.now()
+        val sidebarPost =
+            postRepository.save(
+                Post(
+                    title = "Sidebar Widget",
+                    markdownSource = "sidebar content",
+                    renderedHtml = "<p>sidebar content</p>",
+                    excerpt = "sidebar",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(30, ChronoUnit.MINUTES),
+                    author = admin,
+                )
+            )
+        postCategoryRepository.save(PostCategory(post = sidebarPost, category = sidebarCategory))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindPublished()))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        // Only the original published post, not the sidebar widget
+        assertEquals(1, response.posts.size)
+        assertEquals("Published Post", response.posts[0].title)
     }
 }

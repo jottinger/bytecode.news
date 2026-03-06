@@ -49,6 +49,10 @@ frontend/node_modules/
 frontend/.next/
 frontend/.env.local
 
+### Reference UI ###
+reference-ui/node_modules/
+reference-ui/dist/
+
 ### Playwright ###
 .playwright-mcp/
 newspaper-*.png

@@ -156,6 +156,9 @@
             "format" : "uuid",
             "type" : "string"
           },
+          "markdownSource" : {
+            "type" : "string"
+          },
           "publishedAt" : {
             "format" : "date-time",
             "type" : "string"
@@ -481,6 +484,30 @@
         "required" : [ "accessCount", "attributes", "locked", "selector", "updatedAt" ],
         "type" : "object"
       },
+      "FactoidListResponse" : {
+        "properties" : {
+          "factoids" : {
+            "items" : {
+              "$ref" : "#/components/schemas/FactoidSummaryResponse"
+            },
+            "type" : "array"
+          },
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "factoids", "page", "totalCount", "totalPages" ],
+        "type" : "object"
+      },
       "FactoidSummaryResponse" : {
         "properties" : {
           "accessCount" : {
@@ -531,11 +558,14 @@
             },
             "type" : "array"
           },
+          "siteName" : {
+            "type" : "string"
+          },
           "version" : {
             "$ref" : "#/components/schemas/VersionInfo"
           }
         },
-        "required" : [ "adapters", "ai", "anonymousSubmission", "authentication", "operationGroups", "version" ],
+        "required" : [ "adapters", "ai", "anonymousSubmission", "authentication", "operationGroups", "siteName", "version" ],
         "type" : "object"
       },
       "LoginResponse" : {
@@ -583,78 +613,6 @@
         "required" : [ "code", "email" ],
         "type" : "object"
       },
-      "PageFactoidSummaryResponse" : {
-        "properties" : {
-          "content" : {
-            "items" : {
-              "$ref" : "#/components/schemas/FactoidSummaryResponse"
-            },
-            "type" : "array"
-          },
-          "empty" : {
-            "type" : "boolean"
-          },
-          "first" : {
-            "type" : "boolean"
-          },
-          "last" : {
-            "type" : "boolean"
-          },
-          "number" : {
-            "format" : "int32",
-            "type" : "integer"
-          },
-          "numberOfElements" : {
-            "format" : "int32",
-            "type" : "integer"
-          },
-          "pageable" : {
-            "$ref" : "#/components/schemas/PageableObject"
-          },
-          "size" : {
-            "format" : "int32",
-            "type" : "integer"
-          },
-          "sort" : {
-            "$ref" : "#/components/schemas/SortObject"
-          },
-          "totalElements" : {
-            "format" : "int64",
-            "type" : "integer"
-          },
-          "totalPages" : {
-            "format" : "int32",
-            "type" : "integer"
-          }
-        },
-        "type" : "object"
-      },
-      "PageableObject" : {
-        "properties" : {
-          "offset" : {
-            "format" : "int64",
-            "type" : "integer"
-          },
-          "pageNumber" : {
-            "format" : "int32",
-            "type" : "integer"
-          },
-          "pageSize" : {
-            "format" : "int32",
-            "type" : "integer"
-          },
-          "paged" : {
-            "type" : "boolean"
-          },
-          "sort" : {
-            "$ref" : "#/components/schemas/SortObject"
-          },
-          "unpaged" : {
-            "type" : "boolean"
-          }
-        },
-        "type" : "object"
-      },
       "ProblemDetail" : {
         "properties" : {
           "detail" : {
@@ -690,20 +648,6 @@
           }
         },
         "required" : [ "newRole" ],
-        "type" : "object"
-      },
-      "SortObject" : {
-        "properties" : {
-          "empty" : {
-            "type" : "boolean"
-          },
-          "sorted" : {
-            "type" : "boolean"
-          },
-          "unsorted" : {
-            "type" : "boolean"
-          }
-        },
         "type" : "object"
       },
       "TokenRefreshRequest" : {
@@ -1793,7 +1737,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/PageFactoidSummaryResponse"
+                  "$ref" : "#/components/schemas/FactoidListResponse"
                 }
               }
             },
@@ -1847,6 +1791,50 @@
         "tags" : [ "features-controller" ]
       }
     },
+    "/feed.xml" : {
+      "get" : {
+        "operationId" : "feed",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/xml" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "blog-feed-controller" ]
+      }
+    },
+    "/pages/{slug}" : {
+      "get" : {
+        "operationId" : "getPage",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "page-controller" ]
+      }
+    },
     "/posts" : {
       "get" : {
         "description" : "Returns a paginated list of posts that are approved, not deleted, and have a publishedAt date in the past. Authenticated users also see their own drafts interleaved in the results.",
@@ -1872,6 +1860,14 @@
             "default" : 20,
             "format" : "int32",
             "type" : "integer"
+          }
+        }, {
+          "description" : "Filter by category name",
+          "in" : "query",
+          "name" : "category",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -2301,6 +2297,129 @@
         } ],
         "summary" : "Add a comment to a post",
         "tags" : [ "Comments" ]
+      }
+    },
+    "/sitemap.xml" : {
+      "get" : {
+        "operationId" : "sitemap",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/xml" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "sitemap-controller" ]
+      }
+    },
+    "/ssr/" : {
+      "get" : {
+        "operationId" : "home",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ssr-controller" ]
+      }
+    },
+    "/ssr/pages/{slug}" : {
+      "get" : {
+        "operationId" : "page",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ssr-controller" ]
+      }
+    },
+    "/ssr/posts/{year}/{month}/{slug}" : {
+      "get" : {
+        "operationId" : "post",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "year",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "month",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/html" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "ssr-controller" ]
       }
     }
   },

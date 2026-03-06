@@ -29,6 +29,20 @@ class SlugGenerationService(private val slugRepository: SlugRepository) {
         }
     }
 
+    /** Generate a unique bare slug without date prefix, for system category posts */
+    fun generateBareSlug(title: String): String {
+        val basePath = slugify(title)
+
+        if (slugRepository.resolve(basePath) == null) return basePath
+
+        var suffix = 2
+        while (true) {
+            val candidate = "$basePath-$suffix"
+            if (slugRepository.resolve(candidate) == null) return candidate
+            suffix++
+        }
+    }
+
     /** Convert a title to a URL-safe slug segment */
     fun slugify(title: String): String {
         return title

@@ -1,9 +1,13 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.controller
 
+import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.entity.Post
+import com.enigmastation.streampack.blog.entity.PostCategory
 import com.enigmastation.streampack.blog.entity.Slug
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CategoryRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.core.entity.User
@@ -40,6 +44,8 @@ class PostControllerTests {
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var slugRepository: SlugRepository
     @Autowired lateinit var jwtService: JwtService
+    @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var postCategoryRepository: PostCategoryRepository
 
     private lateinit var verifiedUser: User
     private lateinit var verifiedUserToken: String
@@ -292,5 +298,30 @@ class PostControllerTests {
                 status { isCreated() }
                 jsonPath("$.title") { value("Submitted") }
             }
+    }
+
+    // --- GET /posts?category= ---
+
+    @Test
+    fun `GET posts with category filter returns posts in that category`() {
+        val category = categoryRepository.save(Category(name = "kotlin", slug = "kotlin"))
+        postCategoryRepository.save(PostCategory(post = publishedPost, category = category))
+
+        mockMvc.get("/posts?category=kotlin").andExpect {
+            status { isOk() }
+            jsonPath("$.posts.length()") { value(1) }
+            jsonPath("$.posts[0].title") { value("Published Post") }
+        }
+    }
+
+    @Test
+    fun `GET posts with empty category returns empty list`() {
+        categoryRepository.save(Category(name = "empty", slug = "empty"))
+
+        mockMvc.get("/posts?category=empty").andExpect {
+            status { isOk() }
+            jsonPath("$.posts.length()") { value(0) }
+            jsonPath("$.totalCount") { value(0) }
+        }
     }
 }

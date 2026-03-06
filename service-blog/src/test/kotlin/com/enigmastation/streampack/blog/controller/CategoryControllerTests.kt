@@ -35,7 +35,8 @@ class CategoryControllerTests {
     fun `GET categories returns active categories only`() {
         mockMvc.get("/categories").andExpect {
             status { isOk() }
-            jsonPath("$.length()") { value(2) }
+            // should have _page, _sidebar, kotlin, java
+            jsonPath("$.length()") { value(4) }
             jsonPath("$[0].name") { isNotEmpty() }
             jsonPath("$[0].slug") { isNotEmpty() }
             jsonPath("$[0].id") { isNotEmpty() }

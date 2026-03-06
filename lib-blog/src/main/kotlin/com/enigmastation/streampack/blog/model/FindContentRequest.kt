@@ -12,4 +12,11 @@ sealed interface FindContentRequest {
     data class FindPublished(val page: Int = 0, val size: Int = 20) : FindContentRequest
 
     data class Search(val query: String, val page: Int = 0, val size: Int = 20) : FindContentRequest
+
+    /** Fetch approved posts in a named category, ordered by sortOrder then publishedAt */
+    data class FindByCategory(val categoryName: String, val page: Int = 0, val size: Int = 20) :
+        FindContentRequest
+
+    /** Fetch a single approved page by slug from the _pages system category */
+    data class FindPage(val slug: String) : FindContentRequest
 }

@@ -88,6 +88,7 @@ class EditContentOperation(
                 commentCount = commentRepository.countActiveByPost(updated.id).toInt(),
                 tags = tagNames,
                 categories = categoryNames,
+                markdownSource = updated.markdownSource,
             )
         )
     }

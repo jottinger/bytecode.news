@@ -1,0 +1,65 @@
+/* EasyMDE dark mode overrides for Pico CSS dark theme */
+@media (prefers-color-scheme: dark) {
+  .EasyMDEContainer .CodeMirror {
+    background: var(--pico-background-color);
+    color: var(--pico-color);
+    border-color: var(--pico-muted-border-color);
+  }
+
+  .EasyMDEContainer .CodeMirror-cursor {
+    border-left-color: var(--pico-color);
+  }
+
+  .EasyMDEContainer .CodeMirror-selected {
+    background: var(--pico-primary-focus);
+  }
+
+  .EasyMDEContainer .editor-toolbar {
+    border-color: var(--pico-muted-border-color);
+  }
+
+  .EasyMDEContainer .editor-toolbar button {
+    color: var(--pico-color) !important;
+  }
+
+  .EasyMDEContainer .editor-toolbar button:hover,
+  .EasyMDEContainer .editor-toolbar button.active {
+    background: var(--pico-primary-focus);
+    border-color: var(--pico-muted-border-color);
+  }
+
+  .EasyMDEContainer .editor-toolbar.disabled-for-preview button:not(.no-disable) {
+    color: var(--pico-muted-color) !important;
+  }
+
+  .EasyMDEContainer .editor-preview,
+  .EasyMDEContainer .editor-preview-side {
+    background: var(--pico-background-color);
+    color: var(--pico-color);
+  }
+
+  .EasyMDEContainer .editor-preview pre,
+  .EasyMDEContainer .editor-preview-side pre {
+    background: var(--pico-card-background-color);
+  }
+
+  .EasyMDEContainer .editor-statusbar {
+    color: var(--pico-muted-color);
+  }
+
+  .EasyMDEContainer .CodeMirror .CodeMirror-code .cm-comment {
+    background: transparent;
+  }
+
+  /* highlight.js dark overrides */
+  .EasyMDEContainer .editor-preview .hljs,
+  .EasyMDEContainer .editor-preview-side .hljs,
+  .hljs {
+    background: var(--pico-card-background-color);
+    color: var(--pico-color);
+  }
+
+  .EasyMDEContainer .editor-toolbar .separator {
+    border-left-color: var(--pico-muted-border-color);
+  }
+}
