@@ -5,6 +5,15 @@ import { renderNav } from "./components/nav.js";
 let routes = [];
 const app = () => document.getElementById("app");
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /** Define all application routes */
 function defineRoutes() {
   routes = [
@@ -92,7 +101,9 @@ async function resolve() {
     const search = new URLSearchParams(window.location.search);
     await mod.render(app(), params, search);
   } catch (err) {
-    app().innerHTML = `<article><h2>Error</h2><p>${err.detail || err.message || "Something went wrong"}</p></article>`;
+    const rawMessage = err && (err.detail || err.message) ? (err.detail || err.message) : "Something went wrong";
+    const safeMessage = escapeHtml(rawMessage);
+    app().innerHTML = `<article><h2>Error</h2><p>${safeMessage}</p></article>`;
   }
 }
 
