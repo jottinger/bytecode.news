@@ -59,7 +59,7 @@ class FeedManagementOperationTests {
 
     @BeforeEach
     fun setUp() {
-        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer = HttpServer.create(InetSocketAddress(0), 10)
         httpServer.start()
         baseUrl = "http://localhost:${httpServer.address.port}"
     }
