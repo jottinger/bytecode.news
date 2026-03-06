@@ -86,4 +86,23 @@ class SlugGenerationServiceTests {
         val result = slugGenerationService.generateSlug("Hello World", jan2026)
         assertEquals("2026/01/hello-world", result)
     }
+
+    @Test
+    fun `bare slug has no date prefix`() {
+        val result = slugGenerationService.generateBareSlug("About Us")
+        assertEquals("about-us", result)
+    }
+
+    @Test
+    fun `bare slug handles collision with suffix`() {
+        val post =
+            postRepository.save(
+                Post(title = "Test", markdownSource = "md", renderedHtml = "<p>md</p>")
+            )
+        slugRepository.save(Slug(path = "about", post = post, canonical = true))
+        slugRepository.flush()
+
+        val result = slugGenerationService.generateBareSlug("About")
+        assertEquals("about-2", result)
+    }
 }

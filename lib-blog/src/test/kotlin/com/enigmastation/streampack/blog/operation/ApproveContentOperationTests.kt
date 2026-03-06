@@ -142,6 +142,16 @@ class ApproveContentOperationTests {
     }
 
     @Test
+    fun `approve response includes markdownSource`() {
+        val request = ApproveContentRequest(draftPost.id, Instant.now())
+        val result = eventGateway.process(approveMessage(request, admin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("Draft content to approve.", detail.markdownSource)
+    }
+
+    @Test
     fun `admin approves draft with future publishedAt for scheduling`() {
         val futureDate = Instant.now().plus(7, ChronoUnit.DAYS)
         val request = ApproveContentRequest(draftPost.id, futureDate)

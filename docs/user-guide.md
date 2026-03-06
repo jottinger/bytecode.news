@@ -809,6 +809,69 @@ When `for <pattern>` is omitted, the current channel's provenance is used.
 
 ---
 
+## Site Content Management
+
+Admins can create system pages and sidebar navigation through the normal post workflow.
+The key is **system categories** - categories whose names start with an underscore.
+Posts assigned to system categories behave differently from regular blog posts:
+
+- They don't appear in the public blog feed
+- They get simple slugs without date prefixes (e.g., `about` instead of `2026/03/about`)
+- They're accessed through dedicated URLs rather than the blog post routes
+
+### System Categories
+
+| Category | Purpose | How Content is Displayed |
+|----------|---------|--------------------------|
+| `_pages` | Static site pages (About, Terms, etc.) | No automatic link - referenced explicitly (footer, hardcoded routes) |
+| `_sidebar` | Navigation links in the sidebar | Title shown as a clickable link in the sidebar |
+
+All system category posts are viewable at `/pages/{slug}` regardless of which system category they belong to.
+The category controls *where the link appears*, not whether the content is accessible.
+
+Both categories are created automatically and cannot be deleted.
+
+### Creating a System Page
+
+To create an "About" page:
+
+1. Go to **Submit Post** (or use the admin post creation flow)
+2. Set the title to "About" (or whatever the page should be called)
+3. Write the content in Markdown
+4. Under **Categories**, check `_pages`
+5. Submit the post
+6. Go to **Admin > Pending Posts** and approve it
+
+Once approved, the page is available at `/pages/about`.
+The "About this site" link in the footer already points to `/pages/about`.
+
+### Adding Sidebar Links
+
+To add a link to the sidebar:
+
+1. Create a post with the desired link title
+2. Assign it to the `_sidebar` category
+3. Approve and publish it
+
+The post's title appears as a navigation link in the sidebar.
+If the slug is bare (no date prefix), the link points to `/pages/{slug}`.
+Sidebar items are ordered by the `sortOrder` field (ascending), then by publish date (newest first).
+
+### Managing System Content
+
+All system category content is accessible from **Admin > Content by Category**.
+Select a category from the dropdown to see its posts.
+Click a post title to edit it.
+
+### Tips
+
+- A post can belong to both `_pages` and `_sidebar` - this creates a sidebar link that points to the viewable page.
+For example, an "About" page in both categories appears in the sidebar and is viewable at `/pages/about`.
+- System pages support the full Markdown feature set (tables, fenced code, autolinks).
+- The `sortOrder` field controls the display order of sidebar items.
+Lower numbers appear first.
+Posts with the same sort order are ordered by publish date.
+
 ## Quick Reference
 
 | Command | Addressing | Role | Description |

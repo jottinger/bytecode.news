@@ -38,6 +38,7 @@ class FeaturesController(
     @Value("\${spring.application.name:}") private val applicationName: String,
     @Value("\${streampack.blog.anonymous-submission:false}")
     private val anonymousSubmission: Boolean,
+    @Value("\${streampack.blog.site-name:Nevet}") private val siteName: String,
 ) {
 
     private val cachedResponse: FeaturesResponse = buildResponse()
@@ -56,6 +57,7 @@ class FeaturesController(
         val ai = applicationContext.containsBean("aiService")
 
         return FeaturesResponse(
+            siteName = siteName,
             version = version,
             authentication = authentication,
             operationGroups = operationGroups,

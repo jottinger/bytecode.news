@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nevet - Reference UI</title>
+    <link rel="stylesheet" href="/node_modules/@picocss/pico/css/pico.min.css" />
+    <link rel="alternate" type="application/rss+xml" title="RSS" href="/feed.xml" />
+    <style>
+      /* Minimal layout tweaks beyond Pico defaults */
+      :root { font-size: 16px; }
+      #app { min-height: 60vh; }
+      .sr-only {
+        position: absolute; width: 1px; height: 1px;
+        padding: 0; margin: -1px; overflow: hidden;
+        clip: rect(0,0,0,0); border: 0;
+      }
+      /* Main + sidebar grid layout */
+      .layout-grid {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 2rem;
+        align-items: start;
+      }
+      #sidebar nav {
+        margin-bottom: 1rem;
+      }
+      #sidebar nav strong {
+        display: block;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.6;
+        margin-bottom: 0.25rem;
+      }
+      #sidebar ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      #sidebar li {
+        padding: 0.2rem 0;
+      }
+      @media (max-width: 768px) {
+        .layout-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="container">
+      <nav>
+        <ul><li><strong><a href="/">Nevet</a></strong></li></ul>
+        <ul id="nav"></ul>
+      </nav>
+    </header>
+    <main class="container">
+      <div class="layout-grid" id="layout-grid">
+        <aside id="sidebar"></aside>
+        <div id="app">
+          <article aria-busy="true">Loading...</article>
+        </div>
+      </div>
+    </main>
+    <footer class="container">
+      <small>Code from <a href="https://github.com/jottinger/bytecode.news">ByteCode.News</a>.</small>
+      <small><a href="/about">About</a> | <a href="/terms">Terms of Service</a> | <a href="/privacy">Privacy Policy</a> | <a href="/cookies">Cookie Policy</a></small>
+    </footer>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

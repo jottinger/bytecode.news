@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
+import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.entity.Post
 import com.enigmastation.streampack.blog.entity.PostCategory
 import com.enigmastation.streampack.blog.entity.PostTag
@@ -82,11 +83,21 @@ class CreateContentOperation(
                 )
             )
 
-        val slugPath = slugGenerationService.generateSlug(payload.title, now)
-        slugRepository.save(Slug(path = slugPath, post = post, canonical = true))
-
         val tagNames = assignTags(post, payload.tags ?: emptyList())
-        val categoryNames = assignCategories(post, payload.categoryIds ?: emptyList())
+        val resolvedCategories = resolveCategories(payload.categoryIds ?: emptyList())
+        resolvedCategories.forEach { category ->
+            postCategoryRepository.save(PostCategory(post = post, category = category))
+        }
+        val categoryNames = resolvedCategories.map { it.name }
+
+        val isSystemCategory = categoryNames.any { it.startsWith("_") }
+        val slugPath =
+            if (isSystemCategory) {
+                slugGenerationService.generateBareSlug(payload.title)
+            } else {
+                slugGenerationService.generateSlug(payload.title, now)
+            }
+        slugRepository.save(Slug(path = slugPath, post = post, canonical = true))
 
         logger.info("Post created: {} with slug {}", post.id, slugPath)
 
@@ -123,15 +134,10 @@ class CreateContentOperation(
         return resolved.map { it.name }
     }
 
-    /** Associates existing categories with the post, skipping missing or deleted ones */
-    private fun assignCategories(post: Post, categoryIds: List<java.util.UUID>): List<String> {
-        val resolved =
-            categoryIds.distinct().mapNotNull { id ->
-                categoryRepository.findById(id).orElse(null)?.takeIf { !it.deleted }
-            }
-        resolved.forEach { category ->
-            postCategoryRepository.save(PostCategory(post = post, category = category))
+    /** Resolves category IDs to entities, skipping missing or deleted ones */
+    private fun resolveCategories(categoryIds: List<java.util.UUID>): List<Category> {
+        return categoryIds.distinct().mapNotNull { id ->
+            categoryRepository.findById(id).orElse(null)?.takeIf { !it.deleted }
         }
-        return resolved.map { it.name }
     }
 }

@@ -3,6 +3,7 @@ package com.enigmastation.streampack.features.model
 
 /** Top-level response for GET /features describing backend capabilities */
 data class FeaturesResponse(
+    val siteName: String,
     val version: VersionInfo,
     val authentication: AuthenticationFeatures,
     val operationGroups: List<String>,

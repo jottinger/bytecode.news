@@ -24,8 +24,10 @@ build-if-needed:
 
 # Start db, app, reference-ui, and mailpit for local development
 deploy-dev: build-if-needed
-    docker compose --profile backend --profile reference-ui --profile mail up --build
+    docker compose --profile backend --profile reference-ui --profile mail build --no-cache
+    docker compose --profile backend --profile reference-ui --profile mail up
 
 # Start db, app, and reference-ui
 deploy: build-if-needed
-    docker compose --profile backend --profile reference-ui up --build
+    docker compose --profile backend --profile reference-ui build --no-cache
+    docker compose --profile backend --profile reference-ui up

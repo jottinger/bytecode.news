@@ -3,10 +3,10 @@ package com.enigmastation.streampack.factoid.controller
 
 import com.enigmastation.streampack.factoid.dto.FactoidAttributeResponse
 import com.enigmastation.streampack.factoid.dto.FactoidDetailResponse
+import com.enigmastation.streampack.factoid.dto.FactoidListResponse
 import com.enigmastation.streampack.factoid.dto.FactoidSummaryResponse
 import com.enigmastation.streampack.factoid.entity.Factoid
 import com.enigmastation.streampack.factoid.service.FactoidService
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -26,15 +26,20 @@ class FactoidController(private val factoidService: FactoidService) {
         @RequestParam(required = false) q: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-    ): Page<FactoidSummaryResponse> {
+    ): FactoidListResponse {
         val pageable = PageRequest.of(page, size.coerceAtMost(100))
-        val results: Page<Factoid> =
+        val results =
             if (q.isNullOrBlank()) {
                 factoidService.findAll(pageable)
             } else {
                 factoidService.searchPaginated(q, pageable)
             }
-        return results.map { it.toSummary() }
+        return FactoidListResponse(
+            factoids = results.content.map { it.toSummary() },
+            page = results.number,
+            totalPages = results.totalPages,
+            totalCount = results.totalElements,
+        )
     }
 
     /** Single factoid with all rendered attributes: GET /factoids/{selector} */

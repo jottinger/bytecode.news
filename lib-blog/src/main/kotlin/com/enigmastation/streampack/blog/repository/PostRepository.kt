@@ -39,11 +39,33 @@ interface PostRepository : JpaRepository<Post, UUID> {
     )
     fun findRecentPublishedWithAuthor(now: Instant, pageable: Pageable): List<Post>
 
-    /** Paginated published posts for listing pages */
+    /** Paginated published posts for listing pages, excluding system categories */
     @Query(
-        "SELECT p FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY p.publishedAt DESC"
+        "SELECT p FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\') ORDER BY p.publishedAt DESC",
+        countQuery =
+            "SELECT COUNT(p) FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')",
     )
     fun findPublished(now: Instant, pageable: Pageable): Page<Post>
+
+    /** Posts in a specific category, ordered by sortOrder then publishedAt */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName) ORDER BY p.sortOrder ASC, p.publishedAt DESC",
+        countQuery =
+            "SELECT COUNT(p) FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName)",
+    )
+    fun findByCategory(categoryName: String, now: Instant, pageable: Pageable): Page<Post>
+
+    /** Single published post by slug in a specific category */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT s FROM Slug s WHERE s.post = p AND s.path = :slugPath) AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName)"
+    )
+    fun findByCategoryAndSlug(categoryName: String, slugPath: String, now: Instant): Post?
+
+    /** Single published post by slug in any system category (name starts with _) */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT s FROM Slug s WHERE s.post = p AND s.path = :slugPath) AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')"
+    )
+    fun findBySystemCategoryAndSlug(slugPath: String, now: Instant): Post?
 
     /** Fetch post with author eagerly loaded to avoid LazyInitializationException in DTO mapping */
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.id = :id AND p.deleted = false")

@@ -48,6 +48,8 @@ streampack:
     enabled: ${IRC_ENABLED:false}
   blog:
     anonymous-submission: ${ANONYMOUS_SUBMISSION:false}
+    site-name: ${BLOG_SITE_NAME:Nevet}
+    base-url: ${BLOG_BASE_URL:http://localhost:3001}
   karma:
     immune-subjects: ${KARMA_IMMUNE_SUBJECTS:nevet}
   weather:

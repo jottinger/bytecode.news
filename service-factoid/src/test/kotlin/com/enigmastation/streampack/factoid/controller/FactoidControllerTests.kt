@@ -45,11 +45,11 @@ class FactoidControllerTests {
     fun `GET factoids returns paginated listing`() {
         mockMvc.get("/factoids").andExpect {
             status { isOk() }
-            jsonPath("$.content.length()") { value(3) }
-            jsonPath("$.content[0].selector") { value("java") }
-            jsonPath("$.content[1].selector") { value("kotlin") }
-            jsonPath("$.content[2].selector") { value("spring") }
-            jsonPath("$.totalElements") { value(3) }
+            jsonPath("$.factoids.length()") { value(3) }
+            jsonPath("$.factoids[0].selector") { value("java") }
+            jsonPath("$.factoids[1].selector") { value("kotlin") }
+            jsonPath("$.factoids[2].selector") { value("spring") }
+            jsonPath("$.totalCount") { value(3) }
         }
     }
 
@@ -57,8 +57,8 @@ class FactoidControllerTests {
     fun `GET factoids with page size limits results`() {
         mockMvc.get("/factoids?size=2").andExpect {
             status { isOk() }
-            jsonPath("$.content.length()") { value(2) }
-            jsonPath("$.totalElements") { value(3) }
+            jsonPath("$.factoids.length()") { value(2) }
+            jsonPath("$.totalCount") { value(3) }
             jsonPath("$.totalPages") { value(2) }
         }
     }
@@ -67,8 +67,8 @@ class FactoidControllerTests {
     fun `GET factoids with search query filters results`() {
         mockMvc.get("/factoids?q=spring").andExpect {
             status { isOk() }
-            jsonPath("$.content.length()") { value(1) }
-            jsonPath("$.content[0].selector") { value("spring") }
+            jsonPath("$.factoids.length()") { value(1) }
+            jsonPath("$.factoids[0].selector") { value("spring") }
         }
     }
 
@@ -76,8 +76,8 @@ class FactoidControllerTests {
     fun `GET factoids with search query no matches returns empty page`() {
         mockMvc.get("/factoids?q=nonexistent").andExpect {
             status { isOk() }
-            jsonPath("$.content.length()") { value(0) }
-            jsonPath("$.totalElements") { value(0) }
+            jsonPath("$.factoids.length()") { value(0) }
+            jsonPath("$.totalCount") { value(0) }
         }
     }
 
@@ -158,8 +158,8 @@ class FactoidControllerTests {
     fun `GET factoid listing includes access tracking fields`() {
         mockMvc.get("/factoids").andExpect {
             status { isOk() }
-            jsonPath("$.content[0].accessCount") { value(0) }
-            jsonPath("$.content[0].lastAccessedAt") { doesNotExist() }
+            jsonPath("$.factoids[0].accessCount") { value(0) }
+            jsonPath("$.factoids[0].lastAccessedAt") { doesNotExist() }
         }
     }
 }

@@ -46,6 +46,9 @@ class FindContentOperation(
             is FindContentRequest.FindPublished -> findPublished(payload.page, payload.size)
             is FindContentRequest.Search ->
                 searchPublished(payload.query, payload.page, payload.size)
+            is FindContentRequest.FindByCategory ->
+                findByCategory(payload.categoryName, payload.page, payload.size)
+            is FindContentRequest.FindPage -> findPage(payload.slug, user)
         }
     }
 
@@ -61,7 +64,7 @@ class FindContentOperation(
         }
 
         val canonicalSlug = slugRepository.findCanonical(post.id)
-        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: path))
+        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: path, user))
     }
 
     private fun findById(id: java.util.UUID, user: UserPrincipal?): OperationResult {
@@ -74,7 +77,7 @@ class FindContentOperation(
         }
 
         val canonicalSlug = slugRepository.findCanonical(post.id)
-        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: ""))
+        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: "", user))
     }
 
     private fun findPublished(page: Int, size: Int): OperationResult {
@@ -141,6 +144,46 @@ class FindContentOperation(
         )
     }
 
+    private fun findByCategory(categoryName: String, page: Int, size: Int): OperationResult {
+        val now = Instant.now()
+        val pageResult =
+            postRepository.findByCategory(categoryName, now, PageRequest.of(page, size))
+
+        val summaries =
+            pageResult.content.map { post ->
+                val canonicalSlug = slugRepository.findCanonical(post.id)
+                ContentSummary(
+                    id = post.id,
+                    title = post.title,
+                    slug = canonicalSlug?.path ?: "",
+                    excerpt = post.excerpt,
+                    authorDisplayName = post.author?.displayName ?: "Anonymous",
+                    publishedAt = post.publishedAt,
+                    tags = tagNamesForPost(post.id),
+                    categories = categoryNamesForPost(post.id),
+                )
+            }
+
+        return OperationResult.Success(
+            ContentListResponse(
+                posts = summaries,
+                page = pageResult.number,
+                totalPages = pageResult.totalPages,
+                totalCount = pageResult.totalElements,
+            )
+        )
+    }
+
+    private fun findPage(slug: String, user: UserPrincipal?): OperationResult {
+        val now = Instant.now()
+        val post =
+            postRepository.findBySystemCategoryAndSlug(slug, now)
+                ?: return OperationResult.Error("Page not found")
+
+        val canonicalSlug = slugRepository.findCanonical(post.id)
+        return OperationResult.Success(toDetail(post, canonicalSlug?.path ?: slug, user))
+    }
+
     /** Check visibility rules based on post state and requesting user */
     private fun isVisible(post: Post, user: UserPrincipal?): Boolean {
         val now = Instant.now()
@@ -159,7 +202,13 @@ class FindContentOperation(
         return false
     }
 
-    private fun toDetail(post: Post, slug: String): ContentDetail {
+    private fun toDetail(post: Post, slug: String, user: UserPrincipal? = null): ContentDetail {
+        val canEdit =
+            user != null &&
+                (user.role == Role.ADMIN ||
+                    user.role == Role.SUPER_ADMIN ||
+                    (post.author != null && post.author.id == user.id))
+
         return ContentDetail(
             id = post.id,
             title = post.title,
@@ -175,6 +224,7 @@ class FindContentOperation(
             commentCount = commentRepository.countActiveByPost(post.id).toInt(),
             tags = tagNamesForPost(post.id),
             categories = categoryNamesForPost(post.id),
+            markdownSource = if (canEdit) post.markdownSource else null,
         )
     }
 

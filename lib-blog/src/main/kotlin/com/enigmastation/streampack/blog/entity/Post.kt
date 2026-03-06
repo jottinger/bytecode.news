@@ -14,7 +14,9 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import java.time.Instant
 import java.util.UUID
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.UuidGenerator
+import org.hibernate.type.SqlTypes
 
 /** Blog post with markdown source and pre-rendered HTML */
 @Entity
@@ -33,4 +35,8 @@ data class Post(
     @Column(nullable = false) val createdAt: Instant = Instant.now(),
     @Column(nullable = false) val updatedAt: Instant = Instant.now(),
     @Column(nullable = false) val deleted: Boolean = false,
+    @Column(nullable = false) val sortOrder: Int = 0,
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb", nullable = false)
+    val metadata: Map<String, Any> = emptyMap(),
 )

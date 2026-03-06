@@ -28,6 +28,7 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -159,6 +160,18 @@ class EditContentOperationTests {
         assertTrue(detail.renderedHtml.contains("<h1>Updated</h1>"))
         assertTrue(detail.renderedHtml.contains("<p>New content here.</p>"))
         assertTrue(detail.excerpt!!.contains("New content here"))
+    }
+
+    @Test
+    fun `edit response includes markdownSource`() {
+        val request =
+            EditContentRequest(draftPost.id, "Updated Title", "# Updated\n\nNew content here.")
+        val result = eventGateway.process(editMessage(request, author))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertNotNull(detail.markdownSource)
+        assertEquals("# Updated\n\nNew content here.", detail.markdownSource)
     }
 
     @Test

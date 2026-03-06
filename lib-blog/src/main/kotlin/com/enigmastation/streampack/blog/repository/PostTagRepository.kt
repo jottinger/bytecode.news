@@ -6,6 +6,7 @@ import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 
 /** Manages post-to-tag assignments */
 interface PostTagRepository : JpaRepository<PostTag, UUID> {
@@ -16,6 +17,7 @@ interface PostTagRepository : JpaRepository<PostTag, UUID> {
     fun findByTag(tagId: UUID): List<PostTag>
 
     @Modifying
+    @Transactional
     @Query("DELETE FROM PostTag pt WHERE pt.post.id = :postId")
     fun deleteByPost(postId: UUID)
 }

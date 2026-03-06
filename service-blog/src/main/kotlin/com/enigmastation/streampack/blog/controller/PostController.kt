@@ -72,10 +72,18 @@ class PostController(
         @Parameter(description = "Number of posts per page", example = "20")
         @RequestParam(defaultValue = "20")
         size: Int,
+        @Parameter(description = "Filter by category name")
+        @RequestParam(required = false)
+        category: String?,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
-        val payload = FindContentRequest.FindPublished(page, size)
+        val payload =
+            if (category != null) {
+                FindContentRequest.FindByCategory(category, page, size)
+            } else {
+                FindContentRequest.FindPublished(page, size)
+            }
         return dispatch(payload, "posts/list", user) { result -> mapError(result) }
     }
 

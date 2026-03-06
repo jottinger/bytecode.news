@@ -20,4 +20,5 @@ data class ContentDetail(
     val commentCount: Int = 0,
     val tags: List<String> = emptyList(),
     val categories: List<String> = emptyList(),
+    val markdownSource: String? = null,
 )

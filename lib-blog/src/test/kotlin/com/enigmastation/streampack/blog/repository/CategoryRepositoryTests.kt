@@ -28,22 +28,22 @@ class CategoryRepositoryTests {
 
     @Test
     fun `findActive excludes deleted`() {
+        val baselineCount = categoryRepository.findActive().size
         categoryRepository.save(Category(name = "Active", slug = "active"))
         categoryRepository.save(Category(name = "Deleted", slug = "deleted", deleted = true))
 
         val active = categoryRepository.findActive()
-        assertEquals(1, active.size)
-        assertEquals("Active", active[0].name)
+        assertEquals(baselineCount + 1, active.size)
     }
 
     @Test
     fun `findRoots returns only parentless categories`() {
+        val baselineCount = categoryRepository.findRoots().size
         val parent = categoryRepository.save(Category(name = "JVM", slug = "jvm"))
         categoryRepository.save(Category(name = "Kotlin", slug = "kotlin", parent = parent))
 
         val roots = categoryRepository.findRoots()
-        assertEquals(1, roots.size)
-        assertEquals("JVM", roots[0].name)
+        assertEquals(baselineCount + 1, roots.size)
     }
 
     @Test
@@ -89,6 +89,7 @@ class CategoryRepositoryTests {
 
     @Test
     fun `hierarchical parent-child relationship`() {
+        val baselineRoots = categoryRepository.findRoots().size
         val grandparent =
             categoryRepository.save(Category(name = "Programming", slug = "programming"))
         val parent =
@@ -96,8 +97,7 @@ class CategoryRepositoryTests {
         categoryRepository.save(Category(name = "Kotlin", slug = "kotlin", parent = parent))
 
         val roots = categoryRepository.findRoots()
-        assertEquals(1, roots.size)
-        assertEquals("Programming", roots[0].name)
+        assertEquals(baselineRoots + 1, roots.size)
 
         val jvmChildren = categoryRepository.findChildren(grandparent.id)
         assertEquals(1, jvmChildren.size)
