@@ -29,10 +29,16 @@ export async function render(container) {
 
       ${categoryOptions ? `<fieldset><legend>Categories</legend>${categoryOptions}</fieldset>` : ""}
 
+      <div style="position:absolute;left:-9999px" aria-hidden="true">
+        <input type="text" name="website" tabindex="-1" autocomplete="off" />
+      </div>
+
       <button type="submit">Submit Draft</button>
       <div id="submit-status"></div>
     </form>
   `;
+
+  const formLoadedAt = Date.now();
 
   document.getElementById("submit-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -50,6 +56,8 @@ export async function render(container) {
         markdownSource: fd.get("markdownSource"),
         tags,
         categoryIds,
+        website: fd.get("website"),
+        formLoadedAt,
       });
       status.innerHTML = `<p>Draft created. <a href="/posts/${escapeHtml(result.slug)}">View post</a></p>`;
     } catch (err) {

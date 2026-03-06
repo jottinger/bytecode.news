@@ -708,9 +708,10 @@ Only searches published, non-deleted posts.
 ### POST /posts
 
 Submit a new blog post as a draft.
-Requires a verified email.
+When `streampack.blog.anonymous-submission` is `false` (the default), authentication is required.
+When `true`, anonymous submissions are accepted.
 
-**Auth**: Required (Bearer token, email verified)
+**Auth**: Required when anonymous submission is disabled; optional when enabled
 
 **Request**:
 ```json
@@ -718,13 +719,22 @@ Requires a verified email.
   "title": "Understanding Virtual Threads",
   "markdownSource": "Virtual threads change the concurrency model...",
   "tags": ["java", "concurrency"],
-  "categoryIds": ["01234567-89ab-7def-8123-456789abcdef"]
+  "categoryIds": ["01234567-89ab-7def-8123-456789abcdef"],
+  "website": "",
+  "formLoadedAt": 1709740800000
 }
 ```
 
 `tags` and `categoryIds` are optional (default empty).
 Tags are created automatically if they don't exist yet.
 Category IDs that don't exist or point to deleted categories are silently skipped.
+
+**Spam prevention fields**:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `website` | string? | Honeypot field. Frontends must include it as a hidden form field (hidden via CSS, not `type="hidden"`). Leave empty. If a bot auto-fills it, the submission is silently rejected with a fake 201 response. |
+| `formLoadedAt` | long | Epoch milliseconds when the form was rendered. Frontends must set this to `Date.now()` on form load. Required. Submissions arriving less than 3 seconds after form load are silently rejected with a fake 201 response. Submissions omitting this field are also silently rejected. |
 
 **Success (201)**:
 ```json
@@ -746,7 +756,7 @@ Category IDs that don't exist or point to deleted categories are silently skippe
 
 | Status | Condition | Detail |
 |--------|-----------|--------|
-| 401 | Missing/invalid token | "Authentication required" |
+| 401 | No auth token and anonymous submission disabled | "Authentication required" |
 | 400 | Email not verified | "Email verification required" |
 | 400 | Blank title | "Title is required" |
 | 400 | Blank content | "Content is required" |
@@ -1093,7 +1103,7 @@ Hidden from selection, existing post associations preserved.
 | GET | `/posts` | No | List published posts |
 | GET | `/posts/{year}/{month}/{slug}` | No | Get single post |
 | GET | `/posts/search?q=` | No | Search published posts |
-| POST | `/posts` | Yes (verified) | Submit new post (draft) |
+| POST | `/posts` | Conditional | Submit new post (draft) |
 | PUT | `/posts/{id}` | Yes | Edit post |
 | GET | `/admin/posts/pending` | Admin+ | List drafts for review |
 | PUT | `/admin/posts/{id}/approve` | Admin+ | Approve and schedule post |
@@ -1211,12 +1221,14 @@ No runtime environment details (usernames, channels, OIDC keys, OS info, paths, 
   },
   "operationGroups": ["21-matches", "ask", "calc", "cal", "factoid", "hangman"],
   "adapters": ["blog", "console", "discord", "irc", "mail", "slack"],
-  "ai": false
+  "ai": false,
+  "anonymousSubmission": false
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `anonymousSubmission` | boolean | True when unauthenticated post submission is allowed |
 | `version.name` | string | Application name |
 | `version.version` | string? | Build version, null in development |
 | `version.commit` | string? | Short git commit hash |

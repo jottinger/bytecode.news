@@ -5,4 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 /** Configuration for the blog service module */
 @ConfigurationProperties(prefix = "streampack.blog")
-data class BlogProperties(val serviceId: String = "blog-service")
+data class BlogProperties(
+    val serviceId: String = "blog-service",
+    /** When false, unauthenticated POST /posts returns 401 */
+    val anonymousSubmission: Boolean = false,
+)

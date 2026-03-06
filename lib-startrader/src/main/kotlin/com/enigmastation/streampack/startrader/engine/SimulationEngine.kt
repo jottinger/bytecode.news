@@ -34,7 +34,7 @@ class SimulationEngine(
         config: SimulationConfig,
         deltas: List<SupplyDelta> = emptyList(),
     ): UniverseState {
-        logger.info("Tick {} starting ({} external deltas)", state.tickCount + 1, deltas.size)
+        logger.debug("Tick {} starting ({} external deltas)", state.tickCount + 1, deltas.size)
 
         var current = state.copy(tickCount = state.tickCount + 1)
         val preTickSupply = snapshotSupply(current)
@@ -60,7 +60,7 @@ class SimulationEngine(
         // Phase 7: Tick summary
         current = appendTickSummary(current, preTickSupply, config)
 
-        logger.info("Tick {} complete", current.tickCount)
+        logger.debug("Tick {} complete", current.tickCount)
         return current
     }
 

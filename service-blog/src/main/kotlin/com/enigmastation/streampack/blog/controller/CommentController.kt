@@ -59,7 +59,7 @@ class CommentController(
         description = "Post not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @GetMapping("/posts/{year}/{month}/{slug}/comments")
+    @GetMapping("/posts/{year}/{month}/{slug}/comments", produces = ["application/json"])
     fun getComments(
         @PathVariable @Schema(minimum = "2007", maximum = "3000") year: Int,
         @PathVariable @Schema(minimum = "1", maximum = "12") month: Int,
@@ -91,7 +91,11 @@ class CommentController(
         description = "Post or parent comment not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PostMapping("/posts/{year}/{month}/{slug}/comments")
+    @PostMapping(
+        "/posts/{year}/{month}/{slug}/comments",
+        produces = ["application/json"],
+        consumes = ["application/json"],
+    )
     fun createComment(
         @PathVariable @Schema(minimum = "2007", maximum = "3000") year: Int,
         @PathVariable @Schema(minimum = "1", maximum = "12") month: Int,
@@ -134,7 +138,7 @@ class CommentController(
         description = "Comment not found",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PutMapping("/comments/{id}")
+    @PutMapping("/comments/{id}", produces = ["application/json"], consumes = ["application/json"])
     fun editComment(
         @PathVariable id: UUID,
         @RequestBody request: EditCommentHttpRequest,

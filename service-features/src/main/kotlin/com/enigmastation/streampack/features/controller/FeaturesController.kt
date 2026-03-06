@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.features.controller
 
+import com.enigmastation.streampack.blog.config.BlogProperties
 import com.enigmastation.streampack.core.service.Operation
 import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.features.model.AuthenticationFeatures
@@ -31,6 +32,7 @@ class FeaturesController(
     private val operations: List<Operation>,
     private val protocolAdapters: List<ProtocolAdapter>,
     private val applicationContext: ApplicationContext,
+    private val blogProperties: BlogProperties,
     @Autowired(required = false) private val buildProperties: BuildProperties?,
     @Autowired(required = false) private val gitProperties: GitProperties?,
     @Autowired(required = false)
@@ -40,7 +42,7 @@ class FeaturesController(
 
     private val cachedResponse: FeaturesResponse = buildResponse()
 
-    @GetMapping("/features")
+    @GetMapping("/features", produces = ["application/json"])
     fun getFeatures(): ResponseEntity<FeaturesResponse> =
         ResponseEntity.ok()
             .cacheControl(CacheControl.maxAge(java.time.Duration.ofHours(1)).cachePublic())
@@ -59,6 +61,7 @@ class FeaturesController(
             operationGroups = operationGroups,
             adapters = adapters,
             ai = ai,
+            anonymousSubmission = blogProperties.anonymousSubmission,
         )
     }
 

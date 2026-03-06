@@ -840,6 +840,7 @@ Rotate: `find /backups -name "nevet-*.dump" -mtime +30 -delete`.
 | `AI_ENABLED` | `false` | Enable AI services |
 | `ANTHROPIC_API_KEY` | (empty) | Anthropic API key |
 | `OPENWEATHERMAP_API_KEY` | | OpenWeatherMap API key |
+| `ANONYMOUS_SUBMISSION` | `false` | Allow unauthenticated post submissions |
 | `KARMA_IMMUNE_SUBJECTS` | `nevet` | Comma-separated karma-immune names |
 | `GOOGLE_CLIENT_ID` | | Google OAuth2 client ID (requires `oidc` profile) |
 | `GOOGLE_CLIENT_SECRET` | | Google OAuth2 client secret (requires `oidc` profile) |

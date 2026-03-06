@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 class FactoidController(private val factoidService: FactoidService) {
 
     /** Paginated listing with optional search: GET /factoids?q=term&page=0&size=20 */
-    @GetMapping
+    @GetMapping(produces = ["application/json"])
     fun list(
         @RequestParam(required = false) q: String?,
         @RequestParam(defaultValue = "0") page: Int,
@@ -38,7 +38,7 @@ class FactoidController(private val factoidService: FactoidService) {
     }
 
     /** Single factoid with all rendered attributes: GET /factoids/{selector} */
-    @GetMapping("/{selector}")
+    @GetMapping("/{selector}", produces = ["application/json"])
     fun get(@PathVariable selector: String): ResponseEntity<FactoidDetailResponse> {
         val attributes = factoidService.findBySelector(selector)
         if (attributes.isEmpty()) {
