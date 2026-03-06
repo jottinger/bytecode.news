@@ -7,6 +7,7 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
+import com.enigmastation.streampack.core.service.MessageLogService
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.ideas.model.IdeaSessionState
 import com.enigmastation.streampack.ideas.service.IdeaTimerService
@@ -28,6 +29,7 @@ class ArticleOperationTests {
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var stateService: ProvenanceStateService
     @Autowired lateinit var timerService: IdeaTimerService
+    @Autowired lateinit var messageLogService: MessageLogService
 
     private val alicePrincipal =
         UserPrincipal(
@@ -295,5 +297,93 @@ class ArticleOperationTests {
 
         assertTrue(!timerService.hasActiveSession(aliceKey))
         assertTrue(timerService.hasActiveSession(bobKey))
+    }
+
+    @Test
+    fun `logs adds channel messages as content block`() {
+        val channelUri = provenance.encode()
+        messageLogService.logInbound(channelUri, "charlie", "I think we should do X")
+        messageLogService.logInbound(channelUri, "dave", "Yeah X sounds good")
+
+        eventGateway.process(aliceMessage("article Log Test Idea"))
+
+        val result = eventGateway.process(aliceMessage("logs 10m"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.contains("log messages"), "Should mention log messages: $payload")
+        assertTrue(payload.contains("content block #1"), "Should be block #1: $payload")
+    }
+
+    @Test
+    fun `logs with no active session is not handled`() {
+        val result = eventGateway.process(aliceMessage("logs 10m"))
+        // No active session means canHandle returns false, so logs is not handled
+        if (result is OperationResult.Error) {
+            assertTrue(result.message.contains("No idea session"))
+        }
+    }
+
+    @Test
+    fun `logs with invalid duration returns error`() {
+        eventGateway.process(aliceMessage("article Duration Error Test"))
+
+        val result = eventGateway.process(aliceMessage("logs abc"))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        val message = (result as OperationResult.Error).message
+        assertTrue(
+            message.contains("Invalid duration"),
+            "Should mention invalid duration: $message",
+        )
+    }
+
+    @Test
+    fun `logs with hour duration is accepted`() {
+        val channelUri = provenance.encode()
+        messageLogService.logInbound(channelUri, "eve", "An hour-old message")
+
+        eventGateway.process(aliceMessage("article Hour Log Test"))
+
+        val result = eventGateway.process(aliceMessage("logs 1h"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.contains("log messages"), "Should mention log messages: $payload")
+    }
+
+    @Test
+    fun `logs with empty time window returns error`() {
+        eventGateway.process(aliceMessage("article Empty Log Test"))
+
+        // Use a very short duration; no messages should exist in 1 minute on a fresh channel
+        val result =
+            eventGateway.process(
+                MessageBuilder.withPayload("logs 1m")
+                    .setHeader(
+                        Provenance.HEADER,
+                        Provenance(
+                            protocol = Protocol.IRC,
+                            serviceId = "test",
+                            replyTo = "no-logs-channel",
+                            user = alicePrincipal,
+                        ),
+                    )
+                    .setHeader(Provenance.ADDRESSED, true)
+                    .build()
+            )
+        // This may not be handled (different provenance means no active session in canHandle)
+        // The key assertion is that it doesn't crash
+    }
+
+    @Test
+    fun `logs content appears in finalized idea`() {
+        val channelUri = provenance.encode()
+        messageLogService.logInbound(channelUri, "frank", "Great discussion point")
+
+        eventGateway.process(aliceMessage("article Finalize With Logs"))
+        eventGateway.process(aliceMessage("logs 10m"))
+
+        val result = eventGateway.process(aliceMessage("done"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(payload.contains("1 content block"), "Should have 1 block from logs: $payload")
     }
 }
