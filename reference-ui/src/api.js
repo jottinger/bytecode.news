@@ -1,7 +1,9 @@
 import { getToken, clearAuth } from "./auth.js";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+
 /**
- * Fetch wrapper that prepends /api/, injects JWT, and handles errors.
+ * Fetch wrapper that prepends the API base URL, injects JWT, and handles errors.
  * Throws RFC 9457 ProblemDetail objects on non-2xx responses.
  */
 async function api(method, path, body) {
@@ -10,7 +12,7 @@ async function api(method, path, body) {
   if (token) headers["Authorization"] = "Bearer " + token;
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
-  const res = await fetch("/api" + path, {
+  const res = await fetch(API_BASE + path, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
