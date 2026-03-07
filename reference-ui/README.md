@@ -147,28 +147,77 @@ Key patterns:
 - **Pico CSS** - classless semantic CSS, styles `<article>`, `<nav>`, `<form>` directly
 - **pushState routing** - real URLs, requires `try_files` for production nginx
 
-## Production Deployment
+## Production Deployment (Docker)
 
-Build the static files:
+The reference UI ships as a Docker image with nginx serving the SPA and proxying crawler/feed requests to the backend.
+
+### Environment variables
+
+| Variable | Build/Runtime | Default | Purpose |
+|----------|---------------|---------|---------|
+| `VITE_API_BASE` | Build (`--build-arg`) | `/api` | API base URL baked into the JS bundle. Set to the full backend URL for production (e.g. `https://api.bytecode.news`). |
+| `BACKEND_HOST` | Runtime (`-e`) | `backend:8080` | Host used by nginx for server-side proxies (sitemap, RSS feed, SSR). Not used by the browser. |
+
+### Build
 
 ```bash
-npm run build
+docker build --no-cache \
+  --build-arg VITE_API_BASE=https://api.bytecode.news \
+  -t reference-ui reference-ui/
 ```
 
-This produces a `dist/` directory.
-Serve it with nginx using `try_files` for SPA routing:
+`VITE_API_BASE` is baked in at build time - the browser fetches directly from this URL.
+Omit it for local dev (defaults to `/api`, which the Vite proxy or nginx forwards to the backend).
+
+### Run
+
+```bash
+docker run -d --name reference-ui \
+  -e BACKEND_HOST=host.docker.internal:8080 \
+  --add-host host.docker.internal:host-gateway \
+  -p 3001:3001 \
+  reference-ui
+```
+
+`BACKEND_HOST` tells nginx where to proxy sitemap, RSS feed, and SSR requests.
+Use `host.docker.internal:8080` when the Java backend runs on the host machine.
+The `--add-host` flag makes `host.docker.internal` resolve inside the container.
+
+### External reverse proxy
+
+An external nginx handles SSL and forwards to the container:
 
 ```nginx
-location / {
-    root /opt/nevet/reference-ui/dist;
-    try_files $uri $uri/ /index.html;
+server {
+    listen 443 ssl;
+    server_name bytecode.news;
+
+    # SSL certs managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/bytecode.news/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/bytecode.news/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 }
 ```
 
-See the main project's `deploy/nginx/bytecode.news.conf` for the full server block, and [docs/deployment.md](../docs/deployment.md#reference-ui-production-deployment) for the complete production deployment guide.
+### Backend configuration
 
 Set `FRONTEND_URL` on the backend to this frontend's public URL if OIDC is configured.
 Add this frontend's origin to `CORS_ORIGINS`.
+
+### What nginx proxies vs. what the browser handles
+
+The browser (SPA) talks directly to `VITE_API_BASE` for all API calls - no proxy involved.
+Nginx only proxies requests that browsers don't initiate directly:
+- `/sitemap.xml` - search engine crawlers
+- `/feed.xml` - RSS readers
+- `/ssr/*` - server-side rendered pages for crawler user-agents (internal rewrites only)
 
 ## Troubleshooting
 
