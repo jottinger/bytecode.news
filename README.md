@@ -1,7 +1,7 @@
 # Nevet
 
 A content hub and knowledge management system built on Enterprise Application Integration (EAI) principles.
-The initial deployment target is [jvm.news](https://jvm.news), a community-driven JVM ecosystem news site.
+The initial deployment target is [bytecode.news](https://bytecode.news), a community-driven JVM ecosystem news site.
 
 ## Prerequisites
 
