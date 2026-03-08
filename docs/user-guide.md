@@ -587,6 +587,7 @@ Watch GitHub repositories for new issues, pull requests, and releases.
 - When a repo is webhook-enabled, it is removed from the polling schedule; new events flow in real time via the webhook.
 - Re-running `github webhook owner/repo` rotates the secret.
 - Supported webhook events: `issues` (opened), `pull_request` (opened), `release` (published), and `ping`.
+- `ping` is treated as setup verification and is propagated to active subscriptions for the repository.
 - Unsupported GitHub event types are accepted and ignored; Nevet logs them as warnings to help decide future support.
 
 ---

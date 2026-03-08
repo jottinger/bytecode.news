@@ -15,7 +15,10 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import jakarta.servlet.http.HttpServletRequest
 import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+import java.security.DigestException
 import java.security.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -24,7 +27,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -63,15 +65,16 @@ class GitHubWebhookController(
         consumes = [MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE]
     )
     fun receive(
-        @RequestBody body: ByteArray,
         @RequestHeader("X-Hub-Signature-256", required = false) signature: String?,
         @RequestHeader("X-GitHub-Event", required = false) event: String?,
         @RequestHeader("X-GitHub-Delivery", required = false) deliveryId: String?,
         @RequestHeader("Content-Type", required = false) contentType: String?,
+        request: HttpServletRequest,
     ): ResponseEntity<Void> {
         if (signature.isNullOrBlank() || event.isNullOrBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
+        val body = request.inputStream.readAllBytes()
         if (event !in supportedEvents) {
             logger.warn(
                 "Ignoring unsupported GitHub event '{}' (deliveryId={})",
@@ -115,7 +118,15 @@ class GitHubWebhookController(
             }
 
         if (!verifySignature(signature, secret, body)) {
-            logger.warn("Invalid GitHub webhook signature for {}", fullName)
+            logger.warn(
+                "Invalid GitHub webhook signature for {} (deliveryId={}, event={}, contentType={}, bodyBytes={}, bodySha256={})",
+                fullName,
+                deliveryId ?: "unknown",
+                event,
+                contentType ?: "unknown",
+                body.size,
+                sha256Hex(body).take(16),
+            )
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
         if (!deliveryId.isNullOrBlank() && deliveryTracker.isDuplicate(deliveryId)) {
@@ -141,7 +152,10 @@ class GitHubWebhookController(
                 val releaseEvent = objectMapper.treeToValue(root, GitHubReleaseEvent::class.java)
                 webhookService.handleRelease(repo, releaseEvent)
             }
-            "ping" -> logger.info("Received GitHub webhook ping for {}", fullName)
+            "ping" -> {
+                logger.info("Received GitHub webhook ping for {}", fullName)
+                webhookService.handlePing(repo, root.path("zen").asText(null))
+            }
         }
         return ResponseEntity.status(HttpStatus.ACCEPTED).build()
     }
@@ -150,40 +164,56 @@ class GitHubWebhookController(
         if (contentType?.startsWith(MediaType.APPLICATION_FORM_URLENCODED_VALUE) != true) {
             return body
         }
-        val encoded =
-            body
-                .toString(Charsets.UTF_8)
+        val form = body.toString(StandardCharsets.UTF_8)
+        val payloadField =
+            form
                 .split("&")
-                .firstOrNull { it.startsWith("payload=") }
-                ?.substringAfter("payload=") ?: return null
-        val decoded = URLDecoder.decode(encoded, Charsets.UTF_8)
-        return decoded.toByteArray(Charsets.UTF_8)
+                .mapNotNull { token ->
+                    val pair = token.split("=", limit = 2)
+                    val key = URLDecoder.decode(pair[0], StandardCharsets.UTF_8)
+                    val value = pair.getOrNull(1) ?: ""
+                    if (key == "payload") value else null
+                }
+                .firstOrNull() ?: return null
+        val decoded = URLDecoder.decode(payloadField, StandardCharsets.UTF_8)
+        return decoded.toByteArray(StandardCharsets.UTF_8)
     }
 
     private fun verifySignature(header: String, secret: String, body: ByteArray): Boolean {
         if (!header.startsWith("sha256=")) return false
         val expectedHex = header.removePrefix("sha256=")
+        if (expectedHex.length != 64) return false
         val mac = Mac.getInstance("HmacSHA256")
         mac.init(SecretKeySpec(secret.toByteArray(Charsets.UTF_8), "HmacSHA256"))
-        val actual = mac.doFinal(body)
-        val actualHex = actual.joinToString("") { "%02x".format(it) }
-        val expectedBytes = hexToBytes(expectedHex)
-        val actualBytes = hexToBytes(actualHex)
+        val actualBytes = mac.doFinal(body)
+        val expectedBytes =
+            try {
+                hexToBytes(expectedHex)
+            } catch (_: DigestException) {
+                return false
+            }
         if (expectedBytes.size != actualBytes.size) return false
         return MessageDigest.isEqual(expectedBytes, actualBytes)
     }
 
     private fun hexToBytes(input: String): ByteArray {
         val clean = input.trim()
+        if (clean.length % 2 != 0) throw DigestException("Invalid hex length")
         val data = ByteArray(clean.length / 2)
         var i = 0
         while (i < clean.length) {
             val first = Character.digit(clean[i], 16)
             val second = Character.digit(clean[i + 1], 16)
+            if (first < 0 || second < 0) throw DigestException("Invalid hex value")
             data[i / 2] = ((first shl 4) + second).toByte()
             i += 2
         }
         return data
+    }
+
+    private fun sha256Hex(bytes: ByteArray): String {
+        val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
+        return digest.joinToString("") { "%02x".format(it) }
     }
 
     companion object {

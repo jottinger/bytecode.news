@@ -8,14 +8,24 @@ import com.enigmastation.streampack.github.repository.GitHubRepoRepository
 import com.enigmastation.streampack.github.repository.GitHubSubscriptionRepository
 import com.enigmastation.streampack.github.service.WebhookSecretCipher
 import java.net.URLEncoder
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.text.Charsets
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Bean
+import org.springframework.messaging.SubscribableChannel
+import com.enigmastation.streampack.core.integration.EgressSubscriber
+import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Provenance
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
@@ -26,15 +36,39 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class GitHubWebhookControllerTests {
 
+    @TestConfiguration
+    class CapturingConfig {
+        @Bean
+        fun capturingSubscriber(
+            @Qualifier("egressChannel") egressChannel: SubscribableChannel
+        ): CapturingSubscriber {
+            val subscriber = CapturingSubscriber()
+            egressChannel.subscribe(subscriber)
+            return subscriber
+        }
+    }
+
+    class CapturingSubscriber : EgressSubscriber() {
+        val captured = CopyOnWriteArrayList<Pair<OperationResult, Provenance>>()
+
+        override fun matches(provenance: Provenance): Boolean = true
+
+        override fun deliver(result: OperationResult, provenance: Provenance) {
+            captured.add(result to provenance)
+        }
+    }
+
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var repoRepository: GitHubRepoRepository
     @Autowired lateinit var subscriptionRepository: GitHubSubscriptionRepository
     @Autowired lateinit var cipher: WebhookSecretCipher
+    @Autowired lateinit var capturingSubscriber: CapturingSubscriber
 
     private val secret = "integration-secret"
 
     @BeforeEach
     fun seedRepo() {
+        capturingSubscriber.captured.clear()
         subscriptionRepository.deleteAll()
         repoRepository.deleteAll()
         val repo =
@@ -107,6 +141,58 @@ class GitHubWebhookControllerTests {
     }
 
     @Test
+    fun `form encoded payload is accepted when payload is not first field`() {
+        val jsonPayload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":1,"title":"Test issue","html_url":"https://github.com/owner/repo/issues/1"}
+        }"""
+        val formBody =
+            "foo=bar&payload=${URLEncoder.encode(jsonPayload, Charsets.UTF_8)}&empty="
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_FORM_URLENCODED
+                content = formBody
+                header("X-GitHub-Event", "issues")
+                header("X-Hub-Signature-256", sign(formBody.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+    }
+
+    @Test
+    fun `form encoded payload with charset suffix is accepted`() {
+        val jsonPayload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":1,"title":"Test issue","html_url":"https://github.com/owner/repo/issues/1"}
+        }"""
+        val formBody = "payload=${URLEncoder.encode(jsonPayload, Charsets.UTF_8)}"
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.parseMediaType("application/x-www-form-urlencoded; charset=utf-8")
+                content = formBody
+                header("X-GitHub-Event", "issues")
+                header("X-Hub-Signature-256", sign(formBody.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+    }
+
+    @Test
+    fun `form encoded payload missing payload field returns 400`() {
+        val formBody = "foo=bar"
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_FORM_URLENCODED
+                content = formBody
+                header("X-GitHub-Event", "issues")
+                header("X-Hub-Signature-256", sign(formBody.toByteArray()))
+            }
+            .andExpect { status { isBadRequest() } }
+    }
+
+    @Test
     fun `ping event is accepted`() {
         val payload =
             """{
@@ -122,6 +208,39 @@ class GitHubWebhookControllerTests {
                 header("X-Hub-Signature-256", sign(payload.toByteArray()))
             }
             .andExpect { status { isAccepted() } }
+
+        assertEquals(1, capturingSubscriber.captured.size)
+        val (result, provenance) = capturingSubscriber.captured[0]
+        assertEquals("console:///local", provenance.encode())
+        assertTrue(result is OperationResult.Success)
+        assertTrue(
+            (result as OperationResult.Success)
+                .payload
+                .toString()
+                .contains("[owner/repo] Webhook ping received - setup verified."),
+        )
+    }
+
+    @Test
+    fun `ping event with no subscriptions does not fan out`() {
+        subscriptionRepository.deleteAll()
+        capturingSubscriber.captured.clear()
+        val payload =
+            """{
+            "zen":"Keep it logically awesome.",
+            "hook_id":12345,
+            "repository":{"full_name":"owner/repo"}
+        }"""
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "ping")
+                header("X-Hub-Signature-256", sign(payload.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+
+        assertEquals(0, capturingSubscriber.captured.size)
     }
 
     @Test

@@ -41,6 +41,12 @@ class GitHubWebhookService(
         fanOut(repo, message)
     }
 
+    fun handlePing(repo: GitHubRepo, zen: String?) {
+        val suffix = if (zen.isNullOrBlank()) "" else " ($zen)"
+        val message = "[${repo.fullName()}] Webhook ping received - setup verified.$suffix"
+        fanOut(repo, message)
+    }
+
     private fun fanOut(repo: GitHubRepo, message: String) {
         val subscriptions = subscriptionRepository.findByRepoAndActiveTrue(repo)
         if (subscriptions.isEmpty()) return
