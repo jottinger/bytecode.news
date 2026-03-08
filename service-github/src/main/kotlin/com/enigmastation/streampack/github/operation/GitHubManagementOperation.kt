@@ -3,6 +3,7 @@ package com.enigmastation.streampack.github.operation
 
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.github.model.DeliveryMode
 import com.enigmastation.streampack.github.model.GitHubSubscriptionOutcome
 import com.enigmastation.streampack.github.model.RemoveRepoOutcome
 import com.enigmastation.streampack.github.service.GitHubSubscriptionService
@@ -25,7 +26,10 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
         }
         val lines =
             repos.joinToString("\n") { repo ->
-                val status = if (repo.active) "" else " [inactive]"
+                val status = buildString {
+                    if (!repo.active) append(" [inactive]")
+                    if (repo.deliveryMode == DeliveryMode.WEBHOOK) append(" [webhook]")
+                }
                 "${repo.fullName()}$status"
             }
         return OperationResult.Success(lines)
