@@ -12,22 +12,24 @@ data class IdeaSessionState(
     val startedAt: Long,
 ) {
     /** Builds the markdown body with attribution footer for draft creation */
-    fun buildMarkdownBody(): String {
+    fun buildMarkdownBody(includeAttribution: Boolean = true): String {
         val body =
             if (contentBlocks.isNotEmpty()) {
                 contentBlocks.joinToString("\n\n")
             } else {
                 ""
             }
-        val attribution = "\n\n---\n*Contributed by $submitterName via $sourceProvenance*"
+        val attribution =
+            if (includeAttribution) "\n\n---\n*Contributed by $submitterName via $sourceProvenance*"
+            else ""
         return (body + attribution).trimStart()
     }
 
     /** Converts this session into a CreateContentRequest for dispatch via EventGateway */
-    fun toCreateContentRequest(): CreateContentRequest =
+    fun toCreateContentRequest(includeAttribution: Boolean = true): CreateContentRequest =
         CreateContentRequest(
             title = title,
-            markdownSource = buildMarkdownBody(),
+            markdownSource = buildMarkdownBody(includeAttribution),
             tags = listOf("_idea"),
         )
 

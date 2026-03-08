@@ -30,6 +30,7 @@ class IdeaTimerService(
     private val transformerChain: TransformerChainService,
     private val eventGateway: EventGateway,
     private val ideaProperties: IdeaProperties,
+    private val ideaAuthorResolver: IdeaAuthorResolver,
 ) : TickListener {
 
     private val logger = LoggerFactory.getLogger(IdeaTimerService::class.java)
@@ -84,8 +85,15 @@ class IdeaTimerService(
 
     /** Creates a draft post from the session state via EventGateway */
     fun finalizeIdea(state: IdeaSessionState, provenanceUri: String) {
-        val request = state.toCreateContentRequest()
-        val provenance = Provenance(protocol = Protocol.HTTP, serviceId = "ideas", replyTo = "")
+        val resolvedUser = ideaAuthorResolver.resolve(state)
+        val request = state.toCreateContentRequest(includeAttribution = resolvedUser == null)
+        val provenance =
+            Provenance(
+                protocol = Protocol.HTTP,
+                serviceId = "ideas",
+                replyTo = "",
+                user = resolvedUser,
+            )
         val message =
             MessageBuilder.withPayload(request as Any)
                 .setHeader(Provenance.HEADER, provenance)
