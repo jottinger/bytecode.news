@@ -1,0 +1,65 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.karma.controller
+
+import com.enigmastation.streampack.karma.config.TestSecurityConfiguration
+import com.enigmastation.streampack.karma.service.KarmaService
+import com.enigmastation.streampack.test.TestChannelConfiguration
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
+import org.springframework.context.annotation.Import
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.get
+import org.springframework.transaction.annotation.Transactional
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@Transactional
+@Import(TestChannelConfiguration::class, TestSecurityConfiguration::class)
+class KarmaControllerTests {
+
+    @Autowired lateinit var mockMvc: MockMvc
+    @Autowired lateinit var karmaService: KarmaService
+
+    @BeforeEach
+    fun seedData() {
+        repeat(3) { karmaService.adjustKarma("alice", 1) }
+        repeat(2) { karmaService.adjustKarma("bob", 1) }
+        repeat(3) { karmaService.adjustKarma("eve", -1) }
+        karmaService.adjustKarma("mallory", -1)
+        karmaService.adjustKarma("neutral", 1)
+        karmaService.adjustKarma("neutral", -1)
+    }
+
+    @Test
+    fun `GET leaderboard returns top and bottom lists`() {
+        mockMvc.get("/karma/leaderboard?limit=2").andExpect {
+            status { isOk() }
+            jsonPath("$.limit") { value(2) }
+            jsonPath("$.top.length()") { value(2) }
+            jsonPath("$.bottom.length()") { value(2) }
+            jsonPath("$.top[0].subject") { value("alice") }
+            jsonPath("$.top[0].score") { value(3) }
+            jsonPath("$.top[0].upvotes") { value(3) }
+            jsonPath("$.top[0].downvotes") { value(0) }
+            jsonPath("$.top[1].subject") { value("bob") }
+            jsonPath("$.bottom[0].subject") { value("eve") }
+            jsonPath("$.bottom[0].score") { value(-3) }
+            jsonPath("$.bottom[0].upvotes") { value(0) }
+            jsonPath("$.bottom[0].downvotes") { value(3) }
+            jsonPath("$.bottom[1].subject") { value("mallory") }
+        }
+    }
+
+    @Test
+    fun `GET leaderboard clamps invalid limit`() {
+        mockMvc.get("/karma/leaderboard?limit=0").andExpect {
+            status { isOk() }
+            jsonPath("$.limit") { value(1) }
+            jsonPath("$.top.length()") { value(1) }
+            jsonPath("$.bottom.length()") { value(1) }
+        }
+    }
+}

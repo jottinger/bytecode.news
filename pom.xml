@@ -68,6 +68,7 @@
         <module>operation-ideas</module>
         <module>operation-markov</module>
         <module>service-factoid</module>
+        <module>service-karma</module>
         <module>service-rss</module>
         <module>service-slack</module>
         <module>service-bridge</module>
