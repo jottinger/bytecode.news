@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.transaction.annotation.Transactional
 
-@SpringBootTest
+@SpringBootTest(properties = ["streampack.karma.max-subject-length=10"])
 @Transactional
 class KarmaServiceTests {
 
@@ -86,5 +86,22 @@ class KarmaServiceTests {
         karmaService.adjustKarma("KOTLIN", 1)
         val score = karmaService.getKarma("kotlin")
         assertEquals(2, score)
+    }
+
+    @Test
+    fun `cleanup removes oversized subjects`() {
+        val longSubject = "supremely-long-subject"
+        repository.save(
+            KarmaRecord(
+                subject = longSubject,
+                recordDate = LocalDate.now(),
+                delta = 5,
+            )
+        )
+
+        karmaService.getKarma("someone-else")
+
+        val remaining = repository.findBySubject(longSubject)
+        assertTrue(remaining.isEmpty())
     }
 }
