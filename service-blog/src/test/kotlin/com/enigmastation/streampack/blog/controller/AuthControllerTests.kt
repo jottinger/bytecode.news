@@ -28,6 +28,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
 
 /** Integration tests for /auth endpoints, exercising the full MVC stack */
@@ -231,6 +232,38 @@ class AuthControllerTests {
             .delete("/auth/account") {
                 contentType = MediaType.APPLICATION_JSON
                 content = """{}"""
+            }
+            .andExpect {
+                status { isUnauthorized() }
+                jsonPath("$.detail") { value("Not authenticated") }
+            }
+    }
+
+    /* ── Profile ───────────────────────────────────────── */
+
+    @Test
+    fun `authenticated user can update display name`() {
+        mockMvc
+            .put("/auth/profile") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $testUserToken")
+                content = """{"displayName":"Updated User"}"""
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.displayName") { value("Updated User") }
+            }
+
+        val updated = userRepository.findByUsername("testuser")
+        assertEquals("Updated User", updated?.displayName)
+    }
+
+    @Test
+    fun `profile update without auth returns 401`() {
+        mockMvc
+            .put("/auth/profile") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"displayName":"Updated User"}"""
             }
             .andExpect {
                 status { isUnauthorized() }
