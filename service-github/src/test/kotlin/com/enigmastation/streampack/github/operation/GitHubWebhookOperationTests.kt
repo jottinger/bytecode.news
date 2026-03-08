@@ -1,0 +1,115 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.github.operation
+
+import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Protocol
+import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.model.UserPrincipal
+import com.enigmastation.streampack.github.model.DeliveryMode
+import com.enigmastation.streampack.github.repository.GitHubRepoRepository
+import com.enigmastation.streampack.github.service.GitHubApiClient
+import com.enigmastation.streampack.github.service.WebhookSecretCipher
+import com.sun.net.httpserver.HttpServer
+import java.net.InetSocketAddress
+import java.util.UUID
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.messaging.support.MessageBuilder
+import org.springframework.transaction.annotation.Transactional
+
+@SpringBootTest
+@Transactional
+class GitHubWebhookOperationTests {
+
+    @Autowired lateinit var eventGateway: EventGateway
+    @Autowired lateinit var repoRepository: GitHubRepoRepository
+    @Autowired lateinit var cipher: WebhookSecretCipher
+
+    private lateinit var httpServer: HttpServer
+    private var originalApiEndpoint: String? = null
+
+    private val adminUser =
+        UserPrincipal(
+            id = UUID.randomUUID(),
+            username = "admin",
+            displayName = "Admin",
+            role = Role.ADMIN,
+        )
+
+    private fun provenance() =
+        Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local", user = adminUser)
+
+    private fun message(command: String) =
+        MessageBuilder.withPayload(command).setHeader(Provenance.HEADER, provenance()).build()
+
+    @BeforeEach
+    fun setUp() {
+        originalApiEndpoint = GitHubApiClient.apiEndpoint
+        httpServer = HttpServer.create(InetSocketAddress(0), 0)
+        httpServer.start()
+        GitHubApiClient.apiEndpoint = "http://localhost:${httpServer.address.port}"
+    }
+
+    @AfterEach
+    fun tearDown() {
+        httpServer.stop(0)
+        GitHubApiClient.apiEndpoint = originalApiEndpoint
+    }
+
+    private fun stubRepo(owner: String, name: String) {
+        httpServer.createContext("/repos/$owner/$name") { exchange ->
+            val body = """{"id": 1, "full_name": "$owner/$name"}"""
+            exchange.sendResponseHeaders(200, body.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(body.toByteArray()) }
+        }
+        httpServer.createContext("/repos/$owner/$name/issues") { exchange ->
+            val json =
+                """[
+                {"number": 1, "title": "Issue 1", "html_url": "https://github.com/$owner/$name/issues/1"}
+            ]"""
+            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(json.toByteArray()) }
+        }
+        httpServer.createContext("/repos/$owner/$name/pulls") { exchange ->
+            val json =
+                """[
+                {"number": 2, "title": "PR 1", "html_url": "https://github.com/$owner/$name/pull/2"}
+            ]"""
+            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(json.toByteArray()) }
+        }
+        httpServer.createContext("/repos/$owner/$name/releases") { exchange ->
+            val json =
+                """[
+                {"tag_name": "v1.0.0", "name": "First Release", "html_url": "https://github.com/$owner/$name/releases/tag/v1.0.0"}
+            ]"""
+            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(json.toByteArray()) }
+        }
+    }
+
+    @Test
+    fun `github webhook enables webhook mode and stores encrypted secret`() {
+        stubRepo("owner", "repo")
+        val addResult = eventGateway.process(message("github add owner/repo"))
+        assertInstanceOf(OperationResult.Success::class.java, addResult)
+
+        val result = eventGateway.process(message("github webhook owner/repo"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+
+        val repo = repoRepository.findByOwnerAndName("owner", "repo")
+        assertNotNull(repo)
+        assertEquals(DeliveryMode.WEBHOOK, repo!!.deliveryMode)
+        assertNotNull(repo.webhookSecret)
+        val decrypted = cipher.decrypt(repo.webhookSecret!!)
+        assertEquals(64, decrypted.length)
+    }
+}

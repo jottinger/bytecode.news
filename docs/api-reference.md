@@ -1090,6 +1090,7 @@ Hidden from selection, existing post associations preserved.
 | DELETE | `/admin/users/{username}/purge` | Admin+ | Purge erased sentinel content |
 | GET | `/admin/users?status=` | Admin+ | List users by status |
 | GET | `/admin/users/{username}/export` | Admin+ | Export user data (admin) |
+| POST | `/webhooks/github` | GitHub HMAC | Receive GitHub webhook deliveries |
 | GET | `/posts` | No | List published posts |
 | GET | `/posts/{year}/{month}/{slug}` | No | Get single post |
 | GET | `/posts/search?q=` | No | Search published posts |
@@ -1177,6 +1178,20 @@ Single factoid with all rendered attributes.
 **404** when no factoid exists for the selector.
 
 Only attributes with non-empty values that are marked `includeInSummary` are returned.
+
+---
+
+### POST /webhooks/github
+
+GitHub sends repository events here when a repo is switched to webhook delivery via `github webhook owner/repo`.
+
+**Auth**: HMAC SHA-256 (`X-Hub-Signature-256: sha256=<hex>` using the generated secret)  
+**Headers**: `X-GitHub-Event` (`issues`, `pull_request`, or `release`)
+
+**Body**: Standard GitHub webhook JSON payload
+
+**Success (202)**: Event accepted; subscribers receive the same notifications as the polling path.  
+**Errors**: 400 for malformed payloads, 401 for signature mismatch.
 
 ---
 

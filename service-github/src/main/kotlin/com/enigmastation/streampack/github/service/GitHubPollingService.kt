@@ -4,6 +4,7 @@ package com.enigmastation.streampack.github.service
 import com.enigmastation.streampack.core.integration.TickListener
 import com.enigmastation.streampack.github.config.GitHubProperties
 import com.enigmastation.streampack.github.entity.GitHubRelease
+import com.enigmastation.streampack.github.model.DeliveryMode
 import com.enigmastation.streampack.github.repository.GitHubReleaseRepository
 import com.enigmastation.streampack.github.repository.GitHubRepoRepository
 import com.enigmastation.streampack.github.repository.GitHubSubscriptionRepository
@@ -45,7 +46,7 @@ class GitHubPollingService(
 
     @Transactional
     fun pollAllRepos() {
-        val repos = repoRepository.findAllByActiveTrue()
+        val repos = repoRepository.findAllByActiveTrueAndDeliveryMode(DeliveryMode.POLLING)
         logger.debug("Polling {} active GitHub repos", repos.size)
         for (repo in repos) {
             try {

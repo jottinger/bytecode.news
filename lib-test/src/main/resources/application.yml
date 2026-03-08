@@ -18,6 +18,8 @@ spring:
     port: 3025
 
 streampack:
+  jwt:
+    secret: secret
   base-url: http://localhost:8080
   tick:
     scheduler:

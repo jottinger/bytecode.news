@@ -392,6 +392,13 @@ GITHUB_CLIENT_ID=your-client-id
 GITHUB_CLIENT_SECRET=your-client-secret
 ```
 
+After registering repositories in Nevet, you can switch them to webhook delivery for lower latency:
+
+1. Run `github webhook owner/repo` from an admin channel. The bot DM's a generated secret.
+2. In the GitHub repo settings, add a webhook pointing to `https://rest.your-domain.com/webhooks/github` (or your API base URL).
+3. Set **Content type** to `application/json`, paste the secret, and subscribe to the events you care about (Issues, Pull requests, Releases).
+4. Once enabled, the repo is removed from the polling loop and relies solely on webhooks.
+
 ### Split-Domain Deployment
 
 When the API and frontend live on different domains:
