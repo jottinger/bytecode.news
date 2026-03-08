@@ -3226,6 +3226,51 @@
         },
         "tags" : [ "ssr-controller" ]
       }
+    },
+    "/webhooks/github" : {
+      "post" : {
+        "description" : "Validates X-Hub-Signature-256 and fans out issue/PR/release notifications.",
+        "operationId" : "receive",
+        "parameters" : [ {
+          "in" : "header",
+          "name" : "X-Hub-Signature-256",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-GitHub-Event",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "format" : "byte",
+                "type" : "string"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "description" : "Delivery accepted"
+          },
+          "400" : {
+            "description" : "Malformed payload or repository metadata"
+          },
+          "401" : {
+            "description" : "Signature mismatch"
+          }
+        },
+        "summary" : "Receive GitHub webhook deliveries",
+        "tags" : [ "git-hub-webhook-controller" ]
+      }
     }
   },
   "servers" : [ {

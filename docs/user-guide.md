@@ -568,6 +568,7 @@ Watch GitHub repositories for new issues, pull requests, and releases.
 | `github unsubscribe <owner/repo> to <provenance-uri>` | Unsubscribe a specific channel |
 | `github subscriptions` | Show current channel's subscriptions |
 | `github subscriptions for <provenance-uri>` | Show a specific channel's subscriptions |
+| `github webhook <owner/repo>` | Generate a webhook secret and switch the repo to webhook delivery |
 
 **Notification format**:
 
@@ -576,6 +577,14 @@ Watch GitHub repositories for new issues, pull requests, and releases.
 [owner/repo] New PR #43: Add retry logic - https://github.com/owner/repo/pull/43
 [owner/repo] New release v1.2.3 - https://github.com/owner/repo/releases/tag/v1.2.3
 ```
+
+**Webhook mode**:
+
+- Run `github add owner/repo` first (polling baseline).
+- Run `github webhook owner/repo`. The bot replies with setup instructions and sends the generated secret via a direct message (never logged in-channel).
+- Configure a GitHub repository webhook pointing at `https://<api-domain>/webhooks/github` with **Content type** = JSON and the provided secret.
+- When a repo is webhook-enabled, it is removed from the polling schedule; new events flow in real time via the webhook.
+- Re-running `github webhook owner/repo` rotates the secret.
 
 ---
 

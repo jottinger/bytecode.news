@@ -1,0 +1,12 @@
+/* Joseph B. Ottinger (C)2026 */
+package com.enigmastation.streampack.github.service
+
+sealed interface WebhookEnableOutcome {
+    data class Enabled(val ownerRepo: String, val secret: String) : WebhookEnableOutcome
+
+    data class RepoNotFound(val ownerRepo: String) : WebhookEnableOutcome
+
+    data class RepoInactive(val ownerRepo: String) : WebhookEnableOutcome
+
+    data class InvalidRepo(val reason: String) : WebhookEnableOutcome
+}

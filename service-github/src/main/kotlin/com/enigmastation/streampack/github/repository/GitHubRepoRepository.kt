@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.github.repository
 
 import com.enigmastation.streampack.github.entity.GitHubRepo
+import com.enigmastation.streampack.github.model.DeliveryMode
 import java.util.UUID
 import org.springframework.data.jpa.repository.JpaRepository
 
@@ -9,4 +10,6 @@ interface GitHubRepoRepository : JpaRepository<GitHubRepo, UUID> {
     fun findByOwnerAndName(owner: String, name: String): GitHubRepo?
 
     fun findAllByActiveTrue(): List<GitHubRepo>
+
+    fun findAllByActiveTrueAndDeliveryMode(deliveryMode: DeliveryMode): List<GitHubRepo>
 }
