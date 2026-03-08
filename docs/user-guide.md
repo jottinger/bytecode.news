@@ -580,11 +580,14 @@ Watch GitHub repositories for new issues, pull requests, and releases.
 
 **Webhook mode**:
 
-- Run `github add owner/repo` first (polling baseline).
-- Run `github webhook owner/repo`. The bot replies with setup instructions and sends the generated secret via a direct message (never logged in-channel).
+- Run `github webhook owner/repo`. If the repository is not registered yet, Nevet registers it first, then enables webhook delivery.
+- The bot replies with setup instructions and sends the generated secret via a direct message (never logged in-channel).
+- `GITHUB_WEBHOOK_SECRET_KEY` must be configured in `.env` so webhook secrets can be encrypted at rest.
 - Configure a GitHub repository webhook pointing at `https://<api-domain>/webhooks/github` with **Content type** = JSON and the provided secret.
 - When a repo is webhook-enabled, it is removed from the polling schedule; new events flow in real time via the webhook.
 - Re-running `github webhook owner/repo` rotates the secret.
+- Supported webhook events: `issues` (opened), `pull_request` (opened), `release` (published), and `ping`.
+- Unsupported GitHub event types are accepted and ignored; Nevet logs them as warnings to help decide future support.
 
 ---
 

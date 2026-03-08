@@ -50,13 +50,13 @@ class GitHubWebhookOperation(
                     "Webhook enabled for ${outcome.ownerRepo}. Configure GitHub to POST to $webhookUrl with the provided secret."
                 )
             }
-            is WebhookEnableOutcome.RepoNotFound ->
-                OperationResult.Error("No registered repository found for ${outcome.ownerRepo}")
             is WebhookEnableOutcome.RepoInactive ->
                 OperationResult.Error(
                     "${outcome.ownerRepo} is inactive. Add or reactivate it first."
                 )
             is WebhookEnableOutcome.InvalidRepo -> OperationResult.Error(outcome.reason)
+            is WebhookEnableOutcome.ApiFailed ->
+                OperationResult.Error("Failed to access ${outcome.ownerRepo}: ${outcome.reason}")
         }
     }
 

@@ -3229,7 +3229,7 @@
     },
     "/webhooks/github" : {
       "post" : {
-        "description" : "Validates X-Hub-Signature-256 and fans out issue/PR/release notifications.",
+        "description" : "Validates X-Hub-Signature-256, deduplicates deliveries, and fans out supported GitHub events.",
         "operationId" : "receive",
         "parameters" : [ {
           "in" : "header",
@@ -3241,6 +3241,13 @@
         }, {
           "in" : "header",
           "name" : "X-GitHub-Event",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-GitHub-Delivery",
           "required" : false,
           "schema" : {
             "type" : "string"

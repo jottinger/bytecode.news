@@ -24,6 +24,7 @@ DB_URL=jdbc:postgresql://localhost:5432/nevet
 DB_USERNAME=nevet
 DB_PASSWORD=nevet
 CONSOLE_ENABLED=true
+GITHUB_WEBHOOK_SECRET_KEY=replace-with-random-key
 ```
 
 The `.env` file is in `.gitignore` and will not be committed.
@@ -205,6 +206,7 @@ These must be changed:
 | Variable | What to set |
 |----------|-------------|
 | `JWT_SECRET` | Strong random value: `openssl rand -base64 32` |
+| `GITHUB_WEBHOOK_SECRET_KEY` | Required for webhook secret encryption: `openssl rand -hex 32` |
 | `BASE_URL` | Public URL, e.g., `https://bytecode.news` |
 | `DB_PASSWORD` | A real password |
 | `CORS_ORIGINS` | All frontend origins, e.g., `https://bytecode.news,https://nextjs.bytecode.news` |
@@ -390,6 +392,13 @@ Add to your `.env`:
 ```
 GITHUB_CLIENT_ID=your-client-id
 GITHUB_CLIENT_SECRET=your-client-secret
+GITHUB_WEBHOOK_SECRET_KEY=your-generated-key
+```
+
+Generate `GITHUB_WEBHOOK_SECRET_KEY` with:
+
+```bash
+openssl rand -hex 32
 ```
 
 After registering repositories in Nevet, you can switch them to webhook delivery for lower latency:
@@ -731,6 +740,7 @@ Rotate: `find /backups -name "nevet-*.dump" -mtime +30 -delete`.
 | `DB_USERNAME` | `nevet` | Database user |
 | `DB_PASSWORD` | `nevet` | Database password |
 | `JWT_SECRET` | `change-me-in-production` | HMAC signing key for JWTs |
+| `GITHUB_WEBHOOK_SECRET_KEY` | (required) | AES key material source for encrypting GitHub webhook secrets at rest |
 | `BASE_URL` | `http://localhost:8080` | Public base URL for links in emails |
 | `FRONTEND_URL` | (same as BASE_URL) | Frontend URL for OIDC redirect |
 | `MAIL_HOST` | `localhost` | SMTP server host |
@@ -760,4 +770,6 @@ Rotate: `find /backups -name "nevet-*.dump" -mtime +30 -delete`.
 | `GITHUB_CLIENT_SECRET` | | GitHub OAuth2 client secret (requires `oidc` profile) |
 | `RSS_POLL_INTERVAL` | `PT60M` | RSS polling interval (ISO-8601) |
 | `GITHUB_POLL_INTERVAL` | `PT60M` | GitHub polling interval (ISO-8601) |
+| `GITHUB_WEBHOOK_BASE_URL` | (same as `BASE_URL`) | Public base URL used in `github webhook` setup instructions |
+| `GITHUB_WEBHOOK_DEDUPE_TTL` | `PT6H` | Duplicate GitHub delivery retention window (ISO-8601) |
 | `API_URL` | `http://localhost:8080` | Backend URL for frontend rewrites |

@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @Transactional
 class GitHubWebhookControllerTests {
 
@@ -122,6 +122,45 @@ class GitHubWebhookControllerTests {
                 header("X-Hub-Signature-256", sign(payload.toByteArray()))
             }
             .andExpect { status { isAccepted() } }
+    }
+
+    @Test
+    fun `unsupported event is accepted and ignored`() {
+        val payload =
+            """{
+            "action":"created",
+            "repository":{"full_name":"owner/repo"}
+        }"""
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "repository_ruleset")
+                header("X-Hub-Signature-256", sign(payload.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+    }
+
+    @Test
+    fun `duplicate delivery id is accepted`() {
+        val payload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":1,"title":"Test issue","html_url":"https://github.com/owner/repo/issues/1"}
+        }"""
+        val signature = sign(payload.toByteArray())
+        repeat(2) {
+            mockMvc
+                .post("/webhooks/github") {
+                    contentType = MediaType.APPLICATION_JSON
+                    content = payload
+                    header("X-GitHub-Event", "issues")
+                    header("X-GitHub-Delivery", "delivery-123")
+                    header("X-Hub-Signature-256", signature)
+                }
+                .andExpect { status { isAccepted() } }
+        }
     }
 
     private fun sign(body: ByteArray): String {

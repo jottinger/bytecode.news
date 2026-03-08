@@ -6,6 +6,7 @@ import com.enigmastation.streampack.github.model.GitHubIssueEvent
 import com.enigmastation.streampack.github.model.GitHubPullRequestEvent
 import com.enigmastation.streampack.github.model.GitHubReleaseEvent
 import com.enigmastation.streampack.github.repository.GitHubRepoRepository
+import com.enigmastation.streampack.github.service.GitHubWebhookDeliveryTracker
 import com.enigmastation.streampack.github.service.GitHubWebhookService
 import com.enigmastation.streampack.github.service.WebhookSecretCipher
 import com.fasterxml.jackson.databind.JsonNode
@@ -34,13 +35,15 @@ class GitHubWebhookController(
     private val repoRepository: GitHubRepoRepository,
     private val secretCipher: WebhookSecretCipher,
     private val webhookService: GitHubWebhookService,
+    private val deliveryTracker: GitHubWebhookDeliveryTracker,
 ) {
     private val objectMapper = ObjectMapper()
     private val logger = LoggerFactory.getLogger(GitHubWebhookController::class.java)
 
     @Operation(
         summary = "Receive GitHub webhook deliveries",
-        description = "Validates X-Hub-Signature-256 and fans out issue/PR/release notifications.",
+        description =
+            "Validates X-Hub-Signature-256, deduplicates deliveries, and fans out supported GitHub events.",
         responses =
             [
                 ApiResponse(responseCode = "202", description = "Delivery accepted"),
@@ -63,10 +66,19 @@ class GitHubWebhookController(
         @RequestBody body: ByteArray,
         @RequestHeader("X-Hub-Signature-256", required = false) signature: String?,
         @RequestHeader("X-GitHub-Event", required = false) event: String?,
+        @RequestHeader("X-GitHub-Delivery", required = false) deliveryId: String?,
         @RequestHeader("Content-Type", required = false) contentType: String?,
     ): ResponseEntity<Void> {
         if (signature.isNullOrBlank() || event.isNullOrBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
+        }
+        if (event !in supportedEvents) {
+            logger.warn(
+                "Ignoring unsupported GitHub event '{}' (deliveryId={})",
+                event,
+                deliveryId ?: "unknown",
+            )
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build()
         }
 
         val payload =
@@ -106,6 +118,15 @@ class GitHubWebhookController(
             logger.warn("Invalid GitHub webhook signature for {}", fullName)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
+        if (!deliveryId.isNullOrBlank() && deliveryTracker.isDuplicate(deliveryId)) {
+            logger.warn(
+                "Ignoring duplicate GitHub webhook delivery {} for {} ({})",
+                deliveryId,
+                fullName,
+                event,
+            )
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build()
+        }
 
         when (event) {
             "issues" -> {
@@ -121,7 +142,6 @@ class GitHubWebhookController(
                 webhookService.handleRelease(repo, releaseEvent)
             }
             "ping" -> logger.debug("Received GitHub webhook ping for {}", fullName)
-            else -> logger.debug("Ignoring unsupported GitHub event {} for {}", event, fullName)
         }
         return ResponseEntity.status(HttpStatus.ACCEPTED).build()
     }
@@ -164,5 +184,9 @@ class GitHubWebhookController(
             i += 2
         }
         return data
+    }
+
+    companion object {
+        private val supportedEvents = setOf("issues", "pull_request", "release", "ping")
     }
 }

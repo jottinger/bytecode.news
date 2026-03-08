@@ -97,11 +97,8 @@ class GitHubWebhookOperationTests {
     }
 
     @Test
-    fun `github webhook enables webhook mode and stores encrypted secret`() {
+    fun `github webhook registers repo enables webhook mode and stores encrypted secret`() {
         stubRepo("owner", "repo")
-        val addResult = eventGateway.process(message("github add owner/repo"))
-        assertInstanceOf(OperationResult.Success::class.java, addResult)
-
         val result = eventGateway.process(message("github webhook owner/repo"))
         val success = assertInstanceOf(OperationResult.Success::class.java, result)
         assertEquals(
