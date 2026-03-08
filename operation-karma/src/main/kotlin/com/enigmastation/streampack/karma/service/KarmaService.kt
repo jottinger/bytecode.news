@@ -3,6 +3,7 @@ package com.enigmastation.streampack.karma.service
 
 import com.enigmastation.streampack.karma.config.KarmaProperties
 import com.enigmastation.streampack.karma.entity.KarmaRecord
+import com.enigmastation.streampack.karma.model.KarmaLeaderboardEntry
 import com.enigmastation.streampack.karma.repository.KarmaRecordRepository
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -43,17 +44,10 @@ class KarmaService(
         purgeStaleRecords()
         purgeOversizedSubjects()
         val normalized = subject.lowercase()
-        val now = LocalDate.now()
 
         val records = repository.findBySubject(normalized)
         if (records.isEmpty()) return 0
-
-        val score =
-            records.sumOf { record ->
-                val ageInDays = ChronoUnit.DAYS.between(record.recordDate, now)
-                record.delta * exp(-0.002 * ageInDays)
-            }
-        return score.roundToInt()
+        return computeScore(records, LocalDate.now())
     }
 
     /** Returns true if any karma records exist for the subject. */
@@ -67,12 +61,51 @@ class KarmaService(
     fun getRanking(limit: Int, ascending: Boolean): List<Pair<String, Int>> {
         purgeStaleRecords()
         purgeOversizedSubjects()
+        val now = LocalDate.now()
         val subjects = repository.findDistinctSubjects()
         return subjects
-            .map { it to getKarma(it) }
+            .mapNotNull { subject ->
+                val records = repository.findBySubject(subject)
+                if (records.isEmpty()) return@mapNotNull null
+                subject to computeScore(records, now)
+            }
             .filter { it.second != 0 }
             .sortedBy { if (ascending) it.second else -it.second }
             .take(limit)
+    }
+
+    /** Rich leaderboard rows for HTTP clients. */
+    @Transactional
+    fun getLeaderboard(limit: Int, ascending: Boolean): List<KarmaLeaderboardEntry> {
+        purgeStaleRecords()
+        purgeOversizedSubjects()
+        val now = LocalDate.now()
+        return repository
+            .findDistinctSubjects()
+            .mapNotNull { subject ->
+                val records = repository.findBySubject(subject)
+                if (records.isEmpty()) return@mapNotNull null
+                val score = computeScore(records, now)
+                if (score == 0) return@mapNotNull null
+                KarmaLeaderboardEntry(
+                    subject = subject,
+                    score = score,
+                    upvotes = records.filter { it.delta > 0 }.sumOf { it.delta },
+                    downvotes = records.filter { it.delta < 0 }.sumOf { -it.delta },
+                    lastUpdated = records.maxOf { it.recordDate },
+                )
+            }
+            .sortedBy { if (ascending) it.score else -it.score }
+            .take(limit)
+    }
+
+    private fun computeScore(records: List<KarmaRecord>, now: LocalDate): Int {
+        val score =
+            records.sumOf { record ->
+                val ageInDays = ChronoUnit.DAYS.between(record.recordDate, now)
+                record.delta * exp(-0.002 * ageInDays)
+            }
+        return score.roundToInt()
     }
 
     private fun purgeStaleRecords() {

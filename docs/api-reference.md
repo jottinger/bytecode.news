@@ -1217,6 +1217,44 @@ Only attributes with non-empty values that are marked `includeInSummary` are ret
 
 ---
 
+### `GET /karma/leaderboard`
+
+Read-only karma leaderboard snapshot for web clients.
+
+**Query params**:
+- `limit` (optional, default `10`, min `1`, max `100`)
+
+**Response:**
+
+```json
+{
+  "top": [
+    {
+      "subject": "alice",
+      "score": 42,
+      "upvotes": 50,
+      "downvotes": 8,
+      "lastUpdated": "2026-03-08"
+    }
+  ],
+  "bottom": [
+    {
+      "subject": "mallory",
+      "score": -17,
+      "upvotes": 2,
+      "downvotes": 19,
+      "lastUpdated": "2026-03-08"
+    }
+  ],
+  "limit": 10
+}
+```
+
+`top` is sorted by highest score first, `bottom` by lowest score first.
+Subjects with neutral (zero) score are excluded.
+
+---
+
 ### POST /webhooks/github
 
 GitHub sends repository events here when a repo is switched to webhook delivery via `github webhook owner/repo`.

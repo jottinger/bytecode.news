@@ -585,6 +585,53 @@
         "required" : [ "adapters", "ai", "anonymousSubmission", "authentication", "operationGroups", "siteName", "version" ],
         "type" : "object"
       },
+      "KarmaLeaderboardEntryResponse" : {
+        "properties" : {
+          "downvotes" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "lastUpdated" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "score" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "subject" : {
+            "type" : "string"
+          },
+          "upvotes" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "downvotes", "lastUpdated", "score", "subject", "upvotes" ],
+        "type" : "object"
+      },
+      "KarmaLeaderboardResponse" : {
+        "properties" : {
+          "bottom" : {
+            "items" : {
+              "$ref" : "#/components/schemas/KarmaLeaderboardEntryResponse"
+            },
+            "type" : "array"
+          },
+          "limit" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "top" : {
+            "items" : {
+              "$ref" : "#/components/schemas/KarmaLeaderboardEntryResponse"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "bottom", "limit", "top" ],
+        "type" : "object"
+      },
       "LoginResponse" : {
         "properties" : {
           "principal" : {
@@ -2379,6 +2426,34 @@
           }
         },
         "tags" : [ "blog-feed-controller" ]
+      }
+    },
+    "/karma/leaderboard" : {
+      "get" : {
+        "operationId" : "leaderboard",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "limit",
+          "required" : false,
+          "schema" : {
+            "default" : 10,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/KarmaLeaderboardResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "karma-controller" ]
       }
     },
     "/pages/{slug}" : {

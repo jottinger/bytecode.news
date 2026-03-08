@@ -247,4 +247,4 @@ Check `http://localhost:8025` for the email.
 
 This covers: blog content workflow, auth (OTP + OIDC), comments, admin post/user/category management, user profile editing with GDPR export and erasure, and legal pages (terms, privacy, cookies).
 
-Not covered: factoids, karma, spam prevention, real-time updates, markdown preview.
+Not covered: spam prevention, real-time updates, markdown preview.
