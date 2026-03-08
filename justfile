@@ -31,3 +31,14 @@ deploy-dev: build-if-needed
 deploy: build-if-needed
     docker compose --profile backend --profile reference-ui build --no-cache
     docker compose --profile backend --profile reference-ui up
+
+# Rebuild and redeploy only the reference-ui container
+redeploy-reference-ui:
+    docker rm -f reference-ui || true
+    docker build --no-cache -t reference-ui reference-ui/
+    docker run -d --name reference-ui \
+      -e BACKEND_SCHEME=http \
+      -e BACKEND_HOST=host.docker.internal:8080 \
+      --add-host host.docker.internal:host-gateway \
+      -p 3001:3001 \
+      reference-ui

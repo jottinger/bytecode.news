@@ -161,6 +161,7 @@ The reference UI ships as a Docker image with nginx serving the SPA and proxying
 |----------|---------------|---------|---------|
 | `VITE_API_BASE` | Build (`--build-arg`) | `/api` | API base URL baked into the JS bundle. Set to the full backend URL for production (e.g. `https://api.bytecode.news`). |
 | `VITE_API_TIMEOUT_MS` | Build (`--build-arg`) | `8000` | Frontend API timeout in milliseconds before surfacing a network timeout error. |
+| `BACKEND_SCHEME` | Runtime (`-e`) | `http` | Scheme nginx uses for server-side proxies (`http` or `https`). |
 | `BACKEND_HOST` | Runtime (`-e`) | `backend:8080` | Host used by nginx for server-side proxies (sitemap, RSS feed, SSR). Not used by the browser. |
 
 ### Build
@@ -178,15 +179,21 @@ Omit it for local dev (defaults to `/api`, which the Vite proxy or nginx forward
 
 ```bash
 docker run -d --name reference-ui \
+  -e BACKEND_SCHEME=http \
   -e BACKEND_HOST=host.docker.internal:8080 \
   --add-host host.docker.internal:host-gateway \
   -p 3001:3001 \
   reference-ui
 ```
 
-`BACKEND_HOST` tells nginx where to proxy sitemap, RSS feed, and SSR requests.
+`BACKEND_SCHEME` and `BACKEND_HOST` tell nginx where to proxy sitemap, RSS feed, and SSR requests.
 Use `host.docker.internal:8080` when the Java backend runs on the host machine.
 The `--add-host` flag makes `host.docker.internal` resolve inside the container.
+If your backend is only reachable over TLS (for example `api.bytecode.news`), set:
+
+```bash
+-e BACKEND_SCHEME=https -e BACKEND_HOST=api.bytecode.news
+```
 
 ### Verify Bot SSR Routing
 
