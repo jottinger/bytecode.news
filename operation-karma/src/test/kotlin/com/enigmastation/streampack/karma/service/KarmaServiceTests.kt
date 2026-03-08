@@ -91,13 +91,7 @@ class KarmaServiceTests {
     @Test
     fun `cleanup removes oversized subjects`() {
         val longSubject = "supremely-long-subject"
-        repository.save(
-            KarmaRecord(
-                subject = longSubject,
-                recordDate = LocalDate.now(),
-                delta = 5,
-            )
-        )
+        repository.save(KarmaRecord(subject = longSubject, recordDate = LocalDate.now(), delta = 5))
 
         karmaService.getKarma("someone-else")
 

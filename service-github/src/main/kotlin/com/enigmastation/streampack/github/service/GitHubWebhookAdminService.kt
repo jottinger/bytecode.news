@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.github.service
 
+import com.enigmastation.streampack.github.model.AddRepoOutcome
 import com.enigmastation.streampack.github.model.DeliveryMode
 import com.enigmastation.streampack.github.repository.GitHubRepoRepository
 import java.security.SecureRandom
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service
 @Service
 class GitHubWebhookAdminService(
     private val repoRepository: GitHubRepoRepository,
+    private val subscriptionService: GitHubSubscriptionService,
     private val secretCipher: WebhookSecretCipher,
 ) {
 
@@ -18,12 +20,21 @@ class GitHubWebhookAdminService(
 
     fun enableWebhook(ownerRepo: String): WebhookEnableOutcome {
         val parts = ownerRepo.split("/")
-        if (parts.size != 2) {
+        if (parts.size != 2 || parts[0].isBlank() || parts[1].isBlank()) {
             return WebhookEnableOutcome.InvalidRepo("Expected owner/repo")
         }
+        val owner = parts[0]
+        val name = parts[1]
         val repo =
-            repoRepository.findByOwnerAndName(parts[0], parts[1])
-                ?: return WebhookEnableOutcome.RepoNotFound(ownerRepo)
+            repoRepository.findByOwnerAndName(owner, name)
+                ?: when (val addOutcome = subscriptionService.addRepo("$owner/$name", null)) {
+                    is AddRepoOutcome.Added -> addOutcome.repo
+                    is AddRepoOutcome.AlreadyExists -> addOutcome.repo
+                    is AddRepoOutcome.InvalidRepo ->
+                        return WebhookEnableOutcome.InvalidRepo(addOutcome.reason)
+                    is AddRepoOutcome.ApiFailed ->
+                        return WebhookEnableOutcome.ApiFailed(ownerRepo, addOutcome.reason)
+                }
         if (!repo.active) {
             return WebhookEnableOutcome.RepoInactive(ownerRepo)
         }

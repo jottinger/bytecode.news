@@ -13,7 +13,7 @@ interface KarmaRecordRepository : JpaRepository<KarmaRecord, UUID> {
 
     fun findBySubject(subject: String): List<KarmaRecord>
 
-    fun deleteByRecordDateBefore(cutoff: LocalDate):Int
+    fun deleteByRecordDateBefore(cutoff: LocalDate): Int
 
     @Modifying
     @Query("DELETE FROM KarmaRecord k WHERE length(k.subject) > :maxLength")

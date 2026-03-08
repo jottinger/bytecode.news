@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.github.service
 
-import com.enigmastation.streampack.core.config.StreampackProperties
+import com.enigmastation.streampack.github.config.GitHubProperties
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -15,17 +15,17 @@ import org.springframework.stereotype.Component
 
 /** Encrypts and decrypts webhook secrets for at-rest storage */
 @Component
-class WebhookSecretCipher(properties: StreampackProperties) {
+class WebhookSecretCipher(properties: GitHubProperties) {
 
     private val secureRandom = SecureRandom()
     private val key: SecretKey
 
     init {
-        val jwtSecret = properties.jwt.secret
-        require(jwtSecret.isNotBlank()) {
-            "streampack.jwt.secret must be configured to enable GitHub webhooks"
+        val webhookSecretKey = properties.webhookSecretKey
+        require(webhookSecretKey.isNotBlank()) {
+            "streampack.github.webhook-secret-key must be configured"
         }
-        val hash = MessageDigest.getInstance("SHA-256").digest(jwtSecret.toByteArray())
+        val hash = MessageDigest.getInstance("SHA-256").digest(webhookSecretKey.toByteArray())
         key = SecretKeySpec(hash, "AES")
     }
 

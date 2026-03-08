@@ -10,5 +10,7 @@ data class GitHubProperties(
     val pollInterval: Duration = Duration.ofMinutes(60),
     val connectTimeoutSeconds: Int = 5,
     val readTimeoutSeconds: Int = 10,
+    val webhookSecretKey: String = "",
     val webhookBaseUrl: String? = null,
+    val deliveryDedupeTtl: Duration = Duration.ofHours(6),
 )

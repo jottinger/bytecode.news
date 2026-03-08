@@ -158,6 +158,22 @@ class GitHubManagementOperationTests {
     }
 
     @Test
+    fun `github subscriptions uses comma separator for multiple repos`() {
+        addRepo("owner", "repo-one")
+        addRepo("owner", "repo-two")
+        eventGateway.process(ircMessage("github subscribe owner/repo-one"))
+        eventGateway.process(ircMessage("github subscribe owner/repo-two"))
+
+        val result = eventGateway.process(ircMessage("github subscriptions"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload.toString()
+        assertTrue(payload.contains("owner/repo-one"))
+        assertTrue(payload.contains("owner/repo-two"))
+        assertTrue(payload.contains(", "))
+        assertTrue(!payload.contains("\n"))
+    }
+
+    @Test
     fun `github subscriptions with none returns appropriate message`() {
         val result = eventGateway.process(ircMessage("github subscriptions"))
         assertInstanceOf(OperationResult.Success::class.java, result)
@@ -245,6 +261,27 @@ class GitHubManagementOperationTests {
             eventGateway.process(consoleMessage("github subscriptions for irc://libera/%23java"))
         assertInstanceOf(OperationResult.Success::class.java, result)
         assertTrue((result as OperationResult.Success).payload.toString().contains("owner/repo"))
+    }
+
+    @Test
+    fun `github subscriptions for explicit target uses comma separator for multiple repos`() {
+        addRepo("owner", "repo-one")
+        addRepo("owner", "repo-two")
+        eventGateway.process(
+            consoleMessage("github subscribe owner/repo-one to irc://libera/%23java")
+        )
+        eventGateway.process(
+            consoleMessage("github subscribe owner/repo-two to irc://libera/%23java")
+        )
+
+        val result =
+            eventGateway.process(consoleMessage("github subscriptions for irc://libera/%23java"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload.toString()
+        assertTrue(payload.contains("owner/repo-one"))
+        assertTrue(payload.contains("owner/repo-two"))
+        assertTrue(payload.contains(", "))
+        assertTrue(!payload.contains("\n"))
     }
 
     @Test
