@@ -11,6 +11,7 @@ import com.enigmastation.streampack.core.service.MessageLogService
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.ideas.model.IdeaSessionState
+import com.enigmastation.streampack.ideas.service.IdeaAuthorResolver
 import com.enigmastation.streampack.ideas.service.IdeaTimerService
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -28,6 +29,7 @@ class ArticleOperation(
     private val timerService: IdeaTimerService,
     private val eventGateway: EventGateway,
     private val messageLogService: MessageLogService,
+    private val ideaAuthorResolver: IdeaAuthorResolver,
     @Value("\${streampack.ideas.max-log-duration:60}") private val maxLogDurationMinutes: Long = 60,
     @Value("\${streampack.ideas.max-log-messages:100}") private val maxLogMessages: Int = 100,
 ) : TypedOperation<String>(String::class) {
@@ -255,8 +257,15 @@ class ArticleOperation(
 
     /** Dispatches a CreateContentRequest through EventGateway to create a draft post */
     private fun dispatchDraftPost(state: IdeaSessionState) {
-        val request = state.toCreateContentRequest()
-        val provenance = Provenance(protocol = Protocol.HTTP, serviceId = "ideas", replyTo = "")
+        val resolvedUser = ideaAuthorResolver.resolve(state)
+        val request = state.toCreateContentRequest(includeAttribution = resolvedUser == null)
+        val provenance =
+            Provenance(
+                protocol = Protocol.HTTP,
+                serviceId = "ideas",
+                replyTo = "",
+                user = resolvedUser,
+            )
         val message =
             MessageBuilder.withPayload(request as Any)
                 .setHeader(Provenance.HEADER, provenance)

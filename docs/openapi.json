@@ -311,9 +311,11 @@
         "type" : "object"
       },
       "CreateContentHttpRequest" : {
+        "default" : "##default",
         "description" : "Request body for creating a new blog post draft",
         "properties" : {
           "categoryIds" : {
+            "default" : "##default",
             "description" : "Category UUIDv7s to associate. Non-existent or deleted IDs are skipped.",
             "items" : {
               "format" : "uuid",
@@ -322,17 +324,20 @@
             "type" : "array"
           },
           "formLoadedAt" : {
+            "default" : "##default",
             "description" : "Epoch milliseconds when the form was rendered (Date.now()). Required. Submissions arriving less than 3 seconds after this timestamp are silently rejected.",
             "example" : 1709740800000,
             "format" : "int64",
             "type" : "integer"
           },
           "markdownSource" : {
+            "default" : "##default",
             "description" : "Post content in Markdown. No raw HTML allowed.",
             "example" : "Virtual threads change the concurrency model...",
             "type" : "string"
           },
           "tags" : {
+            "default" : "##default",
             "description" : "Tag names to associate with the post. Created automatically if new.",
             "example" : [ "java", "concurrency" ],
             "items" : {
@@ -341,6 +346,7 @@
             "type" : "array"
           },
           "title" : {
+            "default" : "##default",
             "description" : "Post title",
             "example" : "Understanding Virtual Threads",
             "type" : "string"
@@ -734,7 +740,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CreateCategoryResponse"
+                  "$ref" : "#/components/schemas/CreateCategoryResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -744,7 +763,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -754,7 +786,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -785,7 +830,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -795,7 +853,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -805,7 +876,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -815,7 +899,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -854,7 +951,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -864,7 +974,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -874,7 +997,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -884,7 +1020,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -925,7 +1074,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse"
+                  "$ref" : "#/components/schemas/ContentListResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -935,7 +1097,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -945,7 +1120,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -984,7 +1172,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentOperationConfirmation"
+                  "$ref" : "#/components/schemas/ContentOperationConfirmation",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -994,7 +1195,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1004,7 +1218,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1014,7 +1241,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1053,7 +1293,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail"
+                  "$ref" : "#/components/schemas/ContentDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1063,7 +1316,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1073,7 +1339,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1083,7 +1362,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1124,7 +1416,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail"
+                  "$ref" : "#/components/schemas/ContentDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1134,7 +1439,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1144,7 +1462,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1154,7 +1485,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1315,7 +1659,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/UserPrincipal"
+                  "$ref" : "#/components/schemas/UserPrincipal",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1325,7 +1682,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1335,7 +1705,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1345,7 +1728,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1532,7 +1928,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/LoginResponse"
+                  "$ref" : "#/components/schemas/LoginResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1542,7 +1951,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1571,7 +1993,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/LoginResponse"
+                  "$ref" : "#/components/schemas/LoginResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1581,7 +2016,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1618,10 +2066,26 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "items" : {
-                    "$ref" : "#/components/schemas/CategorySummary"
+                  "additionalProperties" : {
+                    "default" : "##default"
                   },
-                  "type" : "array"
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "items" : {
+                    "$ref" : "#/components/schemas/CategorySummary",
+                    "contains" : {
+                      "default" : "##default"
+                    },
+                    "default" : "##default",
+                    "unevaluatedItems" : {
+                      "default" : "##default"
+                    }
+                  },
+                  "type" : "array",
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1659,7 +2123,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CommentDetail"
+                  "$ref" : "#/components/schemas/CommentDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1669,7 +2146,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1679,7 +2169,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1689,7 +2192,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1846,9 +2362,8 @@
           "name" : "page",
           "required" : false,
           "schema" : {
-            "default" : 0,
-            "format" : "int32",
-            "type" : "integer"
+            "default" : "##default",
+            "type" : "string"
           }
         }, {
           "description" : "Number of posts per page",
@@ -1857,9 +2372,8 @@
           "name" : "size",
           "required" : false,
           "schema" : {
-            "default" : 20,
-            "format" : "int32",
-            "type" : "integer"
+            "default" : "##default",
+            "type" : "string"
           }
         }, {
           "description" : "Filter by category name",
@@ -1867,6 +2381,7 @@
           "name" : "category",
           "required" : false,
           "schema" : {
+            "default" : "##default",
             "type" : "string"
           }
         } ],
@@ -1875,7 +2390,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse"
+                  "$ref" : "#/components/schemas/ContentListResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1903,7 +2431,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CreateContentResponse"
+                  "$ref" : "#/components/schemas/CreateContentResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1913,7 +2454,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1923,7 +2477,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1948,6 +2515,7 @@
           "name" : "q",
           "required" : true,
           "schema" : {
+            "default" : "##default",
             "type" : "string"
           }
         }, {
@@ -1957,9 +2525,8 @@
           "name" : "page",
           "required" : false,
           "schema" : {
-            "default" : 0,
-            "format" : "int32",
-            "type" : "integer"
+            "default" : "##default",
+            "type" : "string"
           }
         }, {
           "description" : "Number of results per page",
@@ -1968,9 +2535,8 @@
           "name" : "size",
           "required" : false,
           "schema" : {
-            "default" : 20,
-            "format" : "int32",
-            "type" : "integer"
+            "default" : "##default",
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -1978,7 +2544,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentListResponse"
+                  "$ref" : "#/components/schemas/ContentListResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -1999,7 +2578,7 @@
           "name" : "id",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "default" : "##default",
             "type" : "string"
           }
         } ],
@@ -2008,7 +2587,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail"
+                  "$ref" : "#/components/schemas/ContentDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2018,7 +2610,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2037,7 +2642,7 @@
           "name" : "id",
           "required" : true,
           "schema" : {
-            "format" : "uuid",
+            "default" : "##default",
             "type" : "string"
           }
         } ],
@@ -2056,7 +2661,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail"
+                  "$ref" : "#/components/schemas/ContentDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2066,7 +2684,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2076,7 +2707,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2086,7 +2730,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2111,10 +2768,8 @@
           "name" : "year",
           "required" : true,
           "schema" : {
-            "format" : "int32",
-            "maximum" : 3000,
-            "minimum" : 2007,
-            "type" : "integer"
+            "default" : "##default",
+            "type" : "string"
           }
         }, {
           "description" : "Publication month (1-12)",
@@ -2123,10 +2778,8 @@
           "name" : "month",
           "required" : true,
           "schema" : {
-            "format" : "int32",
-            "maximum" : 12,
-            "minimum" : 1,
-            "type" : "integer"
+            "default" : "##default",
+            "type" : "string"
           }
         }, {
           "description" : "URL-safe slug derived from the post title",
@@ -2135,6 +2788,7 @@
           "name" : "slug",
           "required" : true,
           "schema" : {
+            "default" : "##default",
             "type" : "string"
           }
         } ],
@@ -2143,7 +2797,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ContentDetail"
+                  "$ref" : "#/components/schemas/ContentDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2153,7 +2820,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2172,6 +2852,7 @@
           "name" : "year",
           "required" : true,
           "schema" : {
+            "default" : "##default",
             "format" : "int32",
             "maximum" : 3000,
             "minimum" : 2007,
@@ -2182,6 +2863,7 @@
           "name" : "month",
           "required" : true,
           "schema" : {
+            "default" : "##default",
             "format" : "int32",
             "maximum" : 12,
             "minimum" : 1,
@@ -2200,7 +2882,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CommentThreadResponse"
+                  "$ref" : "#/components/schemas/CommentThreadResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2210,7 +2905,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2227,6 +2935,7 @@
           "name" : "year",
           "required" : true,
           "schema" : {
+            "default" : "##default",
             "format" : "int32",
             "maximum" : 3000,
             "minimum" : 2007,
@@ -2237,6 +2946,7 @@
           "name" : "month",
           "required" : true,
           "schema" : {
+            "default" : "##default",
             "format" : "int32",
             "maximum" : 12,
             "minimum" : 1,
@@ -2265,7 +2975,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/CommentDetail"
+                  "$ref" : "#/components/schemas/CommentDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2275,7 +2998,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },
@@ -2285,7 +3021,20 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/ProblemDetail"
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
                 }
               }
             },

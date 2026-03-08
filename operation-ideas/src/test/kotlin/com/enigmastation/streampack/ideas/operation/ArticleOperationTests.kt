@@ -1,22 +1,32 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.ideas.operation
 
+import com.enigmastation.streampack.blog.entity.Post
+import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.core.entity.ServiceBinding
+import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
+import com.enigmastation.streampack.core.repository.ServiceBindingRepository
+import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.MessageLogService
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.ideas.model.IdeaSessionState
 import com.enigmastation.streampack.ideas.service.IdeaTimerService
+import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,6 +40,9 @@ class ArticleOperationTests {
     @Autowired lateinit var stateService: ProvenanceStateService
     @Autowired lateinit var timerService: IdeaTimerService
     @Autowired lateinit var messageLogService: MessageLogService
+    @Autowired lateinit var userRepository: UserRepository
+    @Autowired lateinit var serviceBindingRepository: ServiceBindingRepository
+    @Autowired lateinit var postRepository: PostRepository
 
     private val alicePrincipal =
         UserPrincipal(
@@ -57,6 +70,7 @@ class ArticleOperationTests {
     /** User key: channelUri/username */
     private val aliceKey = "console:///local/alice"
     private val bobKey = "console:///local/bob"
+    private val ircServiceId = "irc-ideas"
 
     private fun aliceMessage(text: String) =
         MessageBuilder.withPayload(text)
@@ -78,12 +92,23 @@ class ArticleOperationTests {
             .setHeader(Provenance.ADDRESSED, true)
             .build()
 
+    private fun ircMessage(text: String, nick: String) =
+        MessageBuilder.withPayload(text)
+            .setHeader(
+                Provenance.HEADER,
+                Provenance(protocol = Protocol.IRC, serviceId = ircServiceId, replyTo = "#ideas"),
+            )
+            .setHeader("nick", nick)
+            .setHeader(Provenance.ADDRESSED, true)
+            .build()
+
     @BeforeEach
     fun cleanup() {
         stateService.clearState(aliceKey, IdeaSessionState.STATE_KEY)
         stateService.clearState(bobKey, IdeaSessionState.STATE_KEY)
         timerService.unregisterSession(aliceKey)
         timerService.unregisterSession(bobKey)
+        postRepository.deleteAll()
     }
 
     @Test
@@ -385,5 +410,75 @@ class ArticleOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val payload = (result as OperationResult.Success).payload as String
         assertTrue(payload.contains("1 content block"), "Should have 1 block from logs: $payload")
+    }
+
+    @Test
+    fun `finalize resolves service binding to author`() {
+        val nick = "bindingNick-${UUID.randomUUID().toString().take(8)}"
+        val ideaTitle = "Binding Idea ${UUID.randomUUID().toString().take(8)}"
+        val user =
+            userRepository.save(
+                User(
+                    username = "binding-${UUID.randomUUID().toString().take(8)}",
+                    email = "binding@example.com",
+                    displayName = "Bound User",
+                    emailVerified = true,
+                )
+            )
+        serviceBindingRepository.save(
+            ServiceBinding(
+                user = user,
+                protocol = Protocol.IRC,
+                serviceId = ircServiceId,
+                externalIdentifier = nick,
+            )
+        )
+        eventGateway.process(ircMessage("""article "$ideaTitle"""", nick))
+        eventGateway.process(ircMessage("content Body text for idea.", nick))
+        val doneResult = eventGateway.process(ircMessage("done", nick))
+        assertInstanceOf(OperationResult.Success::class.java, doneResult)
+
+        val savedPost =
+            awaitPostWithTitle(ideaTitle) ?: fail("Expected post to be created for idea $ideaTitle")
+        val author = savedPost.author ?: fail("Expected author to be resolved")
+        assertEquals(user.id, author.id)
+        assertEquals(user.displayName, author.displayName)
+        assertFalse(
+            savedPost.markdownSource.contains("Contributed by"),
+            "Attribution footer should be removed when author is resolved",
+        )
+    }
+
+    @Test
+    fun `finalize without binding keeps attribution`() {
+        val nick = "anonNick-${UUID.randomUUID().toString().take(8)}"
+        val ideaTitle = "Anonymous Idea ${UUID.randomUUID().toString().take(8)}"
+
+        eventGateway.process(ircMessage("""article "$ideaTitle"""", nick))
+        eventGateway.process(ircMessage("content Body text for idea.", nick))
+        val doneResult = eventGateway.process(ircMessage("done", nick))
+        assertInstanceOf(OperationResult.Success::class.java, doneResult)
+
+        val savedPost =
+            awaitPostWithTitle(ideaTitle) ?: fail("Expected post to be created for idea $ideaTitle")
+        assertNull(savedPost.author, "Author should remain anonymous when no binding is found")
+        assertTrue(
+            savedPost.markdownSource.contains("Contributed by $nick"),
+            "Attribution footer should remain for anonymous posts",
+        )
+    }
+
+    private fun awaitPostWithTitle(
+        title: String,
+        timeout: Duration = Duration.ofSeconds(2),
+    ): Post? {
+        val deadline = System.currentTimeMillis() + timeout.toMillis()
+        var found: Post? = null
+        while (System.currentTimeMillis() < deadline) {
+            found = postRepository.findAll().firstOrNull { it.title == title }
+            if (found != null) break
+            Thread.sleep(50)
+        }
+        return found
     }
 }
