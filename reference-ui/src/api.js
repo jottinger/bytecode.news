@@ -1,6 +1,7 @@
 import { getToken, clearAuth } from "./auth.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+const API_TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS || 8000);
 
 /**
  * Fetch wrapper that prepends the API base URL, injects JWT, and handles errors.
@@ -11,12 +12,28 @@ async function api(method, path, body) {
   const token = getToken();
   if (token) headers["Authorization"] = "Bearer " + token;
   if (body !== undefined) headers["Content-Type"] = "application/json";
-
-  const res = await fetch(API_BASE + path, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(API_BASE + path, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err?.name === "AbortError") {
+      throw {
+        status: 0,
+        title: "Network timeout",
+        detail: `Request timed out after ${API_TIMEOUT_MS}ms`,
+      };
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (res.status === 401) {
     clearAuth();
