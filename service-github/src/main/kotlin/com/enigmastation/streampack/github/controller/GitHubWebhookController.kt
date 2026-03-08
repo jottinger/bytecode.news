@@ -141,7 +141,7 @@ class GitHubWebhookController(
                 val releaseEvent = objectMapper.treeToValue(root, GitHubReleaseEvent::class.java)
                 webhookService.handleRelease(repo, releaseEvent)
             }
-            "ping" -> logger.debug("Received GitHub webhook ping for {}", fullName)
+            "ping" -> logger.info("Received GitHub webhook ping for {}", fullName)
         }
         return ResponseEntity.status(HttpStatus.ACCEPTED).build()
     }

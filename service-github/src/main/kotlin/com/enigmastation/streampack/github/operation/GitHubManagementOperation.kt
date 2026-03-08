@@ -73,7 +73,7 @@ class GitHubManagementOperation(private val subscriptionService: GitHubSubscript
         if (subscriptions.isEmpty()) {
             return OperationResult.Success("No active subscriptions for this channel")
         }
-        val lines = subscriptions.joinToString("\n") { it.repo.fullName() }
+        val lines = subscriptions.joinToString(", ") { it.repo.fullName() }
         return OperationResult.Success(lines)
     }
 
