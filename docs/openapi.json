@@ -3245,10 +3245,23 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "in" : "header",
+          "name" : "Content-Type",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
         } ],
         "requestBody" : {
           "content" : {
             "application/json" : {
+              "schema" : {
+                "format" : "byte",
+                "type" : "string"
+              }
+            },
+            "application/x-www-form-urlencoded" : {
               "schema" : {
                 "format" : "byte",
                 "type" : "string"
