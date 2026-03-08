@@ -1266,7 +1266,7 @@ GitHub sends repository events here when a repo is switched to webhook delivery 
 
 **Body**: Standard GitHub webhook JSON payload, sent either as raw JSON (`application/json`) or as a form payload (`application/x-www-form-urlencoded`, `payload=<json>`).
 
-**Success (202)**: Event accepted; subscribers receive the same notifications as the polling path.  
+**Success (202)**: Event accepted; subscribers receive notifications for supported events (`ping` sends setup verification notices).  
 **Errors**: 400 for malformed payloads, 401 for signature mismatch.
 
 Unsupported event types are ignored with `202 Accepted` and logged at warning level so operators can evaluate whether to add support later.
