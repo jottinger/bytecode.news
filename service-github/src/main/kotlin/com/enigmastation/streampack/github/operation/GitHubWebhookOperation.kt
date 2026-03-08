@@ -7,6 +7,7 @@ import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TranslatingOperation
+import com.enigmastation.streampack.github.config.GitHubProperties
 import com.enigmastation.streampack.github.service.GitHubWebhookAdminService
 import com.enigmastation.streampack.github.service.WebhookEnableOutcome
 import com.enigmastation.streampack.polling.service.EgressNotifier
@@ -19,9 +20,11 @@ class GitHubWebhookOperation(
     private val adminService: GitHubWebhookAdminService,
     private val notifier: EgressNotifier,
     private val properties: StreampackProperties,
+    private val gitHubProperties: GitHubProperties,
 ) : TranslatingOperation<String>(String::class) {
 
-    private val webhookUrl = "${properties.baseUrl.trimEnd('/')}/webhooks/github"
+    private val webhookUrl =
+        "${(gitHubProperties.webhookBaseUrl ?: properties.baseUrl).trimEnd('/')}/webhooks/github"
 
     override val priority: Int = 57
     override val addressed: Boolean = true

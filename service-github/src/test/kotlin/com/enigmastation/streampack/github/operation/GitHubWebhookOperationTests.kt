@@ -25,7 +25,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.transaction.annotation.Transactional
 
-@SpringBootTest
+@SpringBootTest(properties = ["streampack.github.webhook-base-url=https://hooks.example.com"])
 @Transactional
 class GitHubWebhookOperationTests {
 
@@ -103,7 +103,11 @@ class GitHubWebhookOperationTests {
         assertInstanceOf(OperationResult.Success::class.java, addResult)
 
         val result = eventGateway.process(message("github webhook owner/repo"))
-        assertInstanceOf(OperationResult.Success::class.java, result)
+        val success = assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(
+            true,
+            success.payload.toString().contains("https://hooks.example.com/webhooks/github"),
+        )
 
         val repo = repoRepository.findByOwnerAndName("owner", "repo")
         assertNotNull(repo)

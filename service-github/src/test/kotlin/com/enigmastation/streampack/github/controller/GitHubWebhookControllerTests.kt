@@ -7,6 +7,7 @@ import com.enigmastation.streampack.github.model.DeliveryMode
 import com.enigmastation.streampack.github.repository.GitHubRepoRepository
 import com.enigmastation.streampack.github.repository.GitHubSubscriptionRepository
 import com.enigmastation.streampack.github.service.WebhookSecretCipher
+import java.net.URLEncoder
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.text.Charsets
@@ -84,6 +85,43 @@ class GitHubWebhookControllerTests {
                 header("X-Hub-Signature-256", "sha256=badsignature")
             }
             .andExpect { status { isUnauthorized() } }
+    }
+
+    @Test
+    fun `form encoded payload is accepted`() {
+        val jsonPayload =
+            """{
+            "action":"opened",
+            "repository":{"full_name":"owner/repo"},
+            "issue":{"number":1,"title":"Test issue","html_url":"https://github.com/owner/repo/issues/1"}
+        }"""
+        val formBody = "payload=${URLEncoder.encode(jsonPayload, Charsets.UTF_8)}"
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_FORM_URLENCODED
+                content = formBody
+                header("X-GitHub-Event", "issues")
+                header("X-Hub-Signature-256", sign(formBody.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
+    }
+
+    @Test
+    fun `ping event is accepted`() {
+        val payload =
+            """{
+            "zen":"Keep it logically awesome.",
+            "hook_id":12345,
+            "repository":{"full_name":"owner/repo"}
+        }"""
+        mockMvc
+            .post("/webhooks/github") {
+                contentType = MediaType.APPLICATION_JSON
+                content = payload
+                header("X-GitHub-Event", "ping")
+                header("X-Hub-Signature-256", sign(payload.toByteArray()))
+            }
+            .andExpect { status { isAccepted() } }
     }
 
     private fun sign(body: ByteArray): String {

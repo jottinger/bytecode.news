@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import java.net.URLDecoder
 import java.security.MessageDigest
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -55,19 +56,24 @@ class GitHubWebhookController(
                 ),
             ],
     )
-    @PostMapping(consumes = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping(
+        consumes = [MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_FORM_URLENCODED_VALUE]
+    )
     fun receive(
         @RequestBody body: ByteArray,
         @RequestHeader("X-Hub-Signature-256", required = false) signature: String?,
         @RequestHeader("X-GitHub-Event", required = false) event: String?,
+        @RequestHeader("Content-Type", required = false) contentType: String?,
     ): ResponseEntity<Void> {
         if (signature.isNullOrBlank() || event.isNullOrBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
         }
 
+        val payload =
+            extractJsonPayload(body, contentType) ?: return ResponseEntity.badRequest().build()
         val root: JsonNode =
             try {
-                objectMapper.readTree(body)
+                objectMapper.readTree(payload)
             } catch (ex: Exception) {
                 logger.warn("Failed to parse GitHub webhook payload: {}", ex.message)
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build()
@@ -114,9 +120,24 @@ class GitHubWebhookController(
                 val releaseEvent = objectMapper.treeToValue(root, GitHubReleaseEvent::class.java)
                 webhookService.handleRelease(repo, releaseEvent)
             }
+            "ping" -> logger.debug("Received GitHub webhook ping for {}", fullName)
             else -> logger.debug("Ignoring unsupported GitHub event {} for {}", event, fullName)
         }
         return ResponseEntity.status(HttpStatus.ACCEPTED).build()
+    }
+
+    private fun extractJsonPayload(body: ByteArray, contentType: String?): ByteArray? {
+        if (contentType?.startsWith(MediaType.APPLICATION_FORM_URLENCODED_VALUE) != true) {
+            return body
+        }
+        val encoded =
+            body
+                .toString(Charsets.UTF_8)
+                .split("&")
+                .firstOrNull { it.startsWith("payload=") }
+                ?.substringAfter("payload=") ?: return null
+        val decoded = URLDecoder.decode(encoded, Charsets.UTF_8)
+        return decoded.toByteArray(Charsets.UTF_8)
     }
 
     private fun verifySignature(header: String, secret: String, body: ByteArray): Boolean {
