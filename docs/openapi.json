@@ -442,6 +442,17 @@
         },
         "type" : "object"
       },
+      "EditProfileRequest" : {
+        "properties" : {
+          "displayName" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "FactoidAttributeResponse" : {
         "properties" : {
           "rendered" : {
@@ -1972,6 +1983,51 @@
           }
         },
         "summary" : "Verify a one-time sign-in code",
+        "tags" : [ "Authentication" ]
+      }
+    },
+    "/auth/profile" : {
+      "put" : {
+        "operationId" : "editProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EditProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/UserPrincipal",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Updated user principal"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Update the authenticated user's profile",
         "tags" : [ "Authentication" ]
       }
     },

@@ -9,6 +9,7 @@ import com.enigmastation.streampack.blog.model.OtpRequest
 import com.enigmastation.streampack.blog.model.OtpVerifyRequest
 import com.enigmastation.streampack.blog.model.TokenRefreshRequest
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.model.EditProfileRequest
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
@@ -29,6 +30,7 @@ import org.springframework.messaging.support.MessageBuilder
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -126,6 +128,25 @@ class AuthController(
         val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
 
         return dispatch(ExportUserDataRequest(), "auth/export", user) { result ->
+            mapError(result, HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @Operation(summary = "Update the authenticated user's profile")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Updated user principal",
+        content = [Content(schema = Schema(implementation = UserPrincipal::class))],
+    )
+    @PutMapping("/profile", produces = ["application/json"], consumes = ["application/json"])
+    fun editProfile(
+        @RequestBody request: EditProfileRequest,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+
+        return dispatch(request, "auth/profile", user) { result ->
             mapError(result, HttpStatus.BAD_REQUEST)
         }
     }

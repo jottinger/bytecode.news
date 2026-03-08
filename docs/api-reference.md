@@ -1083,6 +1083,7 @@ Hidden from selection, existing post associations preserved.
 | POST | `/auth/refresh` | No | Refresh JWT |
 | DELETE | `/auth/account` | Yes | Erase account (creates sentinel) |
 | GET | `/auth/export` | Yes | Export own data as JSON |
+| PUT | `/auth/profile` | Yes | Update own display name or email |
 | PUT | `/admin/users/{username}/role` | Super-admin | Change user role |
 | PUT | `/admin/users/{username}/suspend` | Admin+ | Suspend user account |
 | PUT | `/admin/users/{username}/unsuspend` | Admin+ | Unsuspend user account |
@@ -1144,6 +1145,41 @@ Paginated listing with optional search.
   "size": 20
 }
 ```
+
+---
+
+### PUT /auth/profile
+
+Update the authenticated user's profile fields (display name and/or email).
+
+**Auth**: Required (Bearer token)
+
+**Request**:
+```json
+{
+  "displayName": "New Display Name",
+  "email": "optional-new-email@example.com"
+}
+```
+
+Each field is optional; omit values you do not wish to change.
+
+**Success (200)**:
+```json
+{
+  "id": "15f8247a-9f36-4ba0-9fae-1737fe1df938",
+  "username": "testuser",
+  "displayName": "New Display Name",
+  "role": "USER"
+}
+```
+
+**Errors**:
+
+| Status | Condition | Detail |
+|--------|-----------|--------|
+| 401 | Missing/invalid token | "Not authenticated" |
+| 400 | Operation rejected | Problem detail from EditProfileOperation |
 
 ---
 
