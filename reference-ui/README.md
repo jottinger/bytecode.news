@@ -19,6 +19,9 @@ npm install
 # Start dev server (port 3003, proxies /api to localhost:8080)
 npm run dev
 
+# Run frontend tests
+npm test
+
 # Production build
 npm run build
 ```
@@ -95,7 +98,7 @@ After authentication, the backend redirects to `{origin}/auth/callback#token=<jw
 
 ```
 src/
-  main.js               # Entry point: init auth, render nav, start router
+  main.js               # Entry point: render immediately, hydrate auth/features in background
   router.js             # pushState routing with path params and route guards
   api.js                # fetch() wrapper with JWT injection and ProblemDetail errors
   auth.js               # Token storage, session refresh, auth change listeners
@@ -139,6 +142,7 @@ Key patterns:
 - Route guards in `router.js` check `auth: true` or `role: 'ADMIN'` before rendering views.
   All authorization is also enforced server-side - UI guards are convenience only.
 - OIDC flow passes an `origin` parameter so the backend knows which frontend to redirect back to.
+- Startup is non-blocking: router/nav render first, then feature/auth hydration updates UI state asynchronously.
 
 ## Technology Choices
 
@@ -156,6 +160,7 @@ The reference UI ships as a Docker image with nginx serving the SPA and proxying
 | Variable | Build/Runtime | Default | Purpose |
 |----------|---------------|---------|---------|
 | `VITE_API_BASE` | Build (`--build-arg`) | `/api` | API base URL baked into the JS bundle. Set to the full backend URL for production (e.g. `https://api.bytecode.news`). |
+| `VITE_API_TIMEOUT_MS` | Build (`--build-arg`) | `8000` | Frontend API timeout in milliseconds before surfacing a network timeout error. |
 | `BACKEND_HOST` | Runtime (`-e`) | `backend:8080` | Host used by nginx for server-side proxies (sitemap, RSS feed, SSR). Not used by the browser. |
 
 ### Build
@@ -182,6 +187,20 @@ docker run -d --name reference-ui \
 `BACKEND_HOST` tells nginx where to proxy sitemap, RSS feed, and SSR requests.
 Use `host.docker.internal:8080` when the Java backend runs on the host machine.
 The `--add-host` flag makes `host.docker.internal` resolve inside the container.
+
+### Verify Bot SSR Routing
+
+After deploying the container, verify crawler user-agents are rewritten to backend SSR:
+
+```bash
+# Should return SSR HTML for bots
+curl -s -A "Googlebot/2.1" https://bytecode.news/posts/2026/03/example | head -n 20
+
+# Should return SPA shell for regular browsers
+curl -s -A "Mozilla/5.0" https://bytecode.news/posts/2026/03/example | head -n 20
+```
+
+For the bot request, confirm the response contains server-rendered article content (not only the SPA shell markup).
 
 ### External reverse proxy
 

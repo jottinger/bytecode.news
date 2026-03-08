@@ -7,6 +7,7 @@ import { renderNav } from "./components/nav.js";
 import { resetTitle } from "./title.js";
 
 let routes = [];
+let started = false;
 const app = () => document.getElementById("app");
 
 /** Define all application routes, including feature-gated routes from the registry */
@@ -124,6 +125,9 @@ async function resolve() {
 
 /** Start the router: listen for navigation events and resolve the initial URL */
 export function startRouter() {
+  if (started) return;
+  started = true;
+
   defineRoutes();
   window.addEventListener("popstate", resolve);
 
@@ -144,4 +148,12 @@ export function startRouter() {
 
   // Warm the editor chunk so it's cached before first use
   import("./editor.js").catch(() => {});
+}
+
+/** Recompute routes after dynamic feature hydration and re-resolve current location. */
+export function refreshRoutes() {
+  defineRoutes();
+  if (started) {
+    resolve();
+  }
 }
