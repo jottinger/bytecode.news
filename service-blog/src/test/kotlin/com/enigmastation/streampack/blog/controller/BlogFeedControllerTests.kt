@@ -80,6 +80,21 @@ class BlogFeedControllerTests {
                 author = author,
             )
         )
+
+        // Approved system-style page should NOT appear in blog RSS entries
+        val pagePost =
+            postRepository.save(
+                Post(
+                    title = "About",
+                    markdownSource = "About page",
+                    renderedHtml = "<p>About page</p>",
+                    excerpt = "About page excerpt",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(2, ChronoUnit.HOURS),
+                    author = author,
+                )
+            )
+        slugRepository.save(Slug(path = "about", post = pagePost, canonical = true))
     }
 
     @Test
@@ -109,11 +124,63 @@ class BlogFeedControllerTests {
     }
 
     @Test
+    fun `feed excludes non blog style slugs`() {
+        mockMvc.get("/feed.xml").andExpect {
+            status { isOk() }
+            content {
+                string(
+                    org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(">About</title>")
+                    )
+                )
+            }
+            content {
+                string(
+                    org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("/posts/about"))
+                )
+            }
+        }
+    }
+
+    @Test
     fun `feed includes channel metadata`() {
         mockMvc.get("/feed.xml").andExpect {
             status { isOk() }
             content { string(org.hamcrest.Matchers.containsString("<title>Nevet</title>")) }
             content { string(org.hamcrest.Matchers.containsString("<description>")) }
         }
+    }
+
+    @Test
+    fun `feed uses forwarded host and proto for public links`() {
+        mockMvc
+            .get("/feed.xml") {
+                header("X-Forwarded-Proto", "https")
+                header("X-Forwarded-Host", "foo.bytecode.news")
+            }
+            .andExpect {
+                status { isOk() }
+                content {
+                    string(
+                        org.hamcrest.Matchers.containsString(
+                            "<link>https://foo.bytecode.news</link>"
+                        )
+                    )
+                }
+                content {
+                    string(
+                        org.hamcrest.Matchers.containsString(
+                            "<guid>https://foo.bytecode.news/posts/$slugPath</guid>"
+                        )
+                    )
+                }
+                content {
+                    string(
+                        org.hamcrest.Matchers.not(
+                            org.hamcrest.Matchers.containsString("localhost:3001")
+                        )
+                    )
+                }
+            }
     }
 }

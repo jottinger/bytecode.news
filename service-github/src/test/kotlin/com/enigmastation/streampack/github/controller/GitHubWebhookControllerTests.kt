@@ -1,6 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.github.controller
 
+import com.enigmastation.streampack.core.integration.EgressSubscriber
+import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.github.entity.GitHubRepo
 import com.enigmastation.streampack.github.entity.GitHubSubscription
 import com.enigmastation.streampack.github.model.DeliveryMode
@@ -12,21 +15,18 @@ import java.util.concurrent.CopyOnWriteArrayList
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import kotlin.text.Charsets
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
-import org.springframework.messaging.SubscribableChannel
-import com.enigmastation.streampack.core.integration.EgressSubscriber
-import com.enigmastation.streampack.core.model.OperationResult
-import com.enigmastation.streampack.core.model.Provenance
 import org.springframework.http.MediaType
+import org.springframework.messaging.SubscribableChannel
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import org.springframework.transaction.annotation.Transactional
@@ -148,8 +148,7 @@ class GitHubWebhookControllerTests {
             "repository":{"full_name":"owner/repo"},
             "issue":{"number":1,"title":"Test issue","html_url":"https://github.com/owner/repo/issues/1"}
         }"""
-        val formBody =
-            "foo=bar&payload=${URLEncoder.encode(jsonPayload, Charsets.UTF_8)}&empty="
+        val formBody = "foo=bar&payload=${URLEncoder.encode(jsonPayload, Charsets.UTF_8)}&empty="
         mockMvc
             .post("/webhooks/github") {
                 contentType = MediaType.APPLICATION_FORM_URLENCODED
@@ -171,7 +170,8 @@ class GitHubWebhookControllerTests {
         val formBody = "payload=${URLEncoder.encode(jsonPayload, Charsets.UTF_8)}"
         mockMvc
             .post("/webhooks/github") {
-                contentType = MediaType.parseMediaType("application/x-www-form-urlencoded; charset=utf-8")
+                contentType =
+                    MediaType.parseMediaType("application/x-www-form-urlencoded; charset=utf-8")
                 content = formBody
                 header("X-GitHub-Event", "issues")
                 header("X-Hub-Signature-256", sign(formBody.toByteArray()))
@@ -217,7 +217,7 @@ class GitHubWebhookControllerTests {
             (result as OperationResult.Success)
                 .payload
                 .toString()
-                .contains("[owner/repo] Webhook ping received - setup verified."),
+                .contains("[owner/repo] Webhook ping received - setup verified.")
         )
     }
 
