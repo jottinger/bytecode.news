@@ -4,6 +4,20 @@ import { createEditor } from "../editor.js";
 import { renderError } from "../components/error-display.js";
 import { navigate } from "../router.js";
 
+function normalizeTags(payload) {
+  const raw = payload && typeof payload === "object" && "tags" in payload ? payload.tags : payload;
+  if (Array.isArray(raw)) {
+    return raw.map((t) => String(t).trim()).filter(Boolean);
+  }
+  if (raw && typeof raw === "object") {
+    return Object.keys(raw).map((t) => String(t).trim()).filter(Boolean);
+  }
+  if (typeof raw === "string") {
+    return raw.split(",").map((t) => t.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 /** Draft post creation form */
 export async function render(container) {
   let categories = [];
@@ -67,8 +81,13 @@ export async function render(container) {
         markdownSource,
         existingTags,
       });
-      tagsInput.value = (suggested.tags || []).join(", ");
-      status.innerHTML = "<p>Heuristic tags applied to the form. Review before submitting.</p>";
+      const normalizedTags = normalizeTags(suggested);
+      if (normalizedTags.length === 0) {
+        status.innerHTML = "<p>No heuristic tags were suggested.</p>";
+        return;
+      }
+      tagsInput.value = normalizedTags.join(", ");
+      status.innerHTML = `<p>Applied ${normalizedTags.length} heuristic tag${normalizedTags.length === 1 ? "" : "s"} to the form. Review before submitting.</p>`;
     } catch (err) {
       renderError(status, err);
     }

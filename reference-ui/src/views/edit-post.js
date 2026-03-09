@@ -5,6 +5,20 @@ import { renderError } from "../components/error-display.js";
 import { getPrincipal } from "../auth.js";
 import { hasRole } from "../roles.js";
 
+function normalizeTags(payload) {
+  const raw = payload && typeof payload === "object" && "tags" in payload ? payload.tags : payload;
+  if (Array.isArray(raw)) {
+    return raw.map((t) => String(t).trim()).filter(Boolean);
+  }
+  if (raw && typeof raw === "object") {
+    return Object.keys(raw).map((t) => String(t).trim()).filter(Boolean);
+  }
+  if (typeof raw === "string") {
+    return raw.split(",").map((t) => t.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 /** Edit an existing post - loads markdownSource from the backend */
 export async function render(container, params) {
   const postId = params.id;
@@ -127,8 +141,13 @@ export async function render(container, params) {
             markdownSource,
             existingTags,
           });
-          tagsInput.value = (suggested.tags || []).join(", ");
-          status.innerHTML = "<p>Heuristic tags applied to the form. Review before saving.</p>";
+          const normalizedTags = normalizeTags(suggested);
+          if (normalizedTags.length === 0) {
+            status.innerHTML = "<p>No heuristic tags were suggested.</p>";
+            return;
+          }
+          tagsInput.value = normalizedTags.join(", ");
+          status.innerHTML = `<p>Applied ${normalizedTags.length} heuristic tag${normalizedTags.length === 1 ? "" : "s"} to the form. Review before saving.</p>`;
         } catch (err) {
           renderError(status, err);
         }
@@ -154,8 +173,13 @@ export async function render(container, params) {
             markdownSource,
             existingTags,
           });
-          tagsInput.value = (derived.tags || []).join(", ");
-          status.innerHTML = "<p>Derived AI tags applied to the form. Review before saving.</p>";
+          const normalizedTags = normalizeTags(derived);
+          if (normalizedTags.length === 0) {
+            status.innerHTML = "<p>AI returned no tag suggestions.</p>";
+            return;
+          }
+          tagsInput.value = normalizedTags.join(", ");
+          status.innerHTML = `<p>Applied ${normalizedTags.length} AI-derived tag${normalizedTags.length === 1 ? "" : "s"} to the form. Review before saving.</p>`;
         } catch (err) {
           renderError(status, err);
         }
