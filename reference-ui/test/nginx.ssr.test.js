@@ -7,6 +7,10 @@ describe("docker nginx SSR routing", () => {
     const conf = readFileSync(resolve(process.cwd(), "nginx.conf"), "utf8");
 
     expect(conf).toContain("map $http_user_agent $is_crawler");
+    expect(conf).toContain("location = /index.html");
+    expect(conf).toContain("no-cache, no-store, must-revalidate");
+    expect(conf).toContain("location /assets/");
+    expect(conf).toContain("max-age=31536000, immutable");
     expect(conf).toContain("proxy_pass ${BACKEND_SCHEME}://${BACKEND_HOST}/;");
     expect(conf).toContain("proxy_ssl_server_name on;");
     expect(conf).toContain("proxy_set_header Host ${BACKEND_HOST};");
