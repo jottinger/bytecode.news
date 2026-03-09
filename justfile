@@ -42,3 +42,9 @@ redeploy-reference-ui:
       --add-host host.docker.internal:host-gateway \
       -p 3001:3001 \
       reference-ui
+
+# Install repository-managed git hooks
+install-git-hooks:
+    chmod +x .githooks/pre-commit .githooks/pre-push
+    git config core.hooksPath .githooks
+    @echo "Installed git hooks from .githooks/"

@@ -175,7 +175,13 @@ class SuggestArticleOperation(
             Rules:
             - Keep strong signal-to-noise.
             - Preserve key technical details and tradeoffs.
+            - Prefer classic essay-style prose when the source has enough depth (often ~3-5 paragraphs), but do not pad.
+            - Use fewer paragraphs when source material is thin.
+            - Do not include headings or bullet lists in summary.
+            - Do not speculate beyond available evidence.
+            - You may add brief contextual commentary only when it is well-established and clearly attributed.
             - tags must be lowercase, no leading '#', no underscores.
+            - return 3-5 tags.
             - no markdown fences.
             """
                 .trimIndent()
@@ -211,7 +217,7 @@ class SuggestArticleOperation(
                                 "SuggestArticleOperation: structured AI response missing summary; using fallback"
                             )
                         }
-            val parsedTags = structured.tags.mapNotNull(::normalizeTag)
+            val parsedTags = structured.tags.mapNotNull(::normalizeTag).take(5)
             logger.info(
                 "SuggestArticleOperation: structured AI success title='{}' tags={}",
                 parsedTitle.take(120),
@@ -260,6 +266,7 @@ class SuggestArticleOperation(
                     .takeIf { it.isArray }
                     ?.mapNotNull { child -> normalizeTag(child.asText("")) }
                     .orEmpty()
+                    .take(5)
             logger.info(
                 "SuggestArticleOperation: JSON fallback succeeded title='{}' tags={}",
                 parsedTitle.take(120),
