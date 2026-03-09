@@ -108,6 +108,18 @@ class DictionaryOperationTests {
         val result = eventGateway.process(message("hello world"))
         assertInstanceOf(OperationResult.NotHandled::class.java, result)
     }
+
+    @Test
+    fun `triggered define lookup is handled`() {
+        httpServer.createContext("/api/v2/entries/en/ephemeral") { exchange ->
+            val json = dictionaryJson("ephemeral", "adjective", "lasting for a very short time.")
+            exchange.sendResponseHeaders(200, json.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(json.toByteArray()) }
+        }
+
+        val result = eventGateway.process(message("!define ephemeral"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
 }
 
 /** DictionaryLookupService that rewrites URLs to point at a local HTTP server */

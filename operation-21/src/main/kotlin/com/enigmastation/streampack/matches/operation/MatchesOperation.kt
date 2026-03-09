@@ -4,6 +4,7 @@ package com.enigmastation.streampack.matches.operation
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.parser.*
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.matches.model.MatchesGameState
@@ -22,7 +23,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
     override val operationGroup: String = "21-matches"
 
     override fun canHandle(payload: String, message: Message<*>): Boolean {
-        return payload.trim().startsWith("21 ")
+        return payload.trim() == "21" || payload.trim().startsWith("21 ")
     }
 
     override fun handle(payload: String, message: Message<*>): OperationOutcome {
@@ -30,19 +31,36 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
             message.headers[Provenance.HEADER] as? Provenance
                 ?: return OperationResult.Error("No provenance available.")
         val provenanceUri = provenance.encode()
-        val command = payload.trim().substringAfter("21 ").trim().lowercase()
         val playerName = senderName(message)
+        return when (val parsed = matcher.match(payload)) {
+            is CommandMatchResult.Match ->
+                when (parsed.patternName) {
+                    "matches" -> startGame(provenanceUri)
+                    "take" -> takeTurn(provenanceUri, parsed.captures["count"] as Int, playerName)
+                    "concede" -> concede(provenanceUri, playerName)
+                    else -> unknownCommand()
+                }
 
-        return when {
-            command == "matches" -> startGame(provenanceUri)
-            command.startsWith("take ") ->
-                takeTurn(provenanceUri, command.substringAfter("take "), playerName)
+            is CommandMatchResult.InvalidArgument ->
+                if (parsed.patternName == "take" && parsed.argumentName == "count") {
+                    OperationResult.Error(
+                        "Please specify a number between 1 and 3. Usage: {{ref:21 take <1-3>}}"
+                    )
+                } else {
+                    unknownCommand()
+                }
 
-            command == "concede" -> concede(provenanceUri, playerName)
-            else ->
-                OperationResult.Error(
-                    "Unknown command. Usage: {{ref:21 matches}} | {{ref:21 take <1-3>}} | {{ref:21 concede}}"
-                )
+            is CommandMatchResult.MissingArguments ->
+                if (parsed.patternName == "take") {
+                    OperationResult.Error(
+                        "Please specify a number between 1 and 3. Usage: {{ref:21 take <1-3>}}"
+                    )
+                } else {
+                    unknownCommand()
+                }
+
+            is CommandMatchResult.TooManyArguments -> unknownCommand()
+            null -> unknownCommand()
         }
     }
 
@@ -70,7 +88,7 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
 
     private fun takeTurn(
         provenanceUri: String,
-        input: String,
+        playerTake: Int,
         playerName: String,
     ): OperationOutcome {
         val existing = stateService.getState(provenanceUri, MatchesGameState.STATE_KEY)
@@ -81,15 +99,6 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         }
 
         val state = objectMapper.convertValue<MatchesGameState>(existing)
-        val playerTake =
-            input.trim().toIntOrNull()
-                ?: return OperationResult.Error(
-                    "Please specify a number between 1 and 3. Usage: {{ref:21 take <1-3>}}"
-                )
-
-        if (playerTake < 1 || playerTake > 3) {
-            return OperationResult.Error("You must take 1, 2, or 3 matches.")
-        }
         if (playerTake > state.remaining) {
             return OperationResult.Error(
                 "There are only ${state.remaining} matches remaining. You cannot take $playerTake."
@@ -136,7 +145,24 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
         return OperationResult.Success("$playerName concedes! ${CONCEDE_LINES.random()}")
     }
 
+    private fun unknownCommand(): OperationResult.Error =
+        OperationResult.Error(
+            "Unknown command. Usage: {{ref:21 matches}} | {{ref:21 take <1-3>}} | {{ref:21 concede}}"
+        )
+
     companion object {
+        private val matcher =
+            CommandPatternMatcher(
+                listOf(
+                    CommandPattern(name = "matches", literals = listOf("21", "matches")),
+                    CommandPattern(
+                        name = "take",
+                        literals = listOf("21", "take"),
+                        args = listOf(CommandArgSpec("count", IntRangeArgType(1..3))),
+                    ),
+                    CommandPattern(name = "concede", literals = listOf("21", "concede")),
+                )
+            )
         val REACTIONS =
             listOf(
                 "Excellent choice!",
@@ -176,7 +202,11 @@ class MatchesOperation(private val stateService: ProvenanceStateService) :
                     }."
                 },
                 { _, took, _, move ->
-                    "$took, really? Child's play. I choose $move${if (move==took) {", too"} else ""}."
+                    "$took, really? Child's play. I choose $move${
+                        if (move == took) {
+                            ", too"
+                        } else ""
+                    }."
                 },
             )
 

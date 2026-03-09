@@ -40,6 +40,18 @@ class CalculatorOperationTests {
     }
 
     @Test
+    fun `complex expression with embedded spaces returns success`() {
+        val result = eventGateway.process(calcMessage("calc (10+5)*   2"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
+    fun `complex expression with multiple embedded spaces returns success`() {
+        val result = eventGateway.process(calcMessage("calc (10 +   5)*   2"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
     fun `invalid expression returns error`() {
         val result = eventGateway.process(calcMessage("calc hello world"))
         assertInstanceOf(OperationResult.Error::class.java, result)
@@ -60,6 +72,12 @@ class CalculatorOperationTests {
     @Test
     fun `calc with no expression returns error`() {
         val result = eventGateway.process(calcMessage("calc "))
-        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+    }
+
+    @Test
+    fun `triggered calc command is accepted`() {
+        val result = eventGateway.process(calcMessage("!calc 7*6"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
     }
 }
