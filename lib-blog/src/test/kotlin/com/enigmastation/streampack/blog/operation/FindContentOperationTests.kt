@@ -56,6 +56,7 @@ class FindContentOperationTests {
 
     private lateinit var author: User
     private lateinit var admin: User
+    private lateinit var superAdmin: User
     private lateinit var otherUser: User
     private lateinit var publishedPost: Post
     private lateinit var draftPost: Post
@@ -84,6 +85,16 @@ class FindContentOperationTests {
                     displayName = "Admin User",
                     emailVerified = true,
                     role = Role.ADMIN,
+                )
+            )
+        superAdmin =
+            userRepository.save(
+                User(
+                    username = "superadmin",
+                    email = "superadmin@test.com",
+                    displayName = "Super Admin",
+                    emailVerified = true,
+                    role = Role.SUPER_ADMIN,
                 )
             )
         otherUser =
@@ -249,6 +260,15 @@ class FindContentOperationTests {
     }
 
     @Test
+    fun `FindById for draft by non-author returns error`() {
+        val result =
+            eventGateway.process(findMessage(FindContentRequest.FindById(draftPost.id), otherUser))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Post not found", (result as OperationResult.Error).message)
+    }
+
+    @Test
     fun `FindPublished returns only published posts`() {
         val result = eventGateway.process(findMessage(FindContentRequest.FindPublished()))
 
@@ -312,6 +332,29 @@ class FindContentOperationTests {
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Post not found", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `anonymous user cannot see scheduled post via FindBySlug`() {
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/scheduled-post"), null)
+            )
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Post not found", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `author can see scheduled post via FindBySlug`() {
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/scheduled-post"), author)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("Scheduled Post", detail.title)
     }
 
     @Test
@@ -486,6 +529,18 @@ class FindContentOperationTests {
     }
 
     @Test
+    fun `super admin receives markdownSource for any post`() {
+        val result =
+            eventGateway.process(
+                findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), superAdmin)
+            )
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("# Published", detail.markdownSource)
+    }
+
+    @Test
     fun `FindById as author includes markdownSource`() {
         val result =
             eventGateway.process(findMessage(FindContentRequest.FindById(publishedPost.id), author))
@@ -599,6 +654,81 @@ class FindContentOperationTests {
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Page not found", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `FindBySlug uses requested path when canonical slug missing`() {
+        val now = Instant.now()
+        val post =
+            postRepository.save(
+                Post(
+                    title = "Alias Only Post",
+                    markdownSource = "# Alias",
+                    renderedHtml = "<h1>Alias</h1>",
+                    excerpt = "alias only",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(10, ChronoUnit.MINUTES),
+                    author = author,
+                )
+            )
+        slugRepository.save(Slug(path = "2026/03/alias-only", post = post, canonical = false))
+
+        val result =
+            eventGateway.process(findMessage(FindContentRequest.FindBySlug("2026/03/alias-only")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("2026/03/alias-only", detail.slug)
+    }
+
+    @Test
+    fun `FindById uses empty slug when canonical slug missing`() {
+        val now = Instant.now()
+        val post =
+            postRepository.save(
+                Post(
+                    title = "Id Only Post",
+                    markdownSource = "# ID",
+                    renderedHtml = "<h1>ID</h1>",
+                    excerpt = "id only",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(10, ChronoUnit.MINUTES),
+                    author = author,
+                )
+            )
+        slugRepository.save(Slug(path = "2026/03/id-only", post = post, canonical = false))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindById(post.id)))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("", detail.slug)
+    }
+
+    @Test
+    fun `FindPage uses requested slug when canonical slug missing`() {
+        val pagesCategory = categoryRepository.findByName("_pages")!!
+        val now = Instant.now()
+        val page =
+            postRepository.save(
+                Post(
+                    title = "Alias Page",
+                    markdownSource = "# Alias Page",
+                    renderedHtml = "<h1>Alias Page</h1>",
+                    excerpt = "alias page",
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(10, ChronoUnit.MINUTES),
+                    author = admin,
+                )
+            )
+        slugRepository.save(Slug(path = "alias-page", post = page, canonical = false))
+        postCategoryRepository.save(PostCategory(post = page, category = pagesCategory))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindPage("alias-page")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("alias-page", detail.slug)
     }
 
     @Test

@@ -163,6 +163,28 @@ class FactoidOperationTests {
         assertError(result)
     }
 
+    @Test
+    fun `unlock from non-admin returns error`() {
+        eventGateway.process(msg("unlocktest=value"))
+        eventGateway.process(msg("unlocktest.lock", role = Role.ADMIN))
+        val result = eventGateway.process(msg("unlocktest.unlock", role = Role.USER))
+        assertError(result)
+    }
+
+    @Test
+    fun `unlock from admin succeeds`() {
+        eventGateway.process(msg("unlocktest2=value"))
+        eventGateway.process(msg("unlocktest2.lock", role = Role.ADMIN))
+        val result = eventGateway.process(msg("unlocktest2.unlock", role = Role.ADMIN))
+        assertSuccess(result, "ok, unlocktest2 is now unlocked.")
+    }
+
+    @Test
+    fun `unlock on nonexistent factoid returns error`() {
+        val result = eventGateway.process(msg("ghost.unlock", role = Role.ADMIN))
+        assertError(result)
+    }
+
     // -- Case insensitive --
 
     @Test
