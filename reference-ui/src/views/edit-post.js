@@ -11,9 +11,9 @@ export async function render(container, params) {
 
   try {
     // FindById returns ContentDetail with markdownSource for authors/admins
-    const post = await get(`/posts/${postId}`);
+    const postDetail = await get(`/posts/${postId}`);
 
-    if (!post.markdownSource && post.markdownSource !== "") {
+    if (!postDetail.markdownSource && postDetail.markdownSource !== "") {
       container.innerHTML = "<article><h2>Cannot edit</h2><p>Markdown source not available. You may not have permission to edit this post.</p></article>";
       return;
     }
@@ -27,14 +27,14 @@ export async function render(container, params) {
 
     const categoryOptions = categories
       .map((c) => {
-        const checked = (post.categories || []).includes(c.name) ? "checked" : "";
+        const checked = (postDetail.categories || []).includes(c.name) ? "checked" : "";
         return `<label><input type="checkbox" name="categoryIds" value="${c.id}" ${checked} /> ${escapeHtml(c.name)}</label>`;
       })
       .join("");
 
-    const currentTags = (post.tags || []).join(", ");
+    const currentTags = (postDetail.tags || []).join(", ");
     const principal = getPrincipal();
-    const canPublishDraft = post.status === "DRAFT" && principal && hasRole(principal.role, "ADMIN");
+    const canPublishDraft = postDetail.status === "DRAFT" && principal && hasRole(principal.role, "ADMIN");
     const canSuggestTags = true;
     const canDeriveAiTags = principal && hasRole(principal.role, "ADMIN");
 
@@ -42,7 +42,7 @@ export async function render(container, params) {
       <h2>Edit Post</h2>
       <form id="edit-form">
         <label for="title">Title</label>
-        <input type="text" id="title" name="title" required value="${escapeAttr(post.title)}" />
+        <input type="text" id="title" name="title" required value="${escapeAttr(postDetail.title)}" />
 
         <label for="markdownSource">Content (Markdown)</label>
         <textarea id="markdownSource" name="markdownSource"></textarea>
@@ -63,7 +63,7 @@ export async function render(container, params) {
     `;
 
     const editor = createEditor(document.getElementById("markdownSource"), {
-      initialValue: post.markdownSource,
+      initialValue: postDetail.markdownSource,
     });
 
     const savePost = async (formEl) => {
