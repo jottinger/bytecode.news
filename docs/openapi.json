@@ -3335,23 +3335,6 @@
             "type" : "string"
           }
         } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "format" : "byte",
-                "type" : "string"
-              }
-            },
-            "application/x-www-form-urlencoded" : {
-              "schema" : {
-                "format" : "byte",
-                "type" : "string"
-              }
-            }
-          },
-          "required" : true
-        },
         "responses" : {
           "202" : {
             "description" : "Delivery accepted"
