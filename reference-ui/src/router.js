@@ -9,6 +9,7 @@ import { resetTitle } from "./title.js";
 let routes = [];
 let started = false;
 const app = () => document.getElementById("app");
+const CHUNK_RELOAD_GUARD = "nevet_chunk_reload_guard";
 
 /** Define all application routes, including feature-gated routes from the registry */
 function defineRoutes() {
@@ -114,9 +115,20 @@ async function resolve() {
 
   try {
     const mod = await route.load();
+    sessionStorage.removeItem(CHUNK_RELOAD_GUARD);
     const search = new URLSearchParams(window.location.search);
     await mod.render(app(), params, search);
   } catch (err) {
+    if (isChunkLoadError(err)) {
+      if (!sessionStorage.getItem(CHUNK_RELOAD_GUARD)) {
+        sessionStorage.setItem(CHUNK_RELOAD_GUARD, "1");
+        window.location.reload();
+        return;
+      }
+      app().innerHTML = "<article><h2>Update available</h2><p>A newer frontend version was deployed. Please refresh this page.</p></article>";
+      return;
+    }
+
     const rawMessage = err && (err.detail || err.message) ? (err.detail || err.message) : "Something went wrong";
     const safeMessage = escapeHtml(rawMessage);
     app().innerHTML = `<article><h2>Error</h2><p>${safeMessage}</p></article>`;
@@ -156,4 +168,9 @@ export function refreshRoutes() {
   if (started) {
     resolve();
   }
+}
+
+function isChunkLoadError(err) {
+  const msg = (err && (err.message || err.detail)) ? String(err.message || err.detail) : "";
+  return msg.includes("Failed to fetch dynamically imported module") || msg.includes("Importing a module script failed");
 }
