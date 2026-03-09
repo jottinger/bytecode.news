@@ -31,6 +31,8 @@ class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
         val titleLower = title.lowercase()
         val bodyLower = markdown.lowercase()
         val allText = "$titleLower\n$bodyLower"
+        val titleTokens =
+            Regex("""[a-z0-9][a-z0-9+._-]{1,40}""").findAll(titleLower).map { it.value }.toList()
 
         val knownTags = findKnownTags(message.headers[Provenance.HEADER] as? Provenance)
         val existing = payload.existingTags.mapNotNull { normalizeTag(it) }
@@ -44,11 +46,13 @@ class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
         val words =
             Regex("""[a-z0-9][a-z0-9+._-]{1,40}""").findAll(allText).map { it.value }.toList()
         val frequencies = words.groupingBy { it }.eachCount()
+        val phraseCandidates = extractTitlePhrases(titleTokens)
 
         val candidates = mutableSetOf<String>()
         candidates.addAll(existing)
         candidates.addAll(hashtags)
-        candidates.addAll(knownTags)
+        candidates.addAll(knownTags.take(120))
+        candidates.addAll(phraseCandidates)
         candidates.addAll(
             frequencies.entries
                 .asSequence()
@@ -76,10 +80,15 @@ class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
                 .sortedWith(
                     compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first }
                 )
-                .map { it.first }
-                .take(10)
+        val selected =
+            selectSignificantTags(
+                scored = scored,
+                knownTags = knownTags,
+                existing = existing,
+                hashtags = hashtags,
+            )
 
-        return OperationResult.Success(SuggestTagsResponse(scored))
+        return OperationResult.Success(SuggestTagsResponse(selected))
     }
 
     private fun findKnownTags(provenance: Provenance?): Set<String> {
@@ -117,9 +126,60 @@ class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
         score += (frequencies[tag] ?: 0) * 6
 
         if (tag in knownTags) score += 8
+        if (tag in GENERIC_LOW_SIGNAL && !containsExact(titleLower, tag)) score -= 45
+        if (tag !in knownTags && tag !in existing && tag !in hashtags) {
+            val freq = frequencies[tag] ?: 0
+            val titleMatch = containsExact(titleLower, tag)
+            val bodyMatch = containsExact(bodyLower, tag)
+            if (!titleMatch && !bodyMatch && freq < 3) score -= 120
+            if (bodyMatch && freq >= 2) score += 10
+        }
         if (tag in STOPWORDS) score -= 50
 
         return score
+    }
+
+    private fun selectSignificantTags(
+        scored: List<Pair<String, Int>>,
+        knownTags: Set<String>,
+        existing: List<String>,
+        hashtags: Set<String>,
+    ): List<String> {
+        val selected = mutableListOf<String>()
+        var newTagCount = 0
+
+        for ((tag, score) in scored) {
+            if (selected.size >= 5) break
+            val known = tag in knownTags || tag in existing || tag in hashtags
+            if (known) {
+                if (score >= 28) selected += tag
+                continue
+            }
+            if (newTagCount >= 1) continue
+            if (score >= 85) {
+                selected += tag
+                newTagCount++
+            }
+        }
+
+        if (selected.isNotEmpty()) return selected
+        return scored.filter { it.second >= 45 }.take(3).map { it.first }
+    }
+
+    private fun extractTitlePhrases(titleTokens: List<String>): Set<String> {
+        if (titleTokens.size < 2) return emptySet()
+        val out = mutableSetOf<String>()
+        for (i in 0 until titleTokens.size - 1) {
+            val bi = "${titleTokens[i]} ${titleTokens[i + 1]}"
+            if (bi.split(" ").all { it !in STOPWORDS }) out += bi
+        }
+        if (titleTokens.size >= 3) {
+            for (i in 0 until titleTokens.size - 2) {
+                val tri = "${titleTokens[i]} ${titleTokens[i + 1]} ${titleTokens[i + 2]}"
+                if (tri.split(" ").all { it !in STOPWORDS }) out += tri
+            }
+        }
+        return out
     }
 
     private fun containsExact(text: String, token: String): Boolean {
@@ -186,6 +246,21 @@ class SuggestTagsHeuristicOperation(private val eventGateway: EventGateway) :
                 "not",
                 "use",
                 "using",
+            )
+
+        private val GENERIC_LOW_SIGNAL =
+            setOf(
+                "development",
+                "design",
+                "testing",
+                "software",
+                "code",
+                "programming",
+                "architecture",
+                "tools",
+                "tooling",
+                "tutorial",
+                "guide",
             )
     }
 }

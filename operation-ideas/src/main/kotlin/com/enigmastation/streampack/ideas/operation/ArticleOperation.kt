@@ -287,6 +287,10 @@ class ArticleOperation(
 
         val aiService = aiServiceProvider.ifAvailable
         if (aiService == null) {
+            logger.info(
+                "ArticleOperation: includeai requested but AI unavailable title='{}'",
+                state.title.take(120),
+            )
             return AiDraftResult(
                 null,
                 emptyList(),
@@ -296,6 +300,13 @@ class ArticleOperation(
 
         val taxonomy = findTaxonomySnapshot(state.sourceProvenance)
         val knownTags = taxonomy?.tags?.keys?.take(200).orEmpty()
+        logger.info(
+            "ArticleOperation: includeai start title='{}' contentBlocks={} hasLogs={} knownTags={}",
+            state.title.take(120),
+            state.contentBlocks.size,
+            state.hasLogs,
+            knownTags.size,
+        )
         val systemPrompt =
             """
             You summarize article drafts for editorial review.
@@ -335,8 +346,46 @@ class ArticleOperation(
             """
                 .trimIndent()
 
-        val response = aiService.prompt(systemPrompt, userPrompt)
-        if (response.isNullOrBlank()) {
+        val aiResponse =
+            aiService.promptForObjectWithRaw(
+                systemPrompt,
+                userPrompt,
+                AiSummaryResponse::class.java,
+            )
+        logger.info(
+            "ArticleOperation: includeai response structured={} rawChars={}",
+            aiResponse.value != null,
+            aiResponse.raw?.length ?: 0,
+        )
+
+        val structured = aiResponse.value
+        if (structured != null) {
+            val summary = structured.summary?.trim().orEmpty().ifBlank { null }
+            val tags =
+                structured.tags
+                    .mapNotNull { raw -> raw.trim().lowercase().ifBlank { null } }
+                    .map { it.removePrefix("#") }
+                    .filter { !it.startsWith("_") }
+                    .distinct()
+            if (summary == null && tags.isEmpty()) {
+                logger.info("ArticleOperation: includeai structured response empty")
+                return AiDraftResult(
+                    null,
+                    emptyList(),
+                    "AI summary requested but structured response was empty; saved without AI summary.",
+                )
+            }
+            logger.info(
+                "ArticleOperation: includeai structured success summaryChars={} tags={}",
+                summary?.length ?: 0,
+                tags.size,
+            )
+            return AiDraftResult(summary, tags, "AI summary appended for admin review.")
+        }
+
+        val raw = aiResponse.raw
+        if (raw.isNullOrBlank()) {
+            logger.info("ArticleOperation: includeai generation failed with empty raw response")
             return AiDraftResult(
                 null,
                 emptyList(),
@@ -345,8 +394,9 @@ class ArticleOperation(
         }
 
         return try {
-            val node = parseAiJson(response)
+            val node = parseAiJson(raw)
             if (node == null) {
+                logger.info("ArticleOperation: includeai raw response invalid JSON")
                 return AiDraftResult(
                     null,
                     emptyList(),
@@ -365,15 +415,22 @@ class ArticleOperation(
                     .orEmpty()
 
             if (summary == null && tags.isEmpty()) {
+                logger.info("ArticleOperation: includeai JSON response empty")
                 AiDraftResult(
                     null,
                     emptyList(),
                     "AI summary requested but response was empty; saved without AI summary.",
                 )
             } else {
+                logger.info(
+                    "ArticleOperation: includeai JSON fallback success summaryChars={} tags={}",
+                    summary?.length ?: 0,
+                    tags.size,
+                )
                 AiDraftResult(summary, tags, "AI summary appended for admin review.")
             }
         } catch (_: Exception) {
+            logger.info("ArticleOperation: includeai JSON parsing exception")
             AiDraftResult(
                 null,
                 emptyList(),
@@ -492,5 +549,10 @@ class ArticleOperation(
         val summary: String?,
         val tags: List<String>,
         val note: String?,
+    )
+
+    private data class AiSummaryResponse(
+        val summary: String? = null,
+        val tags: List<String> = emptyList(),
     )
 }
