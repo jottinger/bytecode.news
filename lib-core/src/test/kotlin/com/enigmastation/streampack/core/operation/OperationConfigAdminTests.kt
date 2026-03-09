@@ -180,6 +180,40 @@ class OperationConfigAdminTests {
         assertEquals("50", config!!.config["maxItems"])
     }
 
+    @Test
+    fun `operation unknown subcommand returns error`() {
+        val result = eventGateway.process(buildMessage("operation explode", Role.ADMIN))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertTrue(
+            (result as OperationResult.Error).message.contains("Unknown operation subcommand")
+        )
+    }
+
+    @Test
+    fun `operation enable without group returns usage error`() {
+        val result = eventGateway.process(buildMessage("operation enable", Role.ADMIN))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Usage: operation enable <group>", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `operation disable without group returns usage error`() {
+        val result = eventGateway.process(buildMessage("operation disable", Role.ADMIN))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Usage: operation disable <group>", (result as OperationResult.Error).message)
+    }
+
+    @Test
+    fun `operation set without enough args returns usage error`() {
+        val result =
+            eventGateway.process(buildMessage("operation set test-admin-op onlyKey", Role.ADMIN))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            "Usage: operation set <group> <key> <value>",
+            (result as OperationResult.Error).message,
+        )
+    }
+
     // -- ChannelConfigOperation tests --
 
     @Test
@@ -229,5 +263,58 @@ class OperationConfigAdminTests {
         assertInstanceOf(OperationResult.Success::class.java, result)
         val output = (result as OperationResult.Success).payload.toString()
         assertTrue(output.contains("test-admin-op"))
+    }
+
+    @Test
+    fun `channel unknown subcommand returns error`() {
+        val result = eventGateway.process(buildMessage("channel kaboom", Role.ADMIN))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertTrue((result as OperationResult.Error).message.contains("Unknown channel subcommand"))
+    }
+
+    @Test
+    fun `channel enable without group returns usage error`() {
+        val result = eventGateway.process(buildMessage("channel enable", Role.ADMIN))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            "Usage: channel enable <group> [for <pattern>]",
+            (result as OperationResult.Error).message,
+        )
+    }
+
+    @Test
+    fun `channel set without enough args returns usage error`() {
+        val result =
+            eventGateway.process(buildMessage("channel set test-admin-op onlyKey", Role.ADMIN))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            "Usage: channel set <group> <key> <value> [for <pattern>]",
+            (result as OperationResult.Error).message,
+        )
+    }
+
+    @Test
+    fun `channel set with value and for clause stores scoped config`() {
+        val result =
+            eventGateway.process(
+                buildMessage(
+                    "channel set test-admin-op greeting hello there for irc://oftc/%23kotlin",
+                    Role.ADMIN,
+                )
+            )
+        assertInstanceOf(OperationResult.Success::class.java, result)
+
+        val config = configService.findConfig("irc://oftc/%23kotlin", "test-admin-op")
+        assertEquals("hello there", config!!.config["greeting"])
+    }
+
+    @Test
+    fun `channel config without provenance suggests for clause`() {
+        val message = MessageBuilder.withPayload("channel config").build()
+        val result = eventGateway.process(message)
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertTrue(
+            (result as OperationResult.Error).message.contains("Cannot determine target provenance")
+        )
     }
 }

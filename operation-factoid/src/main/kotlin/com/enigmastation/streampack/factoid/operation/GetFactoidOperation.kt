@@ -37,10 +37,11 @@ class GetFactoidOperation(
     override fun handle(payload: FactoidQueryRequest, message: Message<*>): OperationOutcome? {
         return try {
             val searchResult =
-                factoidService.findSelectorWithArguments(payload.selector) ?: return null
+                factoidService.findSelectorWithArguments(payload.selector)
+                    ?: return missingSelectorOutcome(payload)
             val (selector, argument) = searchResult
             val attributes = factoidService.findBySelector(selector)
-            if (attributes.isEmpty()) return null
+            if (attributes.isEmpty()) return missingSelectorOutcome(payload)
 
             // Follow .see redirects for default queries
             if (payload.attribute == FactoidAttributeType.UNKNOWN) {
@@ -82,6 +83,18 @@ class GetFactoidOperation(
             OperationResult.Error(e.message!!)
         } catch (_: TooManyArgumentsException) {
             null
+        }
+    }
+
+    private fun missingSelectorOutcome(payload: FactoidQueryRequest): OperationOutcome? {
+        return when (payload.attribute) {
+            FactoidAttributeType.INFO,
+            FactoidAttributeType.LITERAL,
+            FactoidAttributeType.LOCK,
+            FactoidAttributeType.UNLOCK,
+            FactoidAttributeType.STATS ->
+                OperationResult.Error("Factoid '${payload.selector}' not found.")
+            else -> null
         }
     }
 
