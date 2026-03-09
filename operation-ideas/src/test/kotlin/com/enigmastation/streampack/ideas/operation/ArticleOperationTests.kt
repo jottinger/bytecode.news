@@ -413,6 +413,40 @@ class ArticleOperationTests {
     }
 
     @Test
+    fun `includeai toggles on and off for active session`() {
+        eventGateway.process(aliceMessage("article AI Toggle Test"))
+
+        val enabled = eventGateway.process(aliceMessage("includeai"))
+        assertInstanceOf(OperationResult.Success::class.java, enabled)
+        assertTrue(
+            (enabled as OperationResult.Success).payload.toString().contains("AI summary enabled")
+        )
+
+        val disabled = eventGateway.process(aliceMessage("noai"))
+        assertInstanceOf(OperationResult.Success::class.java, disabled)
+        assertTrue(
+            (disabled as OperationResult.Success).payload.toString().contains("AI summary disabled")
+        )
+    }
+
+    @Test
+    fun `includeai keeps draft save when ai is unavailable`() {
+        val ideaTitle = "AI Unavailable ${UUID.randomUUID().toString().take(8)}"
+        eventGateway.process(aliceMessage("""article "$ideaTitle""""))
+        eventGateway.process(aliceMessage("content Body for AI unavailable test."))
+        eventGateway.process(aliceMessage("includeai"))
+
+        val doneResult = eventGateway.process(aliceMessage("done"))
+        assertInstanceOf(OperationResult.Success::class.java, doneResult)
+        val payload = (doneResult as OperationResult.Success).payload.toString()
+        assertTrue(payload.contains("AI summary requested but AI is unavailable"))
+
+        val savedPost =
+            awaitPostWithTitle(ideaTitle) ?: fail("Expected post to be created for idea $ideaTitle")
+        assertFalse(savedPost.markdownSource.contains("## AI Draft Summary (Generated)"))
+    }
+
+    @Test
     fun `finalize resolves service binding to author`() {
         val nick = "bindingNick-${UUID.randomUUID().toString().take(8)}"
         val ideaTitle = "Binding Idea ${UUID.randomUUID().toString().take(8)}"

@@ -35,17 +35,47 @@ export async function render(container) {
         <input type="text" name="website" tabindex="-1" autocomplete="off" />
       </div>
 
-      <button type="submit">Submit Draft</button>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button type="button" id="suggest-tags-btn">Suggest Tags</button>
+        <button type="submit">Submit Draft</button>
+      </div>
       <div id="submit-status"></div>
     </form>
   `;
 
   const editor = createEditor(document.getElementById("markdownSource"));
   const formLoadedAt = Date.now();
+  const form = document.getElementById("submit-form");
+  const tagsInput = document.getElementById("tags");
+  const status = document.getElementById("submit-status");
 
-  document.getElementById("submit-form").addEventListener("submit", async (e) => {
+  document.getElementById("suggest-tags-btn").addEventListener("click", async () => {
+    const fd = new FormData(form);
+    const markdownSource = editor.value();
+    if (!markdownSource.trim()) {
+      status.innerHTML = "<p>Content is required.</p>";
+      return;
+    }
+
+    const existingTags = tagsInput.value
+      ? tagsInput.value.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+
+    try {
+      const suggested = await apiPost("/posts/derive-tags", {
+        title: fd.get("title"),
+        markdownSource,
+        existingTags,
+      });
+      tagsInput.value = (suggested.tags || []).join(", ");
+      status.innerHTML = "<p>Heuristic tags applied to the form. Review before submitting.</p>";
+    } catch (err) {
+      renderError(status, err);
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const status = document.getElementById("submit-status");
     const fd = new FormData(e.target);
 
     const markdownSource = editor.value();

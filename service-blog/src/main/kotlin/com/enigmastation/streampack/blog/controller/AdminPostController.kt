@@ -7,6 +7,9 @@ import com.enigmastation.streampack.blog.model.ApproveContentRequest
 import com.enigmastation.streampack.blog.model.ContentDetail
 import com.enigmastation.streampack.blog.model.ContentListResponse
 import com.enigmastation.streampack.blog.model.ContentOperationConfirmation
+import com.enigmastation.streampack.blog.model.DeriveTagsHttpRequest
+import com.enigmastation.streampack.blog.model.DeriveTagsRequest
+import com.enigmastation.streampack.blog.model.DeriveTagsResponse
 import com.enigmastation.streampack.blog.model.EditContentHttpRequest
 import com.enigmastation.streampack.blog.model.EditContentRequest
 import com.enigmastation.streampack.blog.model.FindDraftsRequest
@@ -34,6 +37,7 @@ import org.springframework.messaging.support.MessageBuilder
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -149,6 +153,47 @@ class AdminPostController(
                 categoryIds = request.categoryIds,
             )
         return dispatch(payload, "admin/posts/edit", user) { result -> mapError(result) }
+    }
+
+    @Operation(summary = "Derive AI tag suggestions from unsaved editor content")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Derived tags",
+        content = [Content(schema = Schema(implementation = DeriveTagsResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "403",
+        description = "Admin access required",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid input or AI unavailable",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @PostMapping(
+        "/{id}/derive-tags",
+        produces = ["application/json"],
+        consumes = ["application/json"],
+    )
+    fun deriveTags(
+        @PathVariable id: UUID,
+        @RequestBody request: DeriveTagsHttpRequest,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
+        val payload =
+            DeriveTagsRequest(
+                title = request.title ?: "",
+                markdownSource = request.markdownSource ?: "",
+                existingTags = request.existingTags ?: emptyList(),
+            )
+        return dispatch(payload, "admin/posts/derive-tags", user) { result -> mapError(result) }
     }
 
     @Operation(summary = "Delete a post (soft by default, hard with ?hard=true)")

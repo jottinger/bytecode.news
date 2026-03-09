@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.urltitle.service
 
+import com.enigmastation.streampack.core.service.TitleFetchResult
 import com.enigmastation.streampack.core.service.TitleFetcher
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -16,6 +17,7 @@ class TestTitleFetcherConfiguration {
 /** Returns controlled titles keyed by URL, allowing tests to verify summary formatting */
 class TestTitleFetcher : TitleFetcher {
     private val titles = mutableMapOf<String, String>()
+    private val invalidCertificates = mutableSetOf<String>()
 
     fun setTitle(url: String, title: String) {
         titles[url] = title
@@ -23,7 +25,24 @@ class TestTitleFetcher : TitleFetcher {
 
     fun clear() {
         titles.clear()
+        invalidCertificates.clear()
+    }
+
+    fun setInvalidCertificate(url: String) {
+        invalidCertificates += url
     }
 
     override fun fetchTitle(url: String): String? = titles[url]
+
+    override fun fetchTitleResult(url: String): TitleFetchResult {
+        if (url in invalidCertificates) {
+            return TitleFetchResult(
+                title = null,
+                finalUrl = url,
+                certificateInvalid = true,
+                warnings = listOf("TLS certificate validation failed"),
+            )
+        }
+        return TitleFetchResult(title = titles[url], finalUrl = url)
+    }
 }

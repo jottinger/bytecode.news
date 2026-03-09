@@ -137,4 +137,19 @@ class UrlTitleSummaryTests {
         // Only one title resolves, so single-URL format (title only)
         assertEquals("Totally Unrelated Title", payload)
     }
+
+    @Test
+    fun `invalid tls certificate returns derived title warning`() {
+        val url = "https://badcert.example.com/deeply-interesting-article"
+        testFetcher.setInvalidCertificate(url)
+
+        val result = eventGateway.process(message("read this $url"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val payload = (result as OperationResult.Success).payload as String
+        assertTrue(
+            payload.contains("Deeply Interesting Article"),
+            "Expected URL-derived fallback title",
+        )
+        assertTrue(payload.contains("TLS certificate invalid"), "Expected TLS warning in payload")
+    }
 }

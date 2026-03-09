@@ -1,4 +1,4 @@
-import { get, put } from "../api.js";
+import { get, post, put } from "../api.js";
 import { escapeHtml, escapeAttr } from "../escape.js";
 import { createEditor } from "../editor.js";
 import { renderError } from "../components/error-display.js";
@@ -35,6 +35,8 @@ export async function render(container, params) {
     const currentTags = (post.tags || []).join(", ");
     const principal = getPrincipal();
     const canPublishDraft = post.status === "DRAFT" && principal && hasRole(principal.role, "ADMIN");
+    const canSuggestTags = true;
+    const canDeriveAiTags = principal && hasRole(principal.role, "ADMIN");
 
     container.innerHTML = `
       <h2>Edit Post</h2>
@@ -52,6 +54,8 @@ export async function render(container, params) {
 
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
           <button type="submit">Save Changes</button>
+          ${canSuggestTags ? `<button type="button" id="suggest-tags-btn">Suggest Tags</button>` : ""}
+          ${canDeriveAiTags ? `<button type="button" id="derive-tags-btn">Derive AI Tags</button>` : ""}
           ${canPublishDraft ? `<button type="button" id="publish-btn" class="contrast">Publish</button>` : ""}
         </div>
         <div id="edit-status"></div>
@@ -103,6 +107,60 @@ export async function render(container, params) {
       e.preventDefault();
       await savePost(form);
     });
+
+    if (canSuggestTags) {
+      document.getElementById("suggest-tags-btn").addEventListener("click", async () => {
+        const status = document.getElementById("edit-status");
+        const tagsInput = document.getElementById("tags");
+        const fd = new FormData(form);
+        const markdownSource = editor.value();
+        if (!markdownSource.trim()) {
+          status.innerHTML = "<p>Content is required.</p>";
+          return;
+        }
+        const existingTags = tagsInput.value
+          ? tagsInput.value.split(",").map((t) => t.trim()).filter(Boolean)
+          : [];
+        try {
+          const suggested = await post(`/posts/derive-tags`, {
+            title: fd.get("title"),
+            markdownSource,
+            existingTags,
+          });
+          tagsInput.value = (suggested.tags || []).join(", ");
+          status.innerHTML = "<p>Heuristic tags applied to the form. Review before saving.</p>";
+        } catch (err) {
+          renderError(status, err);
+        }
+      });
+    }
+
+    if (canDeriveAiTags) {
+      document.getElementById("derive-tags-btn").addEventListener("click", async () => {
+        const status = document.getElementById("edit-status");
+        const tagsInput = document.getElementById("tags");
+        const fd = new FormData(form);
+        const markdownSource = editor.value();
+        if (!markdownSource.trim()) {
+          status.innerHTML = "<p>Content is required.</p>";
+          return;
+        }
+        const existingTags = tagsInput.value
+          ? tagsInput.value.split(",").map((t) => t.trim()).filter(Boolean)
+          : [];
+        try {
+          const derived = await post(`/admin/posts/${postId}/derive-tags`, {
+            title: fd.get("title"),
+            markdownSource,
+            existingTags,
+          });
+          tagsInput.value = (derived.tags || []).join(", ");
+          status.innerHTML = "<p>Derived AI tags applied to the form. Review before saving.</p>";
+        } catch (err) {
+          renderError(status, err);
+        }
+      });
+    }
 
     if (canPublishDraft) {
       document.getElementById("publish-btn").addEventListener("click", async () => {

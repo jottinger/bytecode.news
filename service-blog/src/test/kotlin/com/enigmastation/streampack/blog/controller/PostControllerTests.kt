@@ -213,6 +213,34 @@ class PostControllerTests {
             }
     }
 
+    @Test
+    fun `POST derive-tags suggests heuristic tags without authentication`() {
+        mockMvc
+            .post("/posts/derive-tags") {
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """{"title":"Kotlin JVM Internals","markdownSource":"Kotlin on the JVM is practical. JVM tuning and Kotlin tooling matter.","existingTags":["java"]}"""
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.tags") { isArray() }
+                jsonPath("$.tags[0]") { isNotEmpty() }
+            }
+    }
+
+    @Test
+    fun `POST derive-tags with blank content returns 400`() {
+        mockMvc
+            .post("/posts/derive-tags") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"title":"Anything","markdownSource":"","existingTags":["java"]}"""
+            }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.detail") { value("Content is required") }
+            }
+    }
+
     // --- PUT /posts/{id} ---
 
     @Test

@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.urltitle.service
 
 import com.enigmastation.streampack.core.extensions.compress
+import com.enigmastation.streampack.core.service.TitleFetchResult
 import com.enigmastation.streampack.core.service.TitleFetcher
 import com.enigmastation.streampack.urltitle.config.UrlTitleProperties
 import com.enigmastation.streampack.urltitle.entity.IgnoredHost
@@ -36,6 +37,9 @@ class UrlTitleService(
 
     /** Delegates to the TitleFetcher to retrieve the page title */
     fun fetchTitle(url: String): String? = titleFetcher.fetchTitle(url)
+
+    /** Delegates to the TitleFetcher and includes trust metadata for warning output. */
+    fun fetchTitleResult(url: String): TitleFetchResult = titleFetcher.fetchTitleResult(url)
 
     /** Computes Jaccard similarity between URL path tokens and title tokens */
     fun calculateJaccardSimilarity(url: String, title: String): Double {
@@ -121,5 +125,19 @@ class UrlTitleService(
                 .replace("/", " ")
                 .replace(Regex("[0-9]+"), "")
                 .compress()
+
+        /** Produces a human-readable fallback title from URL path/host tokens. */
+        fun deriveTitleFromUrl(url: String): String {
+            val cleaned = cleanUrl(url)
+            if (cleaned.isBlank()) return url
+            return cleaned
+                .split(" ")
+                .filter { it.isNotBlank() }
+                .joinToString(" ") { token ->
+                    token.replaceFirstChar { c ->
+                        if (c.isLowerCase()) c.titlecase() else c.toString()
+                    }
+                }
+        }
     }
 }

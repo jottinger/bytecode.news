@@ -169,4 +169,35 @@ class CommandParserTests {
             rangeMatcher.match("21 take 4"),
         )
     }
+
+    @Test
+    fun `http url argument accepts only http and https`() {
+        val urlMatcher =
+            CommandPatternMatcher(
+                listOf(
+                    CommandPattern(
+                        name = "suggest",
+                        literals = listOf("suggest"),
+                        args = listOf(CommandArgSpec("url", HttpUrlArgType)),
+                    )
+                )
+            )
+
+        assertInstanceOf(
+            CommandMatchResult.Match::class.java,
+            urlMatcher.match("suggest https://example.com/post"),
+        )
+        assertInstanceOf(
+            CommandMatchResult.Match::class.java,
+            urlMatcher.match("suggest http://example.com/post"),
+        )
+        assertInstanceOf(
+            CommandMatchResult.InvalidArgument::class.java,
+            urlMatcher.match("suggest ftp://example.com/post"),
+        )
+        assertInstanceOf(
+            CommandMatchResult.InvalidArgument::class.java,
+            urlMatcher.match("suggest file:///tmp/test"),
+        )
+    }
 }

@@ -20,4 +20,22 @@ interface PostTagRepository : JpaRepository<PostTag, UUID> {
     @Transactional
     @Query("DELETE FROM PostTag pt WHERE pt.post.id = :postId")
     fun deleteByPost(postId: UUID)
+
+    @Query(
+        """
+        SELECT LOWER(pt.tag.name) AS name, COUNT(pt.id) AS count
+        FROM PostTag pt
+        WHERE pt.tag.deleted = false
+          AND pt.post.deleted = false
+          AND SUBSTRING(LOWER(pt.tag.name), 1, 1) <> '_'
+        GROUP BY LOWER(pt.tag.name)
+        ORDER BY COUNT(pt.id) DESC, LOWER(pt.tag.name) ASC
+        """
+    )
+    fun findTagCounts(): List<NameCountProjection>
+}
+
+interface NameCountProjection {
+    val name: String
+    val count: Long
 }

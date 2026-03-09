@@ -44,4 +44,25 @@ interface FactoidAttributeRepository : JpaRepository<FactoidAttribute, UUID> {
         nativeQuery = true,
     )
     fun findSelectorsByTag(@Param("tag") tag: String): List<String>
+
+    @Query(
+        """
+        SELECT TRIM(BOTH FROM LOWER(t.value)) AS name, COUNT(*) AS count
+        FROM factoid_attributes fa
+        CROSS JOIN LATERAL unnest(string_to_array(fa.attribute_value, ',')) AS t(value)
+        WHERE fa.attribute_type = 'TAGS'
+          AND fa.attribute_value IS NOT NULL
+          AND TRIM(BOTH FROM t.value) <> ''
+          AND LEFT(TRIM(BOTH FROM LOWER(t.value)), 1) <> '_'
+        GROUP BY TRIM(BOTH FROM LOWER(t.value))
+        ORDER BY COUNT(*) DESC, TRIM(BOTH FROM LOWER(t.value)) ASC
+        """,
+        nativeQuery = true,
+    )
+    fun findTagCounts(): List<FactoidNameCountProjection>
+}
+
+interface FactoidNameCountProjection {
+    val name: String
+    val count: Long
 }

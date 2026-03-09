@@ -20,4 +20,17 @@ interface PostCategoryRepository : JpaRepository<PostCategory, UUID> {
     @Transactional
     @Query("DELETE FROM PostCategory pc WHERE pc.post.id = :postId")
     fun deleteByPost(postId: UUID)
+
+    @Query(
+        """
+        SELECT LOWER(pc.category.name) AS name, COUNT(pc.id) AS count
+        FROM PostCategory pc
+        WHERE pc.category.deleted = false
+          AND pc.post.deleted = false
+          AND SUBSTRING(LOWER(pc.category.name), 1, 1) <> '_'
+        GROUP BY LOWER(pc.category.name)
+        ORDER BY COUNT(pc.id) DESC, LOWER(pc.category.name) ASC
+        """
+    )
+    fun findCategoryCounts(): List<NameCountProjection>
 }

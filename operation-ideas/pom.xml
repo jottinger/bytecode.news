@@ -29,6 +29,16 @@
         </dependency>
         <dependency>
             <groupId>com.enigmastation</groupId>
+            <artifactId>lib-ai</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
+            <artifactId>lib-taxonomy</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
             <artifactId>lib-test</artifactId>
             <version>1.0</version>
             <scope>test</scope>

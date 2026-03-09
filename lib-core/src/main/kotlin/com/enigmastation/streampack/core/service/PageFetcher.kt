@@ -5,4 +5,10 @@ package com.enigmastation.streampack.core.service
 interface PageFetcher {
     /** Returns the page body for the given URL, or null on any failure */
     fun fetch(url: String): String?
+
+    /** Returns structured fetch details; default adapts the legacy `fetch` API. */
+    fun fetchResult(url: String): PageFetchResult {
+        val body = fetch(url)
+        return PageFetchResult(body = body, finalUrl = url)
+    }
 }
