@@ -502,6 +502,42 @@ class ArticleOperationTests {
         )
     }
 
+    @Test
+    fun `finalize resolves binding case insensitively`() {
+        val nick = "DreamReal-${UUID.randomUUID().toString().take(6)}"
+        val boundId = nick.lowercase()
+        val ideaTitle = "Case Binding Idea ${UUID.randomUUID().toString().take(8)}"
+
+        val user =
+            userRepository.save(
+                User(
+                    username = "casebinding-${UUID.randomUUID().toString().take(8)}",
+                    email = "casebinding-${UUID.randomUUID().toString().take(8)}@example.com",
+                    displayName = "Case Bound User",
+                    emailVerified = true,
+                )
+            )
+        serviceBindingRepository.save(
+            ServiceBinding(
+                user = user,
+                protocol = Protocol.IRC,
+                serviceId = ircServiceId.uppercase(),
+                externalIdentifier = boundId,
+            )
+        )
+
+        eventGateway.process(ircMessage("""article "$ideaTitle"""", nick))
+        eventGateway.process(ircMessage("content Body text for case-binding idea.", nick))
+        val doneResult = eventGateway.process(ircMessage("done", nick))
+        assertInstanceOf(OperationResult.Success::class.java, doneResult)
+
+        val savedPost =
+            awaitPostWithTitle(ideaTitle) ?: fail("Expected post to be created for idea $ideaTitle")
+        val author = savedPost.author ?: fail("Expected author to be resolved")
+        assertEquals(user.id, author.id)
+        assertFalse(savedPost.markdownSource.contains("Contributed by"))
+    }
+
     private fun awaitPostWithTitle(
         title: String,
         timeout: Duration = Duration.ofSeconds(2),

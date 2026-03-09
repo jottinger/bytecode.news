@@ -13,4 +13,16 @@ interface ServiceBindingRepository : JpaRepository<ServiceBinding, UUID> {
         "SELECT sb FROM ServiceBinding sb WHERE sb.protocol = :protocol AND sb.serviceId = :serviceId AND sb.externalIdentifier = :externalIdentifier"
     )
     fun resolve(protocol: Protocol, serviceId: String, externalIdentifier: String): ServiceBinding?
+
+    @Query(
+        "SELECT sb FROM ServiceBinding sb " +
+            "WHERE sb.protocol = :protocol " +
+            "AND LOWER(sb.serviceId) = LOWER(:serviceId) " +
+            "AND LOWER(sb.externalIdentifier) = LOWER(:externalIdentifier)"
+    )
+    fun resolveIgnoreCase(
+        protocol: Protocol,
+        serviceId: String,
+        externalIdentifier: String,
+    ): ServiceBinding?
 }

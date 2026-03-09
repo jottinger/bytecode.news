@@ -8,6 +8,7 @@ import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
+import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.service.MessageLogService
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TypedOperation
@@ -82,7 +83,7 @@ class ArticleOperation(
             }
             cmd == "includeai" -> toggleAi(userKey, true)
             cmd == "noai" -> toggleAi(userKey, false)
-            cmd == "done" -> finalize(userKey)
+            cmd == "done" -> finalize(userKey, message)
             cmd == "cancel" -> cancel(userKey)
             else -> null
         }
@@ -258,7 +259,7 @@ class ArticleOperation(
         }
     }
 
-    private fun finalize(userKey: String): OperationOutcome {
+    private fun finalize(userKey: String, message: Message<*>): OperationOutcome {
         val data =
             stateService.getState(userKey, IdeaSessionState.STATE_KEY)
                 ?: return OperationResult.Error(
@@ -267,7 +268,8 @@ class ArticleOperation(
 
         val state = objectMapper.convertValue<IdeaSessionState>(data)
         val aiResult = buildAiSummary(state)
-        dispatchDraftPost(state, aiResult.summary, aiResult.tags)
+        val currentPrincipal = (message.headers[Provenance.HEADER] as? Provenance)?.user
+        dispatchDraftPost(state, aiResult.summary, aiResult.tags, currentPrincipal)
 
         stateService.clearState(userKey, IdeaSessionState.STATE_KEY)
         timerService.unregisterSession(userKey)
@@ -343,7 +345,14 @@ class ArticleOperation(
         }
 
         return try {
-            val node = objectMapper.readTree(response)
+            val node = parseAiJson(response)
+            if (node == null) {
+                return AiDraftResult(
+                    null,
+                    emptyList(),
+                    "AI summary requested but response was invalid JSON; saved without AI summary.",
+                )
+            }
             val summary = node.path("summary").asText("").trim().ifBlank { null }
             val tags =
                 node
@@ -373,10 +382,41 @@ class ArticleOperation(
         }
     }
 
+    private fun parseAiJson(response: String): com.fasterxml.jackson.databind.JsonNode? {
+        val raw = response.trim()
+        if (raw.isBlank()) return null
+
+        val candidates =
+            buildList {
+                    add(raw)
+                    add(raw.removeSurrounding("```json", "```").trim())
+                    add(raw.removeSurrounding("```", "```").trim())
+                    val firstBrace = raw.indexOf('{')
+                    val lastBrace = raw.lastIndexOf('}')
+                    if (firstBrace >= 0 && lastBrace > firstBrace) {
+                        add(raw.substring(firstBrace, lastBrace + 1).trim())
+                    }
+                }
+                .distinct()
+                .filter { it.startsWith("{") && it.endsWith("}") }
+
+        for (candidate in candidates) {
+            try {
+                return objectMapper.readTree(candidate)
+            } catch (_: Exception) {}
+        }
+        return null
+    }
+
     private fun findTaxonomySnapshot(sourceProvenance: String): TaxonomySnapshot? {
+        val decoded = runCatching { Provenance.decode(sourceProvenance) }.getOrNull()
         val provenance =
-            runCatching { Provenance.decode(sourceProvenance) }.getOrNull()
-                ?: Provenance(protocol = Protocol.HTTP, serviceId = "ideas", replyTo = "")
+            Provenance(
+                protocol = Protocol.HTTP,
+                serviceId = "ideas",
+                replyTo = "taxonomy",
+                user = decoded?.user,
+            )
 
         val message =
             MessageBuilder.withPayload(FindTaxonomySnapshotRequest as Any)
@@ -407,8 +447,9 @@ class ArticleOperation(
         state: IdeaSessionState,
         aiSummary: String?,
         aiTags: List<String>,
+        preferredUser: UserPrincipal? = null,
     ) {
-        val resolvedUser = ideaAuthorResolver.resolve(state)
+        val resolvedUser = ideaAuthorResolver.resolve(state, preferredUser)
         val request =
             state.toCreateContentRequest(
                 includeAttribution = resolvedUser == null,
