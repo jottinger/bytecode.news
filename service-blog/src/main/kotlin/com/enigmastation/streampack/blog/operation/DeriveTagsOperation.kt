@@ -101,22 +101,60 @@ class DeriveTagsOperation(
     }
 
     private fun parseTags(response: String): List<String> {
-        return try {
-            val node = objectMapper.readTree(response)
-            node
-                .path("tags")
-                .takeIf { it.isArray }
-                ?.mapNotNull { child -> child.asText("").trim().lowercase().ifBlank { null } }
-                ?.map { it.removePrefix("#") }
-                ?.filter { !it.startsWith("_") }
-                ?.distinct()
-                .orEmpty()
-        } catch (_: Exception) {
-            response
-                .split(',')
-                .map { it.trim().lowercase().removePrefix("#") }
-                .filter { it.isNotBlank() && !it.startsWith("_") }
-                .distinct()
+        val node = parseAiJson(response)
+        if (node != null) {
+            val tagNode = if (node.has("tags")) node.path("tags") else node
+            if (tagNode.isArray) {
+                return tagNode
+                    .mapNotNull { child -> normalizeTag(child.asText("")) }
+                    .distinct()
+            }
+            if (tagNode.isTextual) {
+                return tagNode
+                    .asText("")
+                    .split(',')
+                    .mapNotNull(::normalizeTag)
+                    .distinct()
+            }
         }
+
+        return response
+            .split(',')
+            .mapNotNull(::normalizeTag)
+            .distinct()
+    }
+
+    private fun parseAiJson(response: String): com.fasterxml.jackson.databind.JsonNode? {
+        val raw = response.trim()
+        if (raw.isBlank()) return null
+
+        val strippedPrefix = raw.removePrefix("json").trim()
+        val candidates =
+            buildList {
+                add(raw)
+                add(strippedPrefix)
+                add(raw.removeSurrounding("```json", "```").trim())
+                add(raw.removeSurrounding("```", "```").trim())
+                val firstBrace = raw.indexOf('{')
+                val lastBrace = raw.lastIndexOf('}')
+                if (firstBrace >= 0 && lastBrace > firstBrace) {
+                    add(raw.substring(firstBrace, lastBrace + 1).trim())
+                }
+            }.distinct()
+
+        for (candidate in candidates) {
+            if (candidate.isBlank()) continue
+            try {
+                return objectMapper.readTree(candidate)
+            } catch (_: Exception) {}
+        }
+        return null
+    }
+
+    private fun normalizeTag(raw: String): String? {
+        val cleaned = raw.trim().lowercase().removePrefix("#")
+        if (cleaned.isBlank()) return null
+        if (cleaned.startsWith("_")) return null
+        return cleaned
     }
 }
