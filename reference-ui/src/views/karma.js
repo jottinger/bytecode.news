@@ -61,8 +61,6 @@ function renderTable(entries) {
       return `<tr>
         <td>${escapeHtml(entry.subject)}</td>
         <td>${entry.score}</td>
-        <td>${entry.upvotes}</td>
-        <td>${entry.downvotes}</td>
         <td>${updated}</td>
       </tr>`;
     })
@@ -71,7 +69,7 @@ function renderTable(entries) {
   return `
     <table role="grid">
       <thead>
-        <tr><th>Subject</th><th>Score</th><th>Up</th><th>Down</th><th>Updated</th></tr>
+        <tr><th>Subject</th><th>Score</th><th>Updated</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>

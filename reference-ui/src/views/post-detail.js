@@ -25,7 +25,7 @@ export async function render(container, params) {
       (principal.id === post.authorId) ||
       hasRole(principal.role, "ADMIN")
     );
-    const editLink = canEdit ? `<a href="/edit/${post.id}" role="button" class="outline">Edit Post</a>` : "";
+    const editLink = canEdit ? ` | <small><a href="/edit/${post.id}" class="secondary">Edit</a></small>` : "";
 
     container.innerHTML = `
       <article>
@@ -33,9 +33,8 @@ export async function render(container, params) {
           <hgroup>
             <h2>${escapeHtml(post.title)}</h2>
             <p>By ${escapeHtml(post.authorDisplayName)} | ${date} | ${post.commentCount} comment${post.commentCount === 1 ? "" : "s"}
-            ${categories ? ` | ${categories}` : ""}</p>
+            ${categories ? ` | ${categories}` : ""}${editLink}</p>
           </hgroup>
-          ${editLink}
         </header>
         <div id="post-body">${post.renderedHtml}</div>
         ${tags ? `<footer>${tags}</footer>` : ""}

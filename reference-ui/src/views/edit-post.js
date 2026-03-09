@@ -2,6 +2,8 @@ import { get, put } from "../api.js";
 import { escapeHtml, escapeAttr } from "../escape.js";
 import { createEditor } from "../editor.js";
 import { renderError } from "../components/error-display.js";
+import { getPrincipal } from "../auth.js";
+import { hasRole } from "../roles.js";
 
 /** Edit an existing post - loads markdownSource from the backend */
 export async function render(container, params) {
@@ -31,6 +33,8 @@ export async function render(container, params) {
       .join("");
 
     const currentTags = (post.tags || []).join(", ");
+    const principal = getPrincipal();
+    const canPublishDraft = post.status === "DRAFT" && principal && hasRole(principal.role, "ADMIN");
 
     container.innerHTML = `
       <h2>Edit Post</h2>
@@ -46,7 +50,10 @@ export async function render(container, params) {
 
         ${categoryOptions ? `<fieldset><legend>Categories</legend>${categoryOptions}</fieldset>` : ""}
 
-        <button type="submit">Save Changes</button>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button type="submit">Save Changes</button>
+          ${canPublishDraft ? `<button type="button" id="publish-btn" class="contrast">Publish</button>` : ""}
+        </div>
         <div id="edit-status"></div>
       </form>
     `;
@@ -55,15 +62,14 @@ export async function render(container, params) {
       initialValue: post.markdownSource,
     });
 
-    document.getElementById("edit-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    const savePost = async (formEl) => {
       const status = document.getElementById("edit-status");
-      const fd = new FormData(e.target);
+      const fd = new FormData(formEl);
 
       const markdownSource = editor.value();
       if (!markdownSource.trim()) {
         status.innerHTML = "<p>Content is required.</p>";
-        return;
+        return null;
       }
 
       const tags = fd.get("tags")
@@ -85,10 +91,35 @@ export async function render(container, params) {
         } else {
           status.innerHTML = `<p>Saved.</p>`;
         }
+        return result;
       } catch (err) {
         renderError(status, err);
+        return null;
       }
+    };
+
+    const form = document.getElementById("edit-form");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await savePost(form);
     });
+
+    if (canPublishDraft) {
+      document.getElementById("publish-btn").addEventListener("click", async () => {
+        const status = document.getElementById("edit-status");
+        const saved = await savePost(form);
+        if (!saved) return;
+        try {
+          const approved = await put(`/admin/posts/${postId}/approve`, {
+            publishedAt: new Date().toISOString(),
+          });
+          const viewPath = approved.slug?.includes("/") ? `/posts/${escapeHtml(approved.slug)}` : "/admin/posts";
+          status.innerHTML = `<p>Published. <a href="${viewPath}">View post</a></p>`;
+        } catch (err) {
+          renderError(status, err);
+        }
+      });
+    }
   } catch (err) {
     renderError(container, err);
   }

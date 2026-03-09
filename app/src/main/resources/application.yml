@@ -46,6 +46,7 @@ streampack:
     enabled: ${MAIL_ENABLED:false}
   irc:
     enabled: ${IRC_ENABLED:false}
+    identity: ${IRC_IDENTITY:Nevet IRC Bridge}
   blog:
     anonymous-submission: ${ANONYMOUS_SUBMISSION:false}
     site-name: ${BLOG_SITE_NAME:Nevet}

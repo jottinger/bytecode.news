@@ -587,10 +587,6 @@
       },
       "KarmaLeaderboardEntryResponse" : {
         "properties" : {
-          "downvotes" : {
-            "format" : "int32",
-            "type" : "integer"
-          },
           "lastUpdated" : {
             "format" : "date",
             "type" : "string"
@@ -601,13 +597,9 @@
           },
           "subject" : {
             "type" : "string"
-          },
-          "upvotes" : {
-            "format" : "int32",
-            "type" : "integer"
           }
         },
-        "required" : [ "downvotes", "lastUpdated", "score", "subject", "upvotes" ],
+        "required" : [ "lastUpdated", "score", "subject" ],
         "type" : "object"
       },
       "KarmaLeaderboardResponse" : {

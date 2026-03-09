@@ -758,6 +758,7 @@ Rotate: `find /backups -name "nevet-*.dump" -mtime +30 -delete`.
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3003` | Comma-separated allowed origins |
 | `CONSOLE_ENABLED` | `false` | Enable stdin console adapter |
 | `IRC_ENABLED` | `false` | Enable IRC connections |
+| `IRC_IDENTITY` | `Nevet IRC Bridge` | Identity string used for IRC WHOIS/CTCP VERSION responses |
 | `IRC_SIGNAL` | `!` | Global IRC signal character |
 | `SLACK_ENABLED` | `false` | Enable Slack connections |
 | `SLACK_SIGNAL` | `!` | Global Slack signal character |
