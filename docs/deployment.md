@@ -206,10 +206,14 @@ These must be changed:
 | Variable | What to set |
 |----------|-------------|
 | `JWT_SECRET` | Strong random value: `openssl rand -base64 32` |
+| `STREAMPACK_JWT_EXPIRATION_HOURS` | Session lifetime in hours (for example `336` for 2 weeks, `720` for 30 days) |
 | `GITHUB_WEBHOOK_SECRET_KEY` | Required for webhook secret encryption: `openssl rand -hex 32` |
 | `BASE_URL` | Public URL, e.g., `https://bytecode.news` |
 | `DB_PASSWORD` | A real password |
 | `CORS_ORIGINS` | All frontend origins, e.g., `https://bytecode.news,https://nextjs.bytecode.news` |
+
+`STREAMPACK_JWT_EXPIRATION_HOURS` controls JWT/session lifetime only. OTP code lifetime remains
+controlled by `streampack.otp.expiration-minutes` (default 10 minutes).
 
 ### 3. Start PostgreSQL
 
@@ -740,6 +744,7 @@ Rotate: `find /backups -name "nevet-*.dump" -mtime +30 -delete`.
 | `DB_USERNAME` | `nevet` | Database user |
 | `DB_PASSWORD` | `nevet` | Database password |
 | `JWT_SECRET` | `change-me-in-production` | HMAC signing key for JWTs |
+| `STREAMPACK_JWT_EXPIRATION_HOURS` | `24` | JWT/session lifetime in hours (`336` = 2 weeks, `720` = 30 days) |
 | `GITHUB_WEBHOOK_SECRET_KEY` | (required) | AES key material source for encrypting GitHub webhook secrets at rest |
 | `BASE_URL` | `http://localhost:8080` | Public base URL for links in emails |
 | `FRONTEND_URL` | (same as BASE_URL) | Frontend URL for OIDC redirect |
