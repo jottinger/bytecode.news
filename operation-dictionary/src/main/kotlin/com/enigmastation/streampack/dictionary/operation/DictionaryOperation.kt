@@ -4,6 +4,12 @@ package com.enigmastation.streampack.dictionary.operation
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.parser.CommandArgSpec
+import com.enigmastation.streampack.core.parser.CommandLexer
+import com.enigmastation.streampack.core.parser.CommandMatchResult
+import com.enigmastation.streampack.core.parser.CommandPattern
+import com.enigmastation.streampack.core.parser.CommandPatternMatcher
+import com.enigmastation.streampack.core.parser.StringArgType
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.dictionary.model.DictionaryRequest
 import com.enigmastation.streampack.dictionary.service.DictionaryLookupService
@@ -28,13 +34,16 @@ class DictionaryOperation(
     override val addressed: Boolean = true
     override val operationGroup: String = "dictionary"
 
-    private val pattern = Regex("^define\\s+(.+)$", RegexOption.IGNORE_CASE)
-
     override fun translate(payload: String, message: Message<*>): DictionaryRequest? {
-        val match = pattern.matchEntire(payload.trim()) ?: return null
-        val word = match.groupValues[1].trim().lowercase()
-        if (word.isBlank()) return null
-        return DictionaryRequest(word)
+        return when (matcher.match(payload)) {
+            is CommandMatchResult.Match,
+            is CommandMatchResult.TooManyArguments -> {
+                val lexed = CommandLexer.lex(payload)
+                val word = lexed.tokens.drop(1).joinToString(" ").trim().lowercase()
+                if (word.isBlank()) null else DictionaryRequest(word)
+            }
+            else -> null
+        }
     }
 
     override fun handle(payload: DictionaryRequest, message: Message<*>): OperationOutcome? {
@@ -55,5 +64,18 @@ class DictionaryOperation(
         } catch (e: Exception) {
             logger.debug("Could not cache definition as factoid: {}", e.message)
         }
+    }
+
+    private companion object {
+        private val matcher =
+            CommandPatternMatcher(
+                listOf(
+                    CommandPattern(
+                        name = "define",
+                        literals = listOf("define"),
+                        args = listOf(CommandArgSpec("word", StringArgType)),
+                    )
+                )
+            )
     }
 }

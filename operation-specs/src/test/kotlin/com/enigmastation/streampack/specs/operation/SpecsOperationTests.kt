@@ -151,6 +151,18 @@ class SpecsOperationTests {
         val result = eventGateway.process(message("rfc 0"))
         assertInstanceOf(OperationResult.NotHandled::class.java, result)
     }
+
+    @Test
+    fun `triggered spec lookup is handled`() {
+        httpServer.createContext("/rfc/rfc2812.html") { exchange ->
+            val html = rfcHtml(2812, "Internet Relay Chat: Client Protocol")
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+
+        val result = eventGateway.process(message("!rfc 2812"))
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
 }
 
 /** SpecLookupService that rewrites URLs to point at a local HTTP server */

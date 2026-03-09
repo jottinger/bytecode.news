@@ -4,6 +4,11 @@ package com.enigmastation.streampack.specs.operation
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
+import com.enigmastation.streampack.core.parser.CommandArgSpec
+import com.enigmastation.streampack.core.parser.CommandMatchResult
+import com.enigmastation.streampack.core.parser.CommandPattern
+import com.enigmastation.streampack.core.parser.CommandPatternMatcher
+import com.enigmastation.streampack.core.parser.PositiveIntArgType
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.specs.model.SpecRequest
 import com.enigmastation.streampack.specs.model.SpecType
@@ -29,20 +34,23 @@ class SpecsOperation(
     override val addressed: Boolean = true
     override val operationGroup: String = "specs"
 
-    private val specPattern = Regex("^(rfc|jep|jsr|pep)\\s*(\\d+)$", RegexOption.IGNORE_CASE)
+    private val compactPattern = Regex("^(rfc|jep|jsr|pep)(\\d+)$", RegexOption.IGNORE_CASE)
 
     override fun translate(payload: String, message: Message<*>): SpecRequest? {
-        val match = specPattern.matchEntire(payload.trim()) ?: return null
-        val typeName = match.groupValues[1].uppercase()
-        val identifier = match.groupValues[2].toIntOrNull() ?: return null
-        if (identifier <= 0) return null
-        val type =
-            try {
-                SpecType.valueOf(typeName)
-            } catch (_: IllegalArgumentException) {
-                return null
+        val trimmed = payload.trim()
+        compactPattern.matchEntire(trimmed)?.let { match ->
+            val identifier = match.groupValues[2].toIntOrNull() ?: return null
+            return toRequest(match.groupValues[1], identifier)
+        }
+
+        return when (val match = matcher.match(trimmed)) {
+            is CommandMatchResult.Match -> {
+                val typeToken = match.patternName
+                val identifier = match.captures["identifier"] as Int
+                toRequest(typeToken, identifier)
             }
-        return SpecRequest(type, identifier)
+            else -> null
+        }
     }
 
     override fun handle(payload: SpecRequest, message: Message<*>): OperationOutcome? {
@@ -65,5 +73,43 @@ class SpecsOperation(
         } catch (e: Exception) {
             logger.debug("Could not cache spec as factoid: {}", e.message)
         }
+    }
+
+    private fun toRequest(typeToken: String, identifier: Int): SpecRequest? {
+        val type =
+            try {
+                SpecType.valueOf(typeToken.uppercase())
+            } catch (_: IllegalArgumentException) {
+                return null
+            }
+        return SpecRequest(type, identifier)
+    }
+
+    private companion object {
+        private val matcher =
+            CommandPatternMatcher(
+                listOf(
+                    CommandPattern(
+                        name = "rfc",
+                        literals = listOf("rfc"),
+                        args = listOf(CommandArgSpec("identifier", PositiveIntArgType)),
+                    ),
+                    CommandPattern(
+                        name = "jep",
+                        literals = listOf("jep"),
+                        args = listOf(CommandArgSpec("identifier", PositiveIntArgType)),
+                    ),
+                    CommandPattern(
+                        name = "jsr",
+                        literals = listOf("jsr"),
+                        args = listOf(CommandArgSpec("identifier", PositiveIntArgType)),
+                    ),
+                    CommandPattern(
+                        name = "pep",
+                        literals = listOf("pep"),
+                        args = listOf(CommandArgSpec("identifier", PositiveIntArgType)),
+                    ),
+                )
+            )
     }
 }

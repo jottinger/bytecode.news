@@ -6,6 +6,7 @@ It covers how the system works, how to build new capabilities, and what conventi
 For command reference, see [User Guide](user-guide.md).
 For REST API endpoints, see [API Reference](api-reference.md).
 For running a development instance, see [Deployment Guide](deployment.md).
+For command parsing patterns, see [Parser Library Guide](parser-library.md).
 
 ## Design Philosophy
 
@@ -87,6 +88,18 @@ Does the operation accept input from both text commands AND typed requests?
             Yes --> TypedOperation<T>
             No  --> Operation (raw interface)
 ```
+
+## Parser Library
+
+For command-shaped operations, prefer the shared parser utilities in
+`com.enigmastation.streampack.core.parser`.
+
+- `CommandLexer` handles trigger detection and quoted tokenization.
+- `CommandPatternMatcher` matches patterns and returns structured failures.
+- `ChoiceArgType` supports constrained option lists (including dynamic lists).
+
+Use parser patterns where you need predictable command validation. Keep raw parsing where maximum
+input flexibility is required.
 
 ### The Two-Tier canHandle Pattern
 

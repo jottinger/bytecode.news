@@ -72,6 +72,14 @@ class TodayOperationTests {
     }
 
     @Test
+    fun `today with too many arguments returns usage error`() {
+        val result = eventGateway.process(message("today hebrew extra"))
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        val error = (result as OperationResult.Error).message
+        assertTrue(error.contains("Usage: today"), "Expected usage in error: $error")
+    }
+
+    @Test
     fun `non-today message is not handled`() {
         val result = eventGateway.process(message("something else"))
         assertInstanceOf(OperationResult.NotHandled::class.java, result)
