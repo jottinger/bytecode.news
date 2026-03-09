@@ -22,6 +22,7 @@ import org.kitteh.irc.client.library.event.channel.ChannelPartEvent
 import org.kitteh.irc.client.library.event.channel.ChannelTopicEvent
 import org.kitteh.irc.client.library.event.channel.RequestedChannelJoinCompleteEvent
 import org.kitteh.irc.client.library.event.client.ClientNegotiationCompleteEvent
+import org.kitteh.irc.client.library.event.user.PrivateCtcpQueryEvent
 import org.kitteh.irc.client.library.event.user.PrivateMessageEvent
 import org.kitteh.irc.client.library.event.user.UserNickChangeEvent
 import org.kitteh.irc.client.library.event.user.UserQuitEvent
@@ -42,6 +43,7 @@ class IrcAdapter(
     private val channelRepository: IrcChannelRepository,
     private val client: Client,
     override val signalCharacter: String,
+    private val identity: String,
 ) : ProtocolAdapter {
     override val protocol: Protocol = Protocol.IRC
     override val serviceName: String = networkName
@@ -201,6 +203,13 @@ class IrcAdapter(
         }
 
         return null
+    }
+
+    @Handler
+    fun onPrivateCtcpQuery(event: PrivateCtcpQueryEvent) {
+        if (event.message.equals("VERSION", ignoreCase = true)) {
+            event.setReply("VERSION $identity")
+        }
     }
 
     @Handler

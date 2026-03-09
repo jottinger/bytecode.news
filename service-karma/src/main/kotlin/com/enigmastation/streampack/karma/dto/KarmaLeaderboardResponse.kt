@@ -12,7 +12,5 @@ data class KarmaLeaderboardResponse(
 data class KarmaLeaderboardEntryResponse(
     val subject: String,
     val score: Int,
-    val upvotes: Int,
-    val downvotes: Int,
     val lastUpdated: LocalDate,
 )

@@ -80,6 +80,7 @@ class IrcConnectionManager(
             Client.builder()
                 .nick(network.nick)
                 .user(network.nick)
+                .realName(ircProperties.identity)
                 .server()
                 .host(network.host)
                 .port(network.port, securityType)
@@ -104,6 +105,7 @@ class IrcConnectionManager(
                 channelRepository = channelRepository,
                 client = client,
                 signalCharacter = effectiveSignal,
+                identity = ircProperties.identity,
             )
         adapters[network.name] = adapter
         adapter.connect()

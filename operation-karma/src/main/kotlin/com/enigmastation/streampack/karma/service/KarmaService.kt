@@ -90,8 +90,6 @@ class KarmaService(
                 KarmaLeaderboardEntry(
                     subject = subject,
                     score = score,
-                    upvotes = records.filter { it.delta > 0 }.sumOf { it.delta },
-                    downvotes = records.filter { it.delta < 0 }.sumOf { -it.delta },
                     lastUpdated = records.maxOf { it.recordDate },
                 )
             }

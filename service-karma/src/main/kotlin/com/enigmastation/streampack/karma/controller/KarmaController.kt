@@ -27,11 +27,5 @@ class KarmaController(private val karmaService: KarmaService) {
     }
 
     private fun KarmaLeaderboardEntry.toResponse() =
-        KarmaLeaderboardEntryResponse(
-            subject = subject,
-            score = score,
-            upvotes = upvotes,
-            downvotes = downvotes,
-            lastUpdated = lastUpdated,
-        )
+        KarmaLeaderboardEntryResponse(subject = subject, score = score, lastUpdated = lastUpdated)
 }

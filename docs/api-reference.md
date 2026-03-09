@@ -1232,8 +1232,6 @@ Read-only karma leaderboard snapshot for web clients.
     {
       "subject": "alice",
       "score": 42,
-      "upvotes": 50,
-      "downvotes": 8,
       "lastUpdated": "2026-03-08"
     }
   ],
@@ -1241,8 +1239,6 @@ Read-only karma leaderboard snapshot for web clients.
     {
       "subject": "mallory",
       "score": -17,
-      "upvotes": 2,
-      "downvotes": 19,
       "lastUpdated": "2026-03-08"
     }
   ],
