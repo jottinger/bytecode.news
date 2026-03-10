@@ -102,6 +102,34 @@ class AdminPostControllerTests {
     }
 
     @Test
+    fun `GET pending with deleted true returns soft-deleted drafts for admin`() {
+        postRepository.save(
+            Post(
+                title = "Deleted Draft",
+                markdownSource = "Deleted draft content.",
+                renderedHtml = "<p>Deleted draft content.</p>",
+                excerpt = "Deleted draft content.",
+                status = PostStatus.DRAFT,
+                deleted = true,
+                author = regularUser,
+                createdAt = Instant.now(),
+                updatedAt = Instant.now(),
+            )
+        )
+
+        mockMvc
+            .get("/admin/posts/pending?deleted=true") {
+                header("Authorization", "Bearer $adminToken")
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.posts") { isArray() }
+                jsonPath("$.totalCount") { value(1) }
+                jsonPath("$.posts[0].title") { value("Deleted Draft") }
+            }
+    }
+
+    @Test
     fun `GET pending by non-admin returns 403`() {
         mockMvc
             .get("/admin/posts/pending") { header("Authorization", "Bearer $regularUserToken") }

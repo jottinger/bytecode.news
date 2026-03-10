@@ -20,6 +20,7 @@ function defineRoutes() {
     { path: "/", load: () => import("./views/home.js") },
     { path: "/posts/:year/:month/:slug", load: () => import("./views/post-detail.js") },
     { path: "/search", load: () => import("./views/search.js") },
+    { path: "/logs", load: () => import("./views/logs.js") },
     { path: "/login", load: () => import("./views/login.js") },
     { path: "/auth/callback", load: () => import("./views/auth-callback.js") },
     { path: "/submit", load: () => import("./views/submit-post.js") },

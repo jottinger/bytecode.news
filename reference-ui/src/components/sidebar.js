@@ -21,6 +21,7 @@ export function renderSidebar() {
   const browseLinks = [];
   browseLinks.push('<li><a href="/search">Search</a></li>');
   browseLinks.push('<li><a href="/">Blog</a></li>');
+  browseLinks.push('<li><a href="/logs">Logs</a></li>');
   for (const [group, config] of Object.entries(featureRegistry)) {
     if (groups.includes(group) && config.navPath) {
       browseLinks.push(`<li><a href="${config.navPath}">${escapeHtml(config.label)}</a></li>`);

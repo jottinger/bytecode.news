@@ -77,10 +77,11 @@ class AdminPostController(
     fun listPending(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "false") deleted: Boolean,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
-        val payload = FindDraftsRequest(page, size)
+        val payload = FindDraftsRequest(page, size, deleted)
         return dispatch(payload, "admin/posts/pending", user) { result -> mapError(result) }
     }
 

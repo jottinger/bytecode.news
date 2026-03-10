@@ -16,6 +16,7 @@ const navLinks = [
   { href: "/", label: "Front Page" },
   { href: "/posts", label: "Articles" },
   { href: "/factoids", label: "Factoids" },
+  { href: "/logs", label: "Logs" },
 ];
 
 export function MobileNav() {

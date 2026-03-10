@@ -13,10 +13,11 @@ import {
 
 export function getPendingPosts(
   page: number,
-  size: number
+  size: number,
+  deleted: boolean = false
 ): Promise<ContentListResponse> {
   return apiRequest<ContentListResponse>(
-    `/admin/posts/pending?page=${page}&size=${size}`,
+    `/admin/posts/pending?page=${page}&size=${size}&deleted=${deleted}`,
     { auth: true }
   );
 }

@@ -201,6 +201,16 @@ class FindDraftsOperationTests {
     }
 
     @Test
+    fun `deleted flag returns only soft-deleted drafts`() {
+        val result = eventGateway.process(draftsMessage(FindDraftsRequest(deleted = true), admin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(1, response.posts.size)
+        assertEquals("Deleted Draft", response.posts[0].title)
+    }
+
+    @Test
     fun `unauthenticated request returns error`() {
         val result = eventGateway.process(draftsMessage(FindDraftsRequest(), null))
 
