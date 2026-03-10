@@ -21,12 +21,6 @@ function formatTime(value) {
   });
 }
 
-function contentPreview(item) {
-  const sender = item.latestSender ? `${escapeHtml(item.latestSender)} | ` : "";
-  const preview = item.latestContentPreview ? escapeHtml(item.latestContentPreview) : "";
-  return `${sender}${preview}`;
-}
-
 /** Log browser with provenance list + day-based entries */
 export async function render(container, params, search) {
   const day = search.get("day") || utcToday();
@@ -60,7 +54,7 @@ export async function render(container, params, search) {
                 <tr${active ? " style='background: rgba(255,255,255,0.04)'" : ""}>
                   <td><a href="${href}" class="mono">${escapeHtml(item.provenanceUri)}</a></td>
                   <td class="mono">${item.latestTimestamp ? formatTime(item.latestTimestamp) : ""}</td>
-                  <td>${contentPreview(item)}</td>
+                  <td>${item.latestSender ? escapeHtml(item.latestSender) : ""}</td>
                 </tr>
               `;
             })
@@ -104,7 +98,7 @@ export async function render(container, params, search) {
             <section>
               <h3>Available Logs</h3>
               <table>
-                <thead><tr><th>Provenance</th><th>Time</th><th>Preview</th></tr></thead>
+                <thead><tr><th>Provenance</th><th>Time</th><th>Sender</th></tr></thead>
                 <tbody>${leftRows}</tbody>
               </table>
             </section>
@@ -134,7 +128,7 @@ export async function render(container, params, search) {
         <section>
           <h3>Available Logs</h3>
           <table>
-            <thead><tr><th>Provenance</th><th>Time</th><th>Preview</th></tr></thead>
+            <thead><tr><th>Provenance</th><th>Time</th><th>Sender</th></tr></thead>
             <tbody>${leftRows}</tbody>
           </table>
         </section>
@@ -163,4 +157,3 @@ export async function render(container, params, search) {
     renderError(container, err);
   }
 }
-
