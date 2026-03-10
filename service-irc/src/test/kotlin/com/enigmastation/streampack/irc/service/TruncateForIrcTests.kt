@@ -65,4 +65,27 @@ class TruncateForIrcTests {
         val result = IrcAdapter.truncateForIrc(input)
         assertEquals("first line [...more]", result)
     }
+
+    @Test
+    fun `splitForIrc preserves multiline content across multiple messages`() {
+        val input = "line one\nline two\nline three"
+        val result = IrcAdapter.splitForIrc(input)
+        assertEquals(listOf("line one", "line two", "line three"), result)
+    }
+
+    @Test
+    fun `splitForIrc wraps long single line into multiple chunks`() {
+        val input = "word ".repeat(120).trim()
+        val result = IrcAdapter.splitForIrc(input)
+        assertTrue(result.size > 1)
+        assertTrue(result.all { it.length <= 400 })
+    }
+
+    @Test
+    fun `splitForIrc applies more suffix when chunk count exceeds max lines`() {
+        val input = (1..10).joinToString("\n") { "line $it" }
+        val result = IrcAdapter.splitForIrc(input, maxLines = 3)
+        assertEquals(3, result.size)
+        assertTrue(result.last().endsWith(" [...more]"))
+    }
 }

@@ -85,7 +85,7 @@ class IrcAdapter(
     }
 
     override fun sendReply(provenance: Provenance, text: String) {
-        sendMessage(provenance.replyTo, truncateForIrc(text))
+        splitForIrc(text).forEach { chunk -> sendMessage(provenance.replyTo, chunk) }
     }
 
     /** Returns channels the client has joined */
@@ -187,22 +187,7 @@ class IrcAdapter(
      * (no signal char or nick prefix) if addressed, or null if the message is not addressed.
      */
     private fun extractAddressedText(raw: String): String? {
-        if (signalCharacter.isNotEmpty() && raw.startsWith(signalCharacter)) {
-            val stripped = raw.removePrefix(signalCharacter).trimStart()
-            return stripped.ifEmpty { null }
-        }
-
-        val nick = client.nick.lowercase()
-        val lowerRaw = raw.lowercase()
-        for (separator in listOf(": ", ", ")) {
-            val prefix = "$nick$separator"
-            if (lowerRaw.startsWith(prefix)) {
-                val stripped = raw.substring(prefix.length).trimStart()
-                return stripped.ifEmpty { null }
-            }
-        }
-
-        return null
+        return stripAddressedText(raw, signalCharacter, client.nick)
     }
 
     @Handler
@@ -228,7 +213,8 @@ class IrcAdapter(
                         user = user,
                         metadata = mapOf(Provenance.BOT_NICK to client.nick),
                     )
-                dispatch(event.message, provenance, addressed = true, nick, host, ident)
+                val normalized = extractAddressedText(event.message) ?: event.message
+                dispatch(normalized, provenance, addressed = true, nick, host, ident)
             } catch (e: Exception) {
                 logger.error("Error processing private message on {}: {}", networkName, e.message)
             }
@@ -314,12 +300,13 @@ class IrcAdapter(
     companion object {
         const val ALLOW_OPS_KEY = "irc-allow-ops"
         private const val MAX_IRC_MESSAGE_LENGTH = 400
+        private const val MAX_IRC_REPLY_LINES = 4
         private const val TRUNCATION_SUFFIX = " [...more]"
 
         /** Collapses multiline content to first line and truncates to fit IRC message limits */
         fun truncateForIrc(text: String): String {
             val lines = text.split("\n")
-            val firstLine = lines[0]
+            val firstLine = lines.firstOrNull().orEmpty()
             val hasMoreLines = lines.size > 1
 
             if (hasMoreLines) {
@@ -336,6 +323,79 @@ class IrcAdapter(
                     TRUNCATION_SUFFIX
             }
             return firstLine
+        }
+
+        /** Splits text into bounded IRC-safe lines, adding a suffix if content is omitted. */
+        fun splitForIrc(text: String, maxLines: Int = MAX_IRC_REPLY_LINES): List<String> {
+            if (maxLines <= 0) return emptyList()
+            val allChunks = mutableListOf<String>()
+
+            for (line in text.split("\n")) {
+                if (line.isEmpty()) continue
+                allChunks.addAll(wrapIrcLine(line))
+            }
+
+            if (allChunks.isEmpty()) return listOf("")
+            if (allChunks.size <= maxLines) return allChunks
+
+            val visible = allChunks.take(maxLines).toMutableList()
+            visible[visible.lastIndex] = withMoreSuffix(visible.last())
+            return visible
+        }
+
+        private fun wrapIrcLine(line: String): List<String> {
+            if (line.length <= MAX_IRC_MESSAGE_LENGTH) return listOf(line)
+            val chunks = mutableListOf<String>()
+            var remaining = line.trimStart()
+            while (remaining.isNotEmpty()) {
+                if (remaining.length <= MAX_IRC_MESSAGE_LENGTH) {
+                    chunks.add(remaining)
+                    break
+                }
+
+                val boundary = remaining.lastIndexOf(' ', MAX_IRC_MESSAGE_LENGTH)
+                if (boundary <= 0) {
+                    chunks.add(remaining.substring(0, MAX_IRC_MESSAGE_LENGTH))
+                    remaining = remaining.substring(MAX_IRC_MESSAGE_LENGTH)
+                } else {
+                    chunks.add(remaining.substring(0, boundary))
+                    remaining = remaining.substring(boundary + 1)
+                }
+                remaining = remaining.trimStart()
+            }
+            return chunks
+        }
+
+        private fun withMoreSuffix(text: String): String {
+            val maxBaseLength = MAX_IRC_MESSAGE_LENGTH - TRUNCATION_SUFFIX.length
+            return if (text.length > maxBaseLength) {
+                text.take(maxBaseLength) + TRUNCATION_SUFFIX
+            } else {
+                text + TRUNCATION_SUFFIX
+            }
+        }
+
+        internal fun stripAddressedText(
+            raw: String,
+            signalCharacter: String,
+            botNick: String,
+        ): String? {
+            if (signalCharacter.isNotEmpty() && raw.startsWith(signalCharacter)) {
+                val stripped = raw.removePrefix(signalCharacter).trimStart()
+                return stripped.ifEmpty { null }
+            }
+
+            val nick = botNick.lowercase()
+            val lowerRaw = raw.lowercase()
+            for (separator in listOf(": ", ", ")) {
+                val prefix = "$nick$separator"
+                if (lowerRaw.startsWith(prefix)) {
+                    val stripped = raw.substring(prefix.length).trimStart()
+                    return stripped.ifEmpty { null }
+                }
+            }
+
+            return null
         }
     }
 

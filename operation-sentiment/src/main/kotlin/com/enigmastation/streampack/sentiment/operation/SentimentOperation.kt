@@ -7,6 +7,11 @@ import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
+import com.enigmastation.streampack.core.parser.CommandArgSpec
+import com.enigmastation.streampack.core.parser.CommandMatchResult
+import com.enigmastation.streampack.core.parser.CommandPattern
+import com.enigmastation.streampack.core.parser.CommandPatternMatcher
+import com.enigmastation.streampack.core.parser.StringArgType
 import com.enigmastation.streampack.core.service.MessageLogService
 import com.enigmastation.streampack.core.service.TranslatingOperation
 import com.enigmastation.streampack.sentiment.model.SentimentRequest
@@ -35,10 +40,11 @@ class SentimentOperation(
     override val operationGroup: String = "sentiment"
 
     override fun translate(payload: String, message: Message<*>): SentimentRequest? {
-        val trimmed = payload.trim()
-        if (!trimmed.startsWith("sentiment ", ignoreCase = true)) return null
-        val target = trimmed.substring("sentiment ".length).trim()
-        if (target.isBlank()) return null
+        val target =
+            when (val parsed = matcher.match(payload)) {
+                is CommandMatchResult.Match -> parsed.captures["target"] as? String
+                else -> null
+            } ?: return null
 
         val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return null
         val targetUri = resolveTarget(target, provenance)
@@ -160,5 +166,18 @@ class SentimentOperation(
                 replyTo = target,
             )
             .encode()
+    }
+
+    private companion object {
+        private val matcher =
+            CommandPatternMatcher(
+                listOf(
+                    CommandPattern(
+                        name = "sentiment",
+                        literals = listOf("sentiment"),
+                        args = listOf(CommandArgSpec("target", StringArgType)),
+                    )
+                )
+            )
     }
 }

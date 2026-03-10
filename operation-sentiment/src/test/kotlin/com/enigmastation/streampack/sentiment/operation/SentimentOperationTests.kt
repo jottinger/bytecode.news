@@ -107,6 +107,13 @@ class SentimentOperationTests {
     }
 
     @Test
+    fun `triggered sentiment command is accepted`() {
+        val result = sentimentOperation.execute(message("!sentiment #java"))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+    }
+
+    @Test
     fun `bare sentiment command is not handled`() {
         val result = sentimentOperation.execute(message("sentiment"))
         assertNull(result, "Bare 'sentiment' should not be handled")
