@@ -82,6 +82,14 @@ interface PostRepository : JpaRepository<Post, UUID> {
     )
     fun findDrafts(pageable: Pageable): Page<Post>
 
+    /** Paginated soft-deleted drafts for admin review/purge */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.DRAFT AND p.deleted = true ORDER BY p.updatedAt DESC",
+        countQuery =
+            "SELECT COUNT(p) FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.DRAFT AND p.deleted = true",
+    )
+    fun findDeletedDrafts(pageable: Pageable): Page<Post>
+
     /** Hard-deletes all posts by a given author (for purging erased user content) */
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Post p WHERE p.author.id = :authorId")

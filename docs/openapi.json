@@ -653,6 +653,84 @@
         "required" : [ "bottom", "limit", "top" ],
         "type" : "object"
       },
+      "LogDayResponse" : {
+        "properties" : {
+          "day" : {
+            "type" : "string"
+          },
+          "entries" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LogEntry"
+            },
+            "type" : "array"
+          },
+          "provenanceUri" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "day", "entries", "provenanceUri" ],
+        "type" : "object"
+      },
+      "LogEntry" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "direction" : {
+            "enum" : [ "INBOUND", "OUTBOUND" ],
+            "type" : "string"
+          },
+          "sender" : {
+            "type" : "string"
+          },
+          "timestamp" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "direction", "sender", "timestamp" ],
+        "type" : "object"
+      },
+      "LogProvenanceListResponse" : {
+        "properties" : {
+          "provenances" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LogProvenanceSummary"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "provenances" ],
+        "type" : "object"
+      },
+      "LogProvenanceSummary" : {
+        "properties" : {
+          "latestContentPreview" : {
+            "type" : "string"
+          },
+          "latestSender" : {
+            "type" : "string"
+          },
+          "latestTimestamp" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "provenanceUri" : {
+            "type" : "string"
+          },
+          "replyTo" : {
+            "type" : "string"
+          },
+          "serviceId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "protocol", "provenanceUri", "replyTo" ],
+        "type" : "object"
+      },
       "LoginResponse" : {
         "properties" : {
           "principal" : {
@@ -1202,6 +1280,14 @@
             "default" : 20,
             "format" : "int32",
             "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "deleted",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
           }
         } ],
         "responses" : {
@@ -2654,6 +2740,108 @@
           }
         },
         "tags" : [ "karma-controller" ]
+      }
+    },
+    "/logs" : {
+      "get" : {
+        "operationId" : "getDayLogs",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "provenance",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "day",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LogDayResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Log entries for day"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Provenance not found or not authorized"
+          }
+        },
+        "summary" : "Get one day of logs for a provenance",
+        "tags" : [ "Logs" ]
+      }
+    },
+    "/logs/provenances" : {
+      "get" : {
+        "operationId" : "listProvenances",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LogProvenanceListResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Filtered provenance list"
+          }
+        },
+        "summary" : "List browseable log provenances for the current user",
+        "tags" : [ "Logs" ]
       }
     },
     "/pages/{slug}" : {

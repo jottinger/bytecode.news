@@ -16,7 +16,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Lists unapproved drafts for the admin review queue */
+/** Lists active or soft-deleted drafts for the admin review queue */
 @Component
 class FindDraftsOperation(
     private val postRepository: PostRepository,
@@ -32,7 +32,12 @@ class FindDraftsOperation(
             return it
         }
 
-        val pageResult = postRepository.findDrafts(PageRequest.of(payload.page, payload.size))
+        val pageResult =
+            if (payload.deleted) {
+                postRepository.findDeletedDrafts(PageRequest.of(payload.page, payload.size))
+            } else {
+                postRepository.findDrafts(PageRequest.of(payload.page, payload.size))
+            }
 
         val summaries =
             pageResult.content.map { post ->

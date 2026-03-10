@@ -57,6 +57,14 @@ class MessageLogService(private val repository: MessageLogRepository) {
             .content
     }
 
+    /** Returns the most recent message for a provenance, if any. */
+    fun findLatestMessage(provenanceUri: String): MessageLog? {
+        return repository
+            .findByProvenanceUriOrderByTimestampDesc(provenanceUri, PageRequest.of(0, 1))
+            .content
+            .firstOrNull()
+    }
+
     private fun log(
         provenanceUri: String,
         direction: MessageDirection,

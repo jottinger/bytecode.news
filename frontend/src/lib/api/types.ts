@@ -166,6 +166,33 @@ export interface ContentListResponse {
   totalCount: number;
 }
 
+export interface LogProvenanceSummary {
+  provenanceUri: string;
+  protocol: string;
+  serviceId: string | null;
+  replyTo: string;
+  latestTimestamp: string | null;
+  latestSender: string | null;
+  latestContentPreview: string | null;
+}
+
+export interface LogProvenanceListResponse {
+  provenances: LogProvenanceSummary[];
+}
+
+export interface LogEntry {
+  timestamp: string;
+  sender: string;
+  content: string;
+  direction: "INBOUND" | "OUTBOUND";
+}
+
+export interface LogDayResponse {
+  provenanceUri: string;
+  day: string;
+  entries: LogEntry[];
+}
+
 export interface ContentDetail {
   id: string;
   title: string;

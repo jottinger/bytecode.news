@@ -37,6 +37,7 @@ export function PendingPostList() {
   const [data, setData] = useState<ContentListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
+  const [view, setView] = useState<"pending" | "deleted">("pending");
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -45,14 +46,14 @@ export function PendingPostList() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getPendingPosts(page, 10);
+      const result = await getPendingPosts(page, 10, view === "deleted");
       setData(result);
     } catch {
       setData(null);
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, view]);
 
   useEffect(() => {
     fetchData();
@@ -81,8 +82,9 @@ export function PendingPostList() {
     if (!deleteId) return;
     setDeleting(true);
     try {
-      await deletePost(deleteId);
-      toast.success("Post deleted.");
+      const hardDelete = view === "deleted";
+      await deletePost(deleteId, hardDelete);
+      toast.success(hardDelete ? "Post permanently deleted." : "Post deleted.");
       fetchData();
     } catch (error) {
       const message =
@@ -109,12 +111,60 @@ export function PendingPostList() {
 
   if (!data || data.posts.length === 0) {
     return (
-      <p className="text-muted-foreground text-sm">No pending posts.</p>
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant={view === "pending" ? "default" : "outline"}
+            onClick={() => {
+              setView("pending");
+              setPage(0);
+            }}
+          >
+            Pending
+          </Button>
+          <Button
+            size="sm"
+            variant={view === "deleted" ? "default" : "outline"}
+            onClick={() => {
+              setView("deleted");
+              setPage(0);
+            }}
+          >
+            Deleted
+          </Button>
+        </div>
+        <p className="text-muted-foreground text-sm">
+          {view === "deleted" ? "No soft-deleted drafts." : "No pending posts."}
+        </p>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant={view === "pending" ? "default" : "outline"}
+          onClick={() => {
+            setView("pending");
+            setPage(0);
+          }}
+        >
+          Pending
+        </Button>
+        <Button
+          size="sm"
+          variant={view === "deleted" ? "default" : "outline"}
+          onClick={() => {
+            setView("deleted");
+            setPage(0);
+          }}
+        >
+          Deleted
+        </Button>
+      </div>
       {data.posts.map((post) => (
         <Card key={post.id}>
           <CardHeader>
@@ -126,7 +176,9 @@ export function PendingPostList() {
                   {new Date(post.createdAt).toLocaleDateString()}
                 </CardDescription>
               </div>
-              <Badge variant="secondary">Pending</Badge>
+              <Badge variant="secondary">
+                {view === "deleted" ? "Deleted" : "Pending"}
+              </Badge>
             </div>
           </CardHeader>
           {post.excerpt && (
@@ -135,13 +187,15 @@ export function PendingPostList() {
             </CardContent>
           )}
           <CardContent className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={() => handleApprove(post)}
-              disabled={approvingId === post.id}
-            >
-              {approvingId === post.id ? "Approving..." : "Approve"}
-            </Button>
+            {view === "pending" && (
+              <Button
+                size="sm"
+                onClick={() => handleApprove(post)}
+                disabled={approvingId === post.id}
+              >
+                {approvingId === post.id ? "Approving..." : "Approve"}
+              </Button>
+            )}
             <Dialog
               open={deleteOpen && deleteId === post.id}
               onOpenChange={(open) => {
@@ -155,15 +209,20 @@ export function PendingPostList() {
                   variant="destructive"
                   onClick={() => setDeleteId(post.id)}
                 >
-                  Delete
+                  {view === "deleted" ? "Hard delete" : "Delete"}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Delete post?</DialogTitle>
+                  <DialogTitle>
+                    {view === "deleted"
+                      ? "Permanently delete post?"
+                      : "Delete post?"}
+                  </DialogTitle>
                   <DialogDescription>
-                    This will soft-delete &ldquo;{post.title}&rdquo;. This
-                    action can be reversed by a database administrator.
+                    {view === "deleted"
+                      ? `This will permanently remove "${post.title}". This cannot be undone.`
+                      : `This will soft-delete "${post.title}". You can still hard-delete it later from the Deleted view.`}
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -178,7 +237,11 @@ export function PendingPostList() {
                     onClick={handleDelete}
                     disabled={deleting}
                   >
-                    {deleting ? "Deleting..." : "Delete"}
+                    {deleting
+                      ? "Deleting..."
+                      : view === "deleted"
+                        ? "Hard delete"
+                        : "Delete"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
