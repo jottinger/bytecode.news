@@ -42,21 +42,14 @@ export async function render(container, params, search) {
         `/logs?provenance=${encodeURIComponent(provenance)}&day=${encodeURIComponent(day)}`
       );
     }
-
-    const leftRows =
+    const selectedMeta = provenances.find((item) => item.provenanceUri === provenance);
+    const provenanceOptions =
       provenances.length === 0
-        ? "<tr><td colspan='3'>No logs available.</td></tr>"
+        ? '<option value="">No logs available</option>'
         : provenances
             .map((item) => {
-              const active = item.provenanceUri === provenance;
-              const href = `/logs?provenance=${encodeURIComponent(item.provenanceUri)}&day=${encodeURIComponent(day)}`;
-              return `
-                <tr${active ? " style='background: rgba(255,255,255,0.04)'" : ""}>
-                  <td><a href="${href}" class="mono">${escapeHtml(item.provenanceUri)}</a></td>
-                  <td class="mono">${item.latestTimestamp ? formatTime(item.latestTimestamp) : ""}</td>
-                  <td>${item.latestSender ? escapeHtml(item.latestSender) : ""}</td>
-                </tr>
-              `;
+              const selected = item.provenanceUri === provenance ? " selected" : "";
+              return `<option value="${escapeHtml(item.provenanceUri)}"${selected}>${escapeHtml(item.provenanceUri)}</option>`;
             })
             .join("");
 
@@ -94,49 +87,17 @@ export async function render(container, params, search) {
         rightHtml = `<div id="logs-error"></div>`;
         container.innerHTML = `
           <h2>Logs</h2>
-          <div style="display:grid;grid-template-columns:1fr 2fr;gap:1rem">
-            <section>
-              <h3>Available Logs</h3>
-              <table>
-                <thead><tr><th>Provenance</th><th>Time</th><th>Sender</th></tr></thead>
-                <tbody>${leftRows}</tbody>
-              </table>
-            </section>
-            <section>
-              <h3>${escapeHtml(provenance)}</h3>
-              <p>
-                <a href="/logs?provenance=${encodeURIComponent(provenance)}&day=${encodeURIComponent(previousDay)}">Previous day</a> |
-                ${
-                  nextDisabled
-                    ? "Next day"
-                    : `<a href="/logs?provenance=${encodeURIComponent(provenance)}&day=${encodeURIComponent(nextDay)}">Next day</a>`
-                }
-                <span class="mono" style="margin-left:0.5rem">${escapeHtml(day)}</span>
-              </p>
-              <div id="logs-error"></div>
-            </section>
-          </div>
-        `;
-        renderError(document.getElementById("logs-error"), err);
-        return;
-      }
-    }
-
-    container.innerHTML = `
-      <h2>Logs</h2>
-      <div style="display:grid;grid-template-columns:1fr 2fr;gap:1rem">
-        <section>
-          <h3>Available Logs</h3>
-          <table>
-            <thead><tr><th>Provenance</th><th>Time</th><th>Sender</th></tr></thead>
-            <tbody>${leftRows}</tbody>
-          </table>
-        </section>
-        <section>
-          <h3>${provenance ? escapeHtml(provenance) : "No provenance selected"}</h3>
-          ${
-            provenance
-              ? `
+          <section>
+            <p>
+              <label for="provenance-select"><strong>Provenance:</strong></label>
+              <select id="provenance-select" style="min-width: 30rem; max-width: 100%">
+                ${provenanceOptions}
+              </select>
+            </p>
+            <p class="mono">
+              Latest: ${selectedMeta?.latestTimestamp ? formatTime(selectedMeta.latestTimestamp) : "n/a"}
+              ${selectedMeta?.latestSender ? ` | ${escapeHtml(selectedMeta.latestSender)}` : ""}
+            </p>
             <p>
               <a href="/logs?provenance=${encodeURIComponent(provenance)}&day=${encodeURIComponent(previousDay)}">Previous day</a> |
               ${
@@ -146,13 +107,72 @@ export async function render(container, params, search) {
               }
               <span class="mono" style="margin-left:0.5rem">${escapeHtml(day)}</span>
             </p>
-          `
-              : ""
-          }
-          ${rightHtml}
-        </section>
-      </div>
+            <div id="logs-error"></div>
+          </section>
+        `;
+        const select = container.querySelector("#provenance-select");
+        if (select) {
+          select.addEventListener("change", (event) => {
+            const value = event.target.value;
+            if (!value) return;
+            window.history.pushState(
+              null,
+              "",
+              `/logs?provenance=${encodeURIComponent(value)}&day=${encodeURIComponent(day)}`
+            );
+            window.dispatchEvent(new PopStateEvent("popstate"));
+          });
+        }
+        renderError(document.getElementById("logs-error"), err);
+        return;
+      }
+    }
+
+    container.innerHTML = `
+      <h2>Logs</h2>
+      <section>
+        <p>
+          <label for="provenance-select"><strong>Provenance:</strong></label>
+          <select id="provenance-select" style="min-width: 30rem; max-width: 100%">
+            ${provenanceOptions}
+          </select>
+        </p>
+        <p class="mono">
+          Latest: ${selectedMeta?.latestTimestamp ? formatTime(selectedMeta.latestTimestamp) : "n/a"}
+          ${selectedMeta?.latestSender ? ` | ${escapeHtml(selectedMeta.latestSender)}` : ""}
+        </p>
+        ${
+          provenance
+            ? `
+          <p>
+            <a href="/logs?provenance=${encodeURIComponent(provenance)}&day=${encodeURIComponent(previousDay)}">Previous day</a> |
+            ${
+              nextDisabled
+                ? "Next day"
+                : `<a href="/logs?provenance=${encodeURIComponent(provenance)}&day=${encodeURIComponent(nextDay)}">Next day</a>`
+            }
+            <span class="mono" style="margin-left:0.5rem">${escapeHtml(day)}</span>
+          </p>
+        `
+            : ""
+        }
+        ${rightHtml}
+      </section>
     `;
+
+    const select = container.querySelector("#provenance-select");
+    if (select) {
+      select.addEventListener("change", (event) => {
+        const value = event.target.value;
+        if (!value) return;
+        window.history.pushState(
+          null,
+          "",
+          `/logs?provenance=${encodeURIComponent(value)}&day=${encodeURIComponent(day)}`
+        );
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      });
+    }
   } catch (err) {
     renderError(container, err);
   }
