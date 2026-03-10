@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.transaction.annotation.Transactional
 
 /** Queries for blog post retrieval by visibility state */
 interface PostRepository : JpaRepository<Post, UUID> {
@@ -72,7 +73,10 @@ interface PostRepository : JpaRepository<Post, UUID> {
     fun findActiveByIdWithAuthor(id: UUID): Post?
 
     /** Hard-deletes a post by ID, bypassing Hibernate cascade checks (DB cascades handle FKs) */
-    @Modifying @Query("DELETE FROM Post p WHERE p.id = :id") fun hardDeleteById(id: UUID)
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM Post p WHERE p.id = :id")
+    fun hardDeleteById(id: UUID)
 
     /** Paginated draft posts for the admin review queue */
     @Query(
