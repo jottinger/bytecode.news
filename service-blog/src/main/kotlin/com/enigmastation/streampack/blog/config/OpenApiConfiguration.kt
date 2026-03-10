@@ -19,7 +19,12 @@ class OpenApiConfiguration {
                 Info()
                     .title("bytecode.news API")
                     .version("0.1.0")
-                    .description("Content hub and knowledge management for the JVM ecosystem")
+                    .description(
+                        "Content hub and knowledge management for the JVM ecosystem. " +
+                            "Advisory version headers are supported: clients may send " +
+                            "'Accept-Version' and responses include 'Content-Version' and " +
+                            "resolved 'Accept-Version'."
+                    )
             )
             .components(
                 Components()
