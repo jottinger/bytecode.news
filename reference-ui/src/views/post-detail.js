@@ -61,6 +61,7 @@ export async function render(container, params) {
       } else {
         treeEl.innerHTML = "<p>No comments yet.</p>";
       }
+      treeEl.removeAttribute("aria-busy");
 
       // Top-level comment form for logged-in users
       if (isLoggedIn()) {
@@ -86,7 +87,9 @@ export async function render(container, params) {
         });
       }
     } catch (err) {
-      document.getElementById("comment-tree").innerHTML = "<p>Could not load comments.</p>";
+      const treeEl = document.getElementById("comment-tree");
+      treeEl.innerHTML = "<p>Could not load comments.</p>";
+      treeEl.removeAttribute("aria-busy");
     }
   } catch (err) {
     renderError(container, err);

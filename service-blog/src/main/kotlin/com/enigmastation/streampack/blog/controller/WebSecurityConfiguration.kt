@@ -34,7 +34,8 @@ class WebSecurityConfiguration(
         val config = CorsConfiguration()
         config.allowedOrigins = corsOrigins.split(",").map { it.trim() }
         config.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        config.allowedHeaders = listOf("Authorization", "Content-Type", "Accept")
+        config.allowedHeaders = listOf("Authorization", "Content-Type", "Accept", "Accept-Version")
+        config.exposedHeaders = listOf("Content-Version", "Accept-Version")
         config.maxAge = 3600L
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", config)
