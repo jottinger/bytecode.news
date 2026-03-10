@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${post.title} + ' - ' + ${siteHost}">post</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 2rem auto; max-width: 58rem; padding: 0 1rem; line-height: 1.5; }
+    .meta { color: #555; font-size: 0.95rem; }
+    .content :is(h1, h2, h3) { margin-top: 1.5rem; }
+    .comment { border-left: 2px solid #ddd; margin-top: 0.75rem; padding-left: 0.75rem; }
+    .comment .meta { margin: 0; }
+    .comment p { margin-top: 0.35rem; }
+  </style>
+</head>
+<body>
+<header>
+  <p><a href="/">home</a> | <a href="/feed.xml">feed</a></p>
+  <h1 th:text="${post.title}">Title</h1>
+  <p class="meta">
+    <span th:text="${post.authorDisplayName}">Author</span>
+    <span th:if="${post.publishedAt != null}">
+      |
+      <time th:text="${#temporals.format(post.publishedAt, 'yyyy-MM-dd HH:mm')}" th:datetime="${post.publishedAt}"></time>
+    </span>
+  </p>
+</header>
+<main>
+  <article class="content" th:utext="${post.renderedHtml}"></article>
+  <section>
+    <h2 th:text="${'Comments (' + commentCount + ')'}">Comments</h2>
+    <p th:if="${comments.isEmpty()}">No comments yet.</p>
+    <div th:unless="${comments.isEmpty()}">
+      <div th:replace="~{post :: commentNodes(${comments})}"></div>
+    </div>
+  </section>
+</main>
+
+<th:block th:fragment="commentNodes(nodes)">
+  <div th:each="comment : ${nodes}" class="comment">
+    <p class="meta">
+      <strong th:text="${comment.authorDisplayName}">Author</strong>
+      |
+      <time th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}" th:datetime="${comment.createdAt}"></time>
+    </p>
+    <div th:utext="${comment.renderedHtml}"></div>
+    <div th:if="${comment.children != null && !comment.children.isEmpty()}"
+         th:replace="~{post :: commentNodes(${comment.children})}"></div>
+  </div>
+</th:block>
+</body>
+</html>

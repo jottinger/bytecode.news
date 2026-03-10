@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${siteHost} + ' blog'">basic-ui blog</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 2rem auto; max-width: 58rem; padding: 0 1rem; line-height: 1.5; }
+    h1 { margin-bottom: 0.5rem; }
+    ol { padding-left: 1.25rem; }
+    article { margin-bottom: 1.5rem; }
+    .meta { color: #555; font-size: 0.95rem; }
+    nav { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+<header>
+  <h1 th:text="${siteHost}">bytecode.news</h1>
+  <p><a href="/feed.xml">Feed</a></p>
+</header>
+<main>
+  <ol th:if="${!posts.isEmpty()}" th:start="${page * 10 + 1}">
+    <li th:each="post : ${posts}">
+      <article>
+        <h2>
+          <a th:href="${'/posts/' + post.slug}" th:text="${post.title}">Post title</a>
+        </h2>
+        <p class="meta" th:text="${post.authorDisplayName}">Author</p>
+        <p th:text="${post.excerpt != null ? post.excerpt : ''}">Excerpt</p>
+      </article>
+    </li>
+  </ol>
+  <p th:if="${posts.isEmpty()}">No published posts.</p>
+</main>
+<nav>
+  <a th:if="${hasPrev}" th:href="${'/?page=' + prevPage}">prev</a>
+  <a th:if="${hasNext}" th:href="${'/?page=' + nextPage}">next</a>
+</nav>
+</body>
+</html>

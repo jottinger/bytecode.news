@@ -43,6 +43,18 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  basic-ui:
+    build:
+      context: .
+      dockerfile: basic-ui/Dockerfile
+    profiles: ["basic-ui"]
+    ports:
+      - "3003:3003"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
   backend:
     build: .
     profiles: ["backend"]
