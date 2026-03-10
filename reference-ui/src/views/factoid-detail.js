@@ -8,9 +8,36 @@ export async function render(container, params) {
 
   try {
     const data = await get(`/factoids/${encodeURIComponent(selector)}`);
+    const unique = [];
+    const seen = new Set();
+    for (const attr of data.attributes || []) {
+      const type = String(attr?.type || "").toLowerCase();
+      if (!type || seen.has(type)) continue;
+      seen.add(type);
+      unique.push(attr);
+    }
 
-    const attrs = (data.attributes || [])
-      .map((a) => `<dt>${escapeHtml(a.type)}</dt><dd>${a.rendered || escapeHtml(a.value || "")}</dd>`)
+    function formatType(type) {
+      if (type === "seealso") return "see also";
+      return type;
+    }
+
+    function detailValue(attr) {
+      const type = String(attr?.type || "").toLowerCase();
+      const rendered = String(attr?.rendered || "").trim();
+      const fallback = escapeHtml(String(attr?.value || ""));
+      if (!rendered) return fallback;
+      if (type === "tags") {
+        return escapeHtml(rendered.replace(/^tags?:\s*/i, ""));
+      }
+      if (type === "seealso") {
+        return escapeHtml(rendered.replace(/^see also:\s*/i, ""));
+      }
+      return rendered;
+    }
+
+    const attrs = unique
+      .map((a) => `<dt>${escapeHtml(formatType(String(a.type || "").toLowerCase()))}</dt><dd>${detailValue(a)}</dd>`)
       .join("");
 
     const date = data.updatedAt ? new Date(data.updatedAt).toLocaleString("en-US") : "";

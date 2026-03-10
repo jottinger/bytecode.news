@@ -161,10 +161,8 @@ The reference UI ships as a Docker image with nginx serving the SPA and proxying
 |----------|---------------|---------|---------|
 | `VITE_API_BASE` | Build (`--build-arg`) | `/api` | API base URL baked into the JS bundle. Set to the full backend URL for production (e.g. `https://api.bytecode.news`). |
 | `VITE_API_TIMEOUT_MS` | Build (`--build-arg`) | `8000` | Frontend API timeout in milliseconds before surfacing a network timeout error. |
-| `VITE_UI_VERSION` | Build (`--build-arg`) | `dev` | Frontend version label shown in the footer status line. |
 | `VITE_UI_COMMIT` | Build (`--build-arg`) | `unknown` | Frontend git commit shown in the footer status line. |
 | `VITE_UI_BRANCH` | Build (`--build-arg`) | `unknown` | Frontend git branch shown in the footer status line. |
-| `VITE_UI_BUILD_TIME` | Build (`--build-arg`) | `unknown` | Frontend build timestamp shown in the footer status line. |
 | `BACKEND_SCHEME` | Runtime (`-e`) | `http` | Scheme nginx uses for server-side proxies (`http` or `https`). |
 | `BACKEND_HOST` | Runtime (`-e`) | `backend:8080` | Host used by nginx for server-side proxies (sitemap, RSS feed, SSR). Not used by the browser. |
 
@@ -173,10 +171,8 @@ The reference UI ships as a Docker image with nginx serving the SPA and proxying
 ```bash
 docker build --no-cache \
   --build-arg VITE_API_BASE=https://api.bytecode.news \
-  --build-arg VITE_UI_VERSION=0.1.0 \
   --build-arg VITE_UI_COMMIT=$(git rev-parse --short HEAD) \
   --build-arg VITE_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
-  --build-arg VITE_UI_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
   -t reference-ui reference-ui/
 ```
 

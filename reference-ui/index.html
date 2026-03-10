@@ -7,20 +7,101 @@
     <link rel="stylesheet" href="/node_modules/@picocss/pico/css/pico.min.css" />
     <link rel="alternate" type="application/rss+xml" title="RSS" href="/feed.xml" />
     <style>
-      /* Minimal layout tweaks beyond Pico defaults */
-      :root { font-size: 16px; }
+      :root {
+        font-size: 16px;
+        --bg-soft: #f5f3ee;
+        --bg-card: #fffdfa;
+        --ink: #1e2430;
+        --muted: #4f5d73;
+        --line: #d8d2c8;
+        --accent: #1f6f8b;
+        --accent-soft: #e7f4f7;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-soft: #111720;
+          --bg-card: #18202b;
+          --ink: #e7edf5;
+          --muted: #9fb0c6;
+          --line: #2d3a4d;
+          --accent: #7ec8e3;
+          --accent-soft: #203245;
+        }
+      }
+      body {
+        color: var(--ink);
+        background:
+          radial-gradient(1200px 400px at 10% -20%, #fff7df 0%, transparent 60%),
+          radial-gradient(1000px 420px at 100% 0%, #e5f4fa 0%, transparent 55%),
+          linear-gradient(180deg, #fdfbf6 0%, var(--bg-soft) 100%);
+      }
+      a {
+        color: var(--accent);
+      }
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background:
+            radial-gradient(1200px 500px at 10% -20%, #2a2120 0%, transparent 60%),
+            radial-gradient(1000px 420px at 100% 0%, #1f2d3f 0%, transparent 55%),
+            linear-gradient(180deg, #0f141c 0%, var(--bg-soft) 100%);
+        }
+      }
+      header.container,
+      main.container,
+      footer.container {
+        max-width: 1200px;
+      }
+      header.container nav {
+        background: color-mix(in srgb, white 78%, #f8efe2 22%);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 0.45rem 1rem;
+        box-shadow: 0 8px 28px rgba(20, 40, 60, 0.08);
+        backdrop-filter: blur(5px);
+      }
+      @media (prefers-color-scheme: dark) {
+        header.container nav {
+          background: color-mix(in srgb, #1a2431 86%, #243344 14%);
+          box-shadow: 0 10px 30px rgba(3, 8, 14, 0.45);
+        }
+      }
+      header.container nav a { color: var(--ink); }
+      header.container nav strong a {
+        letter-spacing: 0.02em;
+      }
+      header.container nav ul {
+        flex-wrap: wrap;
+        gap: 0.35rem 0.6rem;
+      }
       #app { min-height: 60vh; }
       .sr-only {
         position: absolute; width: 1px; height: 1px;
         padding: 0; margin: -1px; overflow: hidden;
         clip: rect(0,0,0,0); border: 0;
       }
-      /* Main + sidebar grid layout */
       .layout-grid {
         display: grid;
         grid-template-columns: 240px 1fr;
         gap: 2rem;
         align-items: start;
+      }
+      #sidebar {
+        background: color-mix(in srgb, var(--bg-card) 95%, #f2ece2 5%);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 0.9rem;
+        box-shadow: 0 6px 20px rgba(20, 40, 60, 0.06);
+      }
+      @media (prefers-color-scheme: dark) {
+        #sidebar {
+          background: color-mix(in srgb, var(--bg-card) 92%, #111722 8%);
+          box-shadow: 0 10px 26px rgba(3, 8, 14, 0.35);
+        }
       }
       #sidebar nav {
         margin-bottom: 1rem;
@@ -30,7 +111,7 @@
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        opacity: 0.6;
+        color: var(--muted);
         margin-bottom: 0.25rem;
       }
       #sidebar ul {
@@ -41,9 +122,49 @@
       #sidebar li {
         padding: 0.2rem 0;
       }
+      #sidebar a {
+        text-decoration: none;
+        color: var(--accent);
+      }
+      #sidebar a:hover {
+        text-decoration: underline;
+      }
+      #app article {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--bg-card);
+        box-shadow: 0 8px 24px rgba(20, 40, 60, 0.05);
+      }
+      @media (prefers-color-scheme: dark) {
+        #app article {
+          box-shadow: 0 12px 30px rgba(3, 8, 14, 0.35);
+        }
+      }
+      #build-status {
+        color: var(--muted);
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 0.8rem;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      footer.container {
+        display: grid;
+        gap: 0.35rem;
+        margin-bottom: 2rem;
+      }
       @media (max-width: 768px) {
         .layout-grid {
           grid-template-columns: 1fr;
+        }
+        header.container nav {
+          padding: 0.5rem 0.75rem;
+        }
+        header.container nav ul {
+          width: 100%;
+        }
+        footer.container {
+          gap: 0.5rem;
         }
       }
     </style>

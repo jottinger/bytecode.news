@@ -520,42 +520,81 @@ class FactoidOperationTests {
         assertError(result)
     }
 
-    // -- Set verb command --
+    // -- Factoid set/unset verb commands --
 
     @Test
-    fun `set verb sets attribute`() {
-        eventGateway.process(msg("set target.text hello world"))
+    fun `factoid set verb sets attribute`() {
+        eventGateway.process(msg("factoid set target.text hello world"))
         val result = eventGateway.process(msg("target"))
         assertSuccess(result, "target is hello world.")
     }
 
     @Test
-    fun `set verb sets see attribute`() {
+    fun `factoid set verb sets see attribute`() {
         eventGateway.process(msg("destination=the real value"))
-        eventGateway.process(msg("set alias.see destination"))
+        eventGateway.process(msg("factoid set alias.see destination"))
         val result = eventGateway.process(msg("alias"))
         assertSuccess(result, "destination is the real value.")
     }
 
     @Test
-    fun `set verb with multi-word selector`() {
-        eventGateway.process(msg("set spring boot.text An opinionated framework"))
+    fun `factoid set verb with multi-word selector`() {
+        eventGateway.process(msg("factoid set spring boot.text An opinionated framework"))
         val result = eventGateway.process(msg("spring boot"))
         assertSuccess(result, "spring boot is An opinionated framework.")
     }
 
     @Test
-    fun `set verb on locked factoid returns error`() {
+    fun `factoid set verb on locked factoid returns error`() {
         eventGateway.process(msg("guarded2=original"))
         eventGateway.process(msg("guarded2.lock", role = Role.ADMIN))
-        val result = eventGateway.process(msg("set guarded2.text new value"))
+        val result = eventGateway.process(msg("factoid set guarded2.text new value"))
         assertError(result)
     }
 
     @Test
-    fun `set verb without attribute returns not handled`() {
-        val result = eventGateway.process(msg("set noattr"))
-        // Falls through to other operations since "set noattr" doesn't parse as a set command
+    fun `factoid set verb without attribute returns not handled`() {
+        val result = eventGateway.process(msg("factoid set noattr"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `bare set no longer handled by factoid set verb`() {
+        val result = eventGateway.process(msg("set target.text hello world"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `factoid unset removes tags attribute`() {
+        eventGateway.process(msg("project=sample"))
+        eventGateway.process(msg("project.tags=foo,bar"))
+        val unset = eventGateway.process(msg("factoid unset project.tags"))
+        assertSuccess(unset, "ok, unset tags on project.")
+
+        val result = eventGateway.process(msg("project.tags"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `factoid unset removes seealso attribute`() {
+        eventGateway.process(msg("project=sample"))
+        eventGateway.process(msg("project.seealso=foo,bar"))
+        val unset = eventGateway.process(msg("factoid unset project.seealso"))
+        assertSuccess(unset, "ok, unset seealso on project.")
+
+        val result = eventGateway.process(msg("project.seealso"))
+        assertInstanceOf(OperationResult.NotHandled::class.java, result)
+    }
+
+    @Test
+    fun `factoid unset requires explicit attribute`() {
+        val result = eventGateway.process(msg("factoid unset project"))
+        assertError(result)
+    }
+
+    @Test
+    fun `bare unset is not handled by factoid operation`() {
+        val result = eventGateway.process(msg("unset project.tags"))
         assertInstanceOf(OperationResult.NotHandled::class.java, result)
     }
 
