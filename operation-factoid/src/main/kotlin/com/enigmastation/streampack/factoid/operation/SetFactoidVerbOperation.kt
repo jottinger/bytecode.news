@@ -12,7 +12,7 @@ import com.enigmastation.streampack.factoid.service.FactoidService
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Handles "set selector.attribute value" - always requires explicit attribute */
+/** Handles "factoid set selector.attribute value" - always requires explicit attribute */
 @Component
 class SetFactoidVerbOperation(private val factoidService: FactoidService) :
     TranslatingOperation<FactoidVerbSetRequest>(FactoidVerbSetRequest::class) {
@@ -23,8 +23,8 @@ class SetFactoidVerbOperation(private val factoidService: FactoidService) :
 
     override fun translate(payload: String, message: Message<*>): FactoidVerbSetRequest? {
         val compressed = payload.compress()
-        if (!compressed.startsWith("set ", ignoreCase = true)) return null
-        val argument = compressed.substringAfter("set ", "").trim()
+        if (!compressed.startsWith("factoid set ", ignoreCase = true)) return null
+        val argument = compressed.substringAfter("factoid set ", "").trim()
         if (argument.isBlank()) return null
         return parseSetArgument(argument)
     }
