@@ -35,7 +35,12 @@ deploy: build-if-needed
 # Rebuild and redeploy only the reference-ui container
 redeploy-reference-ui:
     docker rm -f reference-ui || true
-    docker build --no-cache -t reference-ui reference-ui/
+    docker build --no-cache \
+      --build-arg VITE_UI_VERSION=$(grep '"version"' reference-ui/package.json | head -1 | sed -E 's/.*"version": "([^"]+)".*/\1/') \
+      --build-arg VITE_UI_COMMIT=$(git rev-parse --short HEAD) \
+      --build-arg VITE_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
+      --build-arg VITE_UI_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+      -t reference-ui reference-ui/
     docker run -d --name reference-ui \
       -e BACKEND_SCHEME=https \
       -e BACKEND_HOST=api.bytecode.news \
