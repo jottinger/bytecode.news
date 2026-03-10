@@ -622,6 +622,17 @@ content Here is another paragraph with more detail.
 Each `content` command appends a new paragraph.
 You can add as many blocks as you like.
 
+**Enable AI summary/tags for this session** (addressed, optional):
+
+```
+includeai
+noai
+```
+
+`includeai` opts the current idea session into AI-generated summary and suggested tags.
+The generated section is appended to the saved draft as clearly marked machine-generated content for admin review.
+`noai` disables this again before save.
+
 **Save the idea** (addressed):
 
 ```
@@ -630,6 +641,8 @@ done
 
 Creates a draft blog post with the title and collected body text.
 An attribution footer records who submitted the idea and from which channel.
+If AI is enabled for the session, Nevet attempts to append an `AI Draft Summary (Generated)` section with suggested tags.
+If AI is unavailable or fails, the draft is still saved without the AI section.
 
 **Discard without saving** (addressed):
 
@@ -640,7 +653,7 @@ cancel
 Clears the session without creating a draft.
 
 **Timeout behavior**: if no interaction occurs for 5 minutes (configurable), the session auto-saves as a draft and notifies the channel.
-Every `content`, `done`, or `cancel` command resets the inactivity timer.
+Every `content`, `logs`, `includeai`, `noai`, `done`, or `cancel` command resets the inactivity timer.
 
 ### Browse Ideas (Admin)
 
@@ -653,6 +666,12 @@ Admins can list, search, and remove captured ideas.
 | `ideas` | List all draft ideas |
 | `ideas search <term>` | Filter ideas by title |
 | `ideas remove #N` | Soft-delete the Nth idea from the list |
+| `suggest <http(s)://url>` | Fetch a URL, generate a draft summary, and save as an idea |
+
+`suggest <url>` is admin-only and accepts only absolute `http` or `https` URLs.
+The generated draft always includes a mandatory `Source:` line with the resolved URL.
+If the source remains plain HTTP (no HTTPS redirect), Nevet includes a warning in the draft and command response.
+If TLS certificate validation fails, Nevet refuses the suggestion and returns an explicit warning.
 
 ---
 
@@ -923,10 +942,12 @@ Posts with the same sort order are ordered by publish date.
 | `github subscribe/unsubscribe` | addressed | admin | Manage repo subscriptions |
 | `article "<title>"` | addressed | all | Start an idea capture session |
 | `content <text>` | addressed | all | Add body to active idea session |
+| `includeai` / `noai` | addressed | all | Toggle AI summary/tag generation for active idea |
 | `done` | addressed | all | Save idea as draft post |
 | `cancel` | addressed | all | Discard active idea session |
 | `ideas` / `ideas search` | addressed | admin | Browse/search ideas |
 | `ideas remove #N` | addressed | admin | Soft-delete an idea |
+| `suggest <http(s)://url>` | addressed | admin | Build an idea draft from a source URL |
 | `url ignore add/delete/list` | addressed | admin | Manage URL title ignore list |
 | `create user ...` | addressed | super-admin | Create a user |
 | `alter user ...` | addressed | admin | Modify a user |

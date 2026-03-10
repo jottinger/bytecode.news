@@ -8,6 +8,8 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.zip.GZIPInputStream
+import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
@@ -22,8 +24,17 @@ class HttpPageFetcher : PageFetcher {
                 "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     }
 
-    override fun fetch(url: String): String? {
+    override fun fetch(url: String): String? = fetchResult(url).body
+
+    override fun fetchResult(url: String): PageFetchResult {
         return try {
+            val parsed = URI(url)
+            val scheme = parsed.scheme?.lowercase()
+            if (scheme != "http" && scheme != "https") {
+                logger.warn("Refusing to fetch non-http(s) URL: {}", url)
+                return PageFetchResult(finalUrl = url, warnings = listOf("Refused non-http(s) URL"))
+            }
+
             val client =
                 HttpClient.newBuilder()
                     .followRedirects(HttpClient.Redirect.NORMAL)
@@ -31,7 +42,7 @@ class HttpPageFetcher : PageFetcher {
                     .build()
             val request =
                 HttpRequest.newBuilder()
-                    .uri(URI(url))
+                    .uri(parsed)
                     .timeout(Duration.ofSeconds(10))
                     .header("User-Agent", USER_AGENT)
                     .header(
@@ -52,7 +63,11 @@ class HttpPageFetcher : PageFetcher {
                     url,
                     finalUri,
                 )
-                return null
+                return PageFetchResult(
+                    finalUrl = finalUri.toString(),
+                    statusCode = response.statusCode(),
+                    warnings = listOf("HTTP ${response.statusCode()} while fetching URL"),
+                )
             }
 
             val encoding = response.headers().firstValue("Content-Encoding").orElse("")
@@ -72,10 +87,38 @@ class HttpPageFetcher : PageFetcher {
                 encoding.ifEmpty { "none" },
                 body.length,
             )
-            body
+            val warnings = mutableListOf<String>()
+            if (finalUri.scheme.equals("http", ignoreCase = true)) {
+                warnings += "Warning: source resolved to plain HTTP without TLS."
+            }
+            PageFetchResult(
+                body = body,
+                finalUrl = finalUri.toString(),
+                statusCode = response.statusCode(),
+                warnings = warnings,
+            )
         } catch (e: Exception) {
+            if (isTlsFailure(e)) {
+                logger.warn("TLS/certificate validation failed for {}: {}", url, e.message)
+                return PageFetchResult(
+                    finalUrl = url,
+                    certificateInvalid = true,
+                    warnings = listOf("TLS certificate validation failed"),
+                )
+            }
             logger.warn("Failed to fetch {}: {}", url, e.message)
-            null
+            PageFetchResult(finalUrl = url, warnings = listOf("Failed to fetch URL: ${e.message}"))
         }
+    }
+
+    private fun isTlsFailure(error: Throwable): Boolean {
+        var cause: Throwable? = error
+        while (cause != null) {
+            if (cause is SSLHandshakeException || cause is SSLException) return true
+            val name = cause::class.java.name
+            if (name.contains("Certificate", ignoreCase = true)) return true
+            cause = cause.cause
+        }
+        return false
     }
 }

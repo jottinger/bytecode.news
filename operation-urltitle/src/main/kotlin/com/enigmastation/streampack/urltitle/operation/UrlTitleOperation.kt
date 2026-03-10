@@ -34,7 +34,13 @@ class UrlTitleOperation(
                 .distinct()
                 .filter { !urlTitleService.isIgnoredHost(it) }
                 .mapNotNull { url ->
-                    val title = urlTitleService.fetchTitle(url) ?: return@mapNotNull null
+                    val result = urlTitleService.fetchTitleResult(url)
+                    if (result.certificateInvalid) {
+                        val fallback = UrlTitleService.deriveTitleFromUrl(url)
+                        return@mapNotNull url to "$fallback [TLS certificate invalid]"
+                    }
+
+                    val title = result.title ?: return@mapNotNull null
                     val similarity = urlTitleService.calculateJaccardSimilarity(url, title)
                     logger.info("url: {}, title: {}, similarity: {}", url, title, similarity)
                     if (similarity >= properties.similarityThreshold) null else url to title

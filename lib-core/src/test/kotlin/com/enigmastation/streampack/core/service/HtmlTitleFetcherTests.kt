@@ -2,7 +2,9 @@
 package com.enigmastation.streampack.core.service
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class HtmlTitleFetcherTests {
@@ -118,5 +120,28 @@ class HtmlTitleFetcherTests {
             "YouTube: Some Video Title",
             fetcher.fetchTitle("https://www.youtube.com/watch?v=abc"),
         )
+    }
+
+    @Test
+    fun `fetchTitleResult exposes certificate warning metadata`() {
+        val fetcher =
+            HtmlTitleFetcher(
+                object : PageFetcher {
+                    override fun fetch(url: String): String? = null
+
+                    override fun fetchResult(url: String): PageFetchResult =
+                        PageFetchResult(
+                            body = null,
+                            finalUrl = url,
+                            certificateInvalid = true,
+                            warnings = listOf("TLS certificate validation failed"),
+                        )
+                }
+            )
+
+        val result = fetcher.fetchTitleResult("https://badcert.example.com")
+        assertNull(result.title)
+        assertTrue(result.certificateInvalid)
+        assertFalse(result.warnings.isEmpty())
     }
 }

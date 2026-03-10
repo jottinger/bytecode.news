@@ -11,6 +11,9 @@ import com.enigmastation.streampack.blog.model.EditContentHttpRequest
 import com.enigmastation.streampack.blog.model.EditContentRequest
 import com.enigmastation.streampack.blog.model.FindContentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.model.SuggestTagsHttpRequest
+import com.enigmastation.streampack.blog.model.SuggestTagsRequest
+import com.enigmastation.streampack.blog.model.SuggestTagsResponse
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
@@ -296,6 +299,42 @@ class PostController(
                 categoryIds = request.categoryIds,
             )
         return dispatch(payload, "posts/edit", user) { result -> mapError(result) }
+    }
+
+    @Operation(
+        summary = "Suggest tags heuristically from unsaved draft content",
+        description =
+            "Returns non-persistent tag suggestions using deterministic heuristics (no AI call). " +
+                "Available to all callers.",
+        operationId = "suggestTags",
+    )
+    @ApiResponse(
+        responseCode = "200",
+        description = "Suggested tags",
+        content = [Content(schema = Schema(implementation = SuggestTagsResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid input",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @PostMapping(
+        "/posts/derive-tags",
+        produces = ["application/json"],
+        consumes = ["application/json"],
+    )
+    fun suggestTags(
+        @RequestBody request: SuggestTagsHttpRequest,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest)
+        val payload =
+            SuggestTagsRequest(
+                title = request.title ?: "",
+                markdownSource = request.markdownSource ?: "",
+                existingTags = request.existingTags ?: emptyList(),
+            )
+        return dispatch(payload, "posts/derive-tags", user) { result -> mapError(result) }
     }
 
     /** Extracts and validates the Bearer token from the Authorization header */

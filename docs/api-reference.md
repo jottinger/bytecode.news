@@ -928,6 +928,43 @@ List all active (non-deleted) categories.
 
 ---
 
+## Implemented Endpoints: Taxonomy
+
+---
+
+### GET /taxonomy
+
+Returns taxonomy term counts from blog tags, blog categories, and factoid tags.
+
+**Auth**: None
+
+**Success (200)**:
+```json
+{
+  "tags": {
+    "xyz": 4,
+    "kotlin": 1,
+    "tools": 1
+  },
+  "categories": {
+    "guides": 1,
+    "xyz": 1
+  },
+  "aggregate": {
+    "xyz": 5,
+    "guides": 1,
+    "kotlin": 1,
+    "tools": 1
+  }
+}
+```
+
+`aggregate` is the union sum of `tags` and `categories` by normalized key.
+
+Terms starting with `_` are excluded from all three maps.
+
+---
+
 ## Implemented Endpoints: Admin Category Management
 
 All admin category endpoints require authentication with Admin or Super-admin role.
@@ -1095,13 +1132,16 @@ Hidden from selection, existing post associations preserved.
 | GET | `/posts` | No | List published posts |
 | GET | `/posts/{year}/{month}/{slug}` | No | Get single post |
 | GET | `/posts/search?q=` | No | Search published posts |
+| POST | `/posts/derive-tags` | No | Heuristic tag suggestions from unsaved content |
 | POST | `/posts` | Yes (verified) | Submit new post (draft) |
 | PUT | `/posts/{id}` | Yes | Edit post |
 | GET | `/admin/posts/pending` | Admin+ | List drafts for review |
 | PUT | `/admin/posts/{id}/approve` | Admin+ | Approve and schedule post |
 | PUT | `/admin/posts/{id}` | Admin+ | Admin edit any post |
+| POST | `/admin/posts/{id}/derive-tags` | Admin+ | AI tag suggestions from unsaved content |
 | DELETE | `/admin/posts/{id}` | Admin+ | Soft/hard delete post |
 | GET | `/categories` | No | List active categories |
+| GET | `/taxonomy` | No | List tag/category taxonomy counts and aggregate union |
 | POST | `/admin/categories` | Admin+ | Create category |
 | DELETE | `/admin/categories/{id}` | Admin+ | Soft-delete category |
 | GET | `/posts/{year}/{month}/{slug}/comments` | No | Get comment thread |

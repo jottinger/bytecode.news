@@ -23,6 +23,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
+import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
 
@@ -178,6 +179,50 @@ class AdminPostControllerTests {
             .andExpect {
                 status { isOk() }
                 jsonPath("$.title") { value("Admin Edited") }
+            }
+    }
+
+    @Test
+    fun `POST derive-tags by admin returns 400 when ai is unavailable`() {
+        mockMvc
+            .post("/admin/posts/${draftPost.id}/derive-tags") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $adminToken")
+                content =
+                    """{"title":"Admin Edited","markdownSource":"Admin edited content.","existingTags":["java"]}"""
+            }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.detail") { value("AI service unavailable") }
+            }
+    }
+
+    @Test
+    fun `POST derive-tags by non-admin returns 403`() {
+        mockMvc
+            .post("/admin/posts/${draftPost.id}/derive-tags") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $regularUserToken")
+                content =
+                    """{"title":"Admin Edited","markdownSource":"Admin edited content.","existingTags":["java"]}"""
+            }
+            .andExpect {
+                status { isForbidden() }
+                jsonPath("$.detail") { value("Insufficient privileges: requires ADMIN") }
+            }
+    }
+
+    @Test
+    fun `POST derive-tags unauthenticated returns 401`() {
+        mockMvc
+            .post("/admin/posts/${draftPost.id}/derive-tags") {
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """{"title":"Admin Edited","markdownSource":"Admin edited content.","existingTags":["java"]}"""
+            }
+            .andExpect {
+                status { isUnauthorized() }
+                jsonPath("$.detail") { value("Authentication required") }
             }
     }
 
