@@ -77,6 +77,7 @@
         <module>service-mail</module>
         <module>service-discord</module>
         <module>service-blog</module>
+        <module>basic-ui</module>
         <module>service-irc</module>
         <module>service-github</module>
         <module>service-features</module>

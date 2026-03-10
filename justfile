@@ -20,17 +20,17 @@ coverage:
 
 # Build only if jar is missing
 build-if-needed:
-    [ -f app/target/app-1.0.jar ] || just build
+    [ -f app/target/app-1.0.jar ] && [ -f basic-ui/target/basic-ui-1.0.jar ] || just build
 
-# Start db, app, reference-ui, and mailpit for local development
+# Start db, app, reference-ui, basic-ui, and mailpit for local development
 deploy-dev: build-if-needed
-    docker compose --profile backend --profile reference-ui --profile mail build --no-cache
-    docker compose --profile backend --profile reference-ui --profile mail up
+    docker compose --profile backend --profile reference-ui --profile basic-ui --profile mail build --no-cache
+    docker compose --profile backend --profile reference-ui --profile basic-ui --profile mail up
 
-# Start db, app, and reference-ui
+# Start db, app, reference-ui, and basic-ui
 deploy: build-if-needed
-    docker compose --profile backend --profile reference-ui build --no-cache
-    docker compose --profile backend --profile reference-ui up
+    docker compose --profile backend --profile reference-ui --profile basic-ui build --no-cache
+    docker compose --profile backend --profile reference-ui --profile basic-ui up
 
 # Rebuild and redeploy only the reference-ui container
 redeploy-reference-ui:
@@ -45,6 +45,25 @@ redeploy-reference-ui:
       --add-host host.docker.internal:host-gateway \
       -p 3001:3001 \
       reference-ui
+
+# Rebuild and redeploy only the basic-ui container
+redeploy-basic-ui:
+    docker rm -f basic-ui || true
+    ./mvnw -am -pl basic-ui -DskipTests package
+    docker build --no-cache \
+      -f basic-ui/Dockerfile \
+      -t basic-ui .
+    docker run -d --name basic-ui \
+      -e BACKEND_SCHEME=https \
+      -e BACKEND_HOST=api.bytecode.news \
+      --add-host host.docker.internal:host-gateway \
+      -p 3003:3003 \
+      basic-ui
+
+# Rebuild and redeploy both UI containers
+redeploy-uis:
+    just redeploy-reference-ui
+    just redeploy-basic-ui
 
 # Install repository-managed git hooks
 install-git-hooks:
