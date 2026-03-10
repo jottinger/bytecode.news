@@ -16,7 +16,9 @@ import com.enigmastation.streampack.core.parser.HttpUrlArgType
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.ideas.service.FetchOutcome
 import com.enigmastation.streampack.ideas.service.SuggestedContentFetcher
+import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.messaging.Message
@@ -283,30 +285,7 @@ class SuggestArticleOperation(
     }
 
     private fun parseAiJson(response: String): JsonNode? {
-        val raw = response.trim()
-        if (raw.isBlank()) return null
-        val strippedPrefix = raw.removePrefix("json").trim()
-        val candidates =
-            buildList {
-                    add(raw)
-                    add(strippedPrefix)
-                    add(raw.removeSurrounding("```json", "```").trim())
-                    add(raw.removeSurrounding("```", "```").trim())
-                    val firstBrace = raw.indexOf('{')
-                    val lastBrace = raw.lastIndexOf('}')
-                    if (firstBrace >= 0 && lastBrace > firstBrace) {
-                        add(raw.substring(firstBrace, lastBrace + 1).trim())
-                    }
-                }
-                .distinct()
-
-        for (candidate in candidates) {
-            if (candidate.isBlank()) continue
-            try {
-                return objectMapper.readTree(candidate)
-            } catch (_: Exception) {}
-        }
-        return null
+        return AiJsonParser.parse(response, objectMapper)
     }
 
     private fun fallbackSummary(extractedText: String): String {
@@ -344,5 +323,71 @@ class SuggestArticleOperation(
                     )
                 )
             )
+    }
+}
+
+internal object AiJsonParser {
+    private val lenientObjectMapper: ObjectMapper =
+        jacksonObjectMapper()
+            .enable(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature())
+            .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature())
+
+    fun parse(response: String, objectMapper: ObjectMapper): JsonNode? {
+        val raw = response.trim()
+        if (raw.isBlank()) return null
+        val strippedPrefix = raw.removePrefix("json").trim()
+        val candidates =
+            buildList {
+                    add(raw)
+                    add(strippedPrefix)
+                    add(raw.removeSurrounding("```json", "```").trim())
+                    add(raw.removeSurrounding("```", "```").trim())
+                    val firstBrace = raw.indexOf('{')
+                    val lastBrace = raw.lastIndexOf('}')
+                    if (firstBrace >= 0 && lastBrace > firstBrace) {
+                        add(raw.substring(firstBrace, lastBrace + 1).trim())
+                    }
+                }
+                .distinct()
+
+        for (candidate in candidates) {
+            if (candidate.isBlank()) continue
+            parseCandidate(candidate, objectMapper)?.let {
+                return it
+            }
+        }
+        return null
+    }
+
+    private fun parseCandidate(candidate: String, objectMapper: ObjectMapper): JsonNode? {
+        runCatching { objectMapper.readTree(candidate) }
+            .getOrNull()
+            ?.let {
+                return it
+            }
+        runCatching { lenientObjectMapper.readTree(candidate) }
+            .getOrNull()
+            ?.let {
+                return it
+            }
+
+        val repaired = repairJson(candidate)
+        if (repaired != candidate) {
+            runCatching { objectMapper.readTree(repaired) }
+                .getOrNull()
+                ?.let {
+                    return it
+                }
+            runCatching { lenientObjectMapper.readTree(repaired) }
+                .getOrNull()
+                ?.let {
+                    return it
+                }
+        }
+        return null
+    }
+
+    private fun repairJson(input: String): String {
+        return input.replace(Regex(",\\s*([}\\]])"), "$1").trim()
     }
 }
