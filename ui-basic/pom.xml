@@ -10,7 +10,7 @@
         <version>1.0</version>
     </parent>
 
-    <artifactId>basic-ui</artifactId>
+    <artifactId>ui-basic</artifactId>
 
     <dependencies>
         <dependency>

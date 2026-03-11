@@ -47,9 +47,9 @@ The `docker-compose.yml` includes optional profiles:
 
 ```bash
 docker compose up -d                                              # PostgreSQL only (default)
-docker compose --profile frontend up -d                           # PostgreSQL + frontend
+docker compose --profile ui-nextjs up -d                          # PostgreSQL + frontend
 docker compose --profile backend up -d                            # PostgreSQL + backend
-docker compose --profile frontend --profile backend up -d         # All three
+docker compose --profile ui-nextjs --profile backend up -d        # All three
 ```
 
 For frontend in Docker with backend on host, set `API_URL=http://host.docker.internal:8080` in `.env`.
@@ -242,8 +242,8 @@ For production, run as a systemd service (see [Process Management](#process-mana
 **Docker (recommended)**:
 
 ```bash
-docker compose --profile frontend build
-docker compose --profile frontend up -d
+docker compose --profile ui-nextjs build
+docker compose --profile ui-nextjs up -d
 ```
 
 Set `API_URL=http://host.docker.internal:8080` in `.env` if the backend runs on the host.
@@ -251,7 +251,7 @@ Set `API_URL=http://host.docker.internal:8080` in `.env` if the backend runs on 
 **Host**:
 
 ```bash
-cd frontend && npm install && npm run build && npm start
+cd ui-nextjs && npm install && npm run build && npm start
 ```
 
 Verify: `curl http://localhost:3000` returns HTML.
@@ -631,8 +631,8 @@ Backend and frontends in Docker; nginx, MTA, certbot on the host.
 
 ```bash
 ./mvnw clean install -DskipTests
-docker compose --profile frontend --profile backend build
-docker compose --profile frontend --profile backend up -d
+docker compose --profile ui-nextjs --profile backend build
+docker compose --profile ui-nextjs --profile backend up -d
 ```
 
 ### Scenario B: Everything in Docker
@@ -678,7 +678,7 @@ sudo systemctl start nevet-backend
 
 ### Frontend systemd unit
 
-Create `/etc/systemd/system/nevet-frontend.service`:
+Create `/etc/systemd/system/nevet-ui-nextjs.service`:
 
 ```ini
 [Unit]
@@ -688,7 +688,7 @@ After=network.target
 [Service]
 Type=simple
 User=nevet
-WorkingDirectory=/opt/nevet/frontend
+WorkingDirectory=/opt/nevet/ui-nextjs
 ExecStart=/usr/bin/node .next/standalone/server.js
 Environment=HOSTNAME=0.0.0.0
 Environment=NODE_ENV=production

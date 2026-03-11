@@ -20,50 +20,54 @@ coverage:
 
 # Build only if jar is missing
 build-if-needed:
-    [ -f app/target/app-1.0.jar ] && [ -f basic-ui/target/basic-ui-1.0.jar ] || just build
+    [ -f app/target/app-1.0.jar ] && [ -f ui-basic/target/ui-basic-1.0.jar ] || just build
 
-# Start db, app, reference-ui, basic-ui, and mailpit for local development
+# Start db, app, ui-reference, ui-basic, and mailpit for local development
 deploy-dev: build-if-needed
-    docker compose --profile backend --profile reference-ui --profile basic-ui --profile mail build --no-cache
-    docker compose --profile backend --profile reference-ui --profile basic-ui --profile mail up
+    docker compose --profile backend --profile ui-reference --profile ui-basic --profile mail build --no-cache
+    docker compose --profile backend --profile ui-reference --profile ui-basic --profile mail up
 
-# Start db, app, reference-ui, and basic-ui
+# Start db, app, ui-reference, and ui-basic
 deploy: build-if-needed
-    docker compose --profile backend --profile reference-ui --profile basic-ui build --no-cache
-    docker compose --profile backend --profile reference-ui --profile basic-ui up
+    docker compose --profile backend --profile ui-reference --profile ui-basic build --no-cache
+    docker compose --profile backend --profile ui-reference --profile ui-basic up
 
-# Rebuild and redeploy only the reference-ui container
-redeploy-reference-ui:
-    docker rm -f reference-ui || true
+# Rebuild and redeploy only the ui-reference container
+redeploy-ui-reference:
+    docker rm -f ui-reference || true
     docker build --no-cache \
       --build-arg VITE_UI_COMMIT=$(git rev-parse --short HEAD) \
       --build-arg VITE_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
-      -t reference-ui reference-ui/
-    docker run -d --name reference-ui \
+      -t ui-reference ui-reference/
+    docker run -d --name ui-reference \
       -e BACKEND_SCHEME=https \
       -e BACKEND_HOST=api.bytecode.news \
       --add-host host.docker.internal:host-gateway \
       -p 3001:3001 \
-      reference-ui
+      ui-reference
 
-# Rebuild and redeploy only the basic-ui container
-redeploy-basic-ui:
-    docker rm -f basic-ui || true
-    ./mvnw -am -pl basic-ui -DskipTests package
+# Rebuild and redeploy only the ui-basic container
+redeploy-ui-basic:
+    docker rm -f ui-basic || true
+    ./mvnw -am -pl ui-basic -DskipTests package
     docker build --no-cache \
-      -f basic-ui/Dockerfile \
-      -t basic-ui .
-    docker run -d --name basic-ui \
+      -f ui-basic/Dockerfile \
+      -t ui-basic .
+    docker run -d --name ui-basic \
       -e BACKEND_SCHEME=https \
       -e BACKEND_HOST=api.bytecode.news \
       --add-host host.docker.internal:host-gateway \
       -p 3003:3003 \
-      basic-ui
+      ui-basic
 
 # Rebuild and redeploy both UI containers
 redeploy-uis:
-    just redeploy-reference-ui
-    just redeploy-basic-ui
+    just redeploy-ui-reference
+    just redeploy-ui-basic
+
+# Run non-blocking warnings for operation-layer web coupling drift
+warn-operation-web-coupling:
+    ./mvnw -q -N exec:exec@warn-operation-web-coupling
 
 # Install repository-managed git hooks
 install-git-hooks:
