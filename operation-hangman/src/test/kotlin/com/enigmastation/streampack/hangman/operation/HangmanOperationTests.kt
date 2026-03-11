@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.hangman.operation
 
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
@@ -15,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.support.MessageBuilder
 import tools.jackson.module.kotlin.convertValue
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 @SpringBootTest
 class HangmanOperationTests {
@@ -25,7 +25,7 @@ class HangmanOperationTests {
 
     @Autowired lateinit var stateService: ProvenanceStateService
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     private val provenance =
         Provenance(protocol = Protocol.CONSOLE, serviceId = "", replyTo = "local")

@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.service
 
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -11,7 +12,6 @@ import java.util.concurrent.TimeUnit
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import tools.jackson.databind.json.JsonMapper
 
 /**
  * TitleFetcher that extracts titles from HTML. Prefers og:title (designed for link sharing) over
@@ -21,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper
 @Component
 class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
     private val logger = LoggerFactory.getLogger(HtmlTitleFetcher::class.java)
-    private val mapper = JsonMapper.builder().build()
+    private val mapper = JacksonMappers.standard()
 
     private val titleCache: LoadingCache<String, Optional<String>> =
         CacheBuilder.newBuilder()

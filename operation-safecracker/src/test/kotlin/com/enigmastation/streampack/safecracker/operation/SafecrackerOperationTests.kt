@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.safecracker.operation
 
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
@@ -24,7 +25,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
 import tools.jackson.module.kotlin.convertValue
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 @SpringBootTest
 class SafecrackerOperationTests {
@@ -35,7 +35,7 @@ class SafecrackerOperationTests {
 
     @Qualifier("tickChannel") @Autowired lateinit var tickChannel: MessageChannel
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     private val provenance =
         Provenance(

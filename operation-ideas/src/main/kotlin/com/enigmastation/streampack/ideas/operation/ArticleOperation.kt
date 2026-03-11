@@ -4,6 +4,7 @@ package com.enigmastation.streampack.ideas.operation
 import com.enigmastation.streampack.ai.service.AiService
 import com.enigmastation.streampack.core.extensions.compress
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
@@ -25,7 +26,6 @@ import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 import tools.jackson.module.kotlin.convertValue
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Captures article ideas through a stateful conversation flow across all protocols */
 @Component
@@ -40,7 +40,7 @@ class ArticleOperation(
     @Value("\${streampack.ideas.max-log-messages:100}") private val maxLogMessages: Int = 100,
 ) : TypedOperation<String>(String::class) {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     override val priority: Int = 50
     override val addressed: Boolean = true

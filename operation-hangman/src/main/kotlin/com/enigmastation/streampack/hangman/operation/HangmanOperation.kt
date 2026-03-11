@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.hangman.operation
 
 import com.enigmastation.streampack.core.extensions.compress
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
@@ -12,7 +13,6 @@ import com.enigmastation.streampack.hangman.service.HangmanService
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 import tools.jackson.module.kotlin.convertValue
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Word guessing game where players reveal letters one at a time before running out of lives */
 @Component
@@ -21,7 +21,7 @@ class HangmanOperation(
     private val hangmanService: HangmanService,
 ) : TypedOperation<String>(String::class) {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     override val priority: Int = 50
     override val addressed: Boolean = true

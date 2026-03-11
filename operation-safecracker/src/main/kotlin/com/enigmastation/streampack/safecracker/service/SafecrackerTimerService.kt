@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.safecracker.service
 
 import com.enigmastation.streampack.core.integration.TickListener
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ProvenanceStateService
@@ -16,7 +17,6 @@ import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 import tools.jackson.module.kotlin.convertValue
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Monitors active safecracker games for 30-second countdown and 5-minute timeout */
 @Component
@@ -27,7 +27,7 @@ class SafecrackerTimerService(
 ) : TickListener {
 
     private val logger = LoggerFactory.getLogger(SafecrackerTimerService::class.java)
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
     private val activeGames = ConcurrentHashMap<String, ActiveGame>()
 
     fun registerGame(provenanceUri: String, startedAt: Instant) {

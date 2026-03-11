@@ -5,6 +5,7 @@ import com.enigmastation.streampack.ai.service.AiService
 import com.enigmastation.streampack.blog.model.DeriveTagsRequest
 import com.enigmastation.streampack.blog.model.DeriveTagsResponse
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Non-persistent admin operation that derives AI tag suggestions from editor content. */
 @Component
@@ -25,7 +25,7 @@ class DeriveTagsOperation(
     private val aiServiceProvider: ObjectProvider<AiService>,
 ) : TypedOperation<DeriveTagsRequest>(DeriveTagsRequest::class) {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     override fun handle(payload: DeriveTagsRequest, message: Message<*>): OperationOutcome {
         requireRole(message, Role.ADMIN)?.let {

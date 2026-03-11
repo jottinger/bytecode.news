@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.weather.service
 
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.weather.config.WeatherProperties
 import com.enigmastation.streampack.weather.model.GeocodingResult
 import com.enigmastation.streampack.weather.model.WeatherApiResponse
@@ -12,7 +13,6 @@ import java.net.http.HttpResponse
 import java.time.Duration
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import tools.jackson.module.kotlin.jacksonObjectMapper
 import tools.jackson.module.kotlin.readValue
 
 /** Geocodes locations via Nominatim and fetches current weather from OpenWeatherMap */
@@ -20,7 +20,7 @@ import tools.jackson.module.kotlin.readValue
 class WeatherService(private val config: WeatherProperties) {
 
     private val logger = LoggerFactory.getLogger(WeatherService::class.java)
-    private val mapper = jacksonObjectMapper()
+    private val mapper = JacksonMappers.standard()
 
     /** Enforces Nominatim TOS: max 1 geocoding request per second */
     @Volatile private var lastGeocodingRequestMs: Long = 0

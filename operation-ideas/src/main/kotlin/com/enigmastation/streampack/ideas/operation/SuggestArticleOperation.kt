@@ -3,6 +3,7 @@ package com.enigmastation.streampack.ideas.operation
 
 import com.enigmastation.streampack.ai.service.AiService
 import com.enigmastation.streampack.blog.model.CreateContentRequest
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
@@ -20,11 +21,8 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
-import tools.jackson.core.json.JsonReadFeature
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.json.JsonMapper
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Admin command: suggest a draft article from a source URL. */
 @Component
@@ -34,7 +32,7 @@ class SuggestArticleOperation(
     private val eventGateway: com.enigmastation.streampack.core.integration.EventGateway,
 ) : TypedOperation<String>(String::class) {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     override val priority: Int = 45
     override val addressed: Boolean = true
@@ -328,13 +326,9 @@ class SuggestArticleOperation(
 }
 
 internal object AiJsonParser {
-    private val lenientObjectMapper: ObjectMapper =
-        JsonMapper.builder()
-            .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
-            .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-            .build()
+    private val lenientObjectMapper: JsonMapper = JacksonMappers.lenientInput()
 
-    fun parse(response: String, objectMapper: ObjectMapper): JsonNode? {
+    fun parse(response: String, objectMapper: JsonMapper): JsonNode? {
         val raw = response.trim()
         if (raw.isBlank()) return null
         val strippedPrefix = raw.removePrefix("json").trim()
@@ -361,7 +355,7 @@ internal object AiJsonParser {
         return null
     }
 
-    private fun parseCandidate(candidate: String, objectMapper: ObjectMapper): JsonNode? {
+    private fun parseCandidate(candidate: String, objectMapper: JsonMapper): JsonNode? {
         runCatching { objectMapper.readTree(candidate) }
             .getOrNull()
             ?.let {

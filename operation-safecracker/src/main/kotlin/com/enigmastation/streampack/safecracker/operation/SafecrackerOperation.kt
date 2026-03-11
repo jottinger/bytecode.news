@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.safecracker.operation
 
 import com.enigmastation.streampack.core.extensions.compress
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
@@ -13,7 +14,6 @@ import java.time.Instant
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 import tools.jackson.module.kotlin.convertValue
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Competitive code-breaking game where players race to crack a 4-digit combination */
 @Component
@@ -22,7 +22,7 @@ class SafecrackerOperation(
     private val timerService: SafecrackerTimerService,
 ) : TypedOperation<String>(String::class) {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     override val priority: Int = 50
     override val addressed: Boolean = true

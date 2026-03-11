@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack
 
+import com.enigmastation.streampack.core.json.JacksonMappers
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -11,8 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
 import tools.jackson.databind.JsonNode
-import tools.jackson.databind.SerializationFeature
-import tools.jackson.databind.json.JsonMapper
 import tools.jackson.databind.node.ArrayNode
 import tools.jackson.databind.node.ObjectNode
 
@@ -36,7 +35,7 @@ class OpenApiGeneratorTest {
             "Failed to fetch OpenAPI spec: ${response.statusCode()}"
         }
 
-        val mapper = JsonMapper.builder().enable(SerializationFeature.INDENT_OUTPUT).build()
+        @Suppress("DEPRECATION") val mapper = JacksonMappers.pretty()
         val root = mapper.readTree(response.body()) as ObjectNode
 
         // Replace random test port with a stable placeholder

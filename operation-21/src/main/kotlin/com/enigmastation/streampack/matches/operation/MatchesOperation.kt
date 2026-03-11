@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.matches.operation
 
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
@@ -11,14 +12,13 @@ import com.enigmastation.streampack.matches.model.MatchesGameState
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 import tools.jackson.module.kotlin.convertValue
-import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Take-turns game where players remove 1-3 matches from a pile of 21. Last match loses. */
 @Component
 class MatchesOperation(private val stateService: ProvenanceStateService) :
     TypedOperation<String>(String::class) {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     override val operationGroup: String = "21-matches"
 
