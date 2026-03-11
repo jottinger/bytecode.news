@@ -265,6 +265,58 @@ sudo ln -s /etc/nginx/sites-available/bytecode.news /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
+### 6.1 Abuse Trapping + Durable IP Bans (Recommended)
+
+This setup blocks obvious hostile traffic (multipart submissions to unsupported routes,
+common WordPress/CMS probe paths) and applies durable host-level bans via fail2ban.
+
+1. Install the shared nginx abuse snippets:
+
+```bash
+sudo cp deploy/nginx/abuse-http.conf /etc/nginx/conf.d/bytecode-abuse-http.conf
+sudo cp deploy/nginx/abuse-server.conf /etc/nginx/conf.d/bytecode-abuse-server.conf
+```
+
+2. In each frontend `server {}` block you want protected (at minimum `ui-reference`
+   and `ui-basic`), add:
+
+```nginx
+include /etc/nginx/conf.d/bytecode-abuse-server.conf;
+```
+
+Add it after the `/.well-known/acme-challenge/` location and before normal proxy locations.
+
+3. Reload nginx:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+4. Install fail2ban assets:
+
+```bash
+sudo cp deploy/fail2ban/filter.d/bytecode-abuse.conf /etc/fail2ban/filter.d/
+sudo cp deploy/fail2ban/jail.d/bytecode-abuse.local /etc/fail2ban/jail.d/
+sudo fail2ban-client reload
+sudo fail2ban-client status bytecode-abuse
+```
+
+5. Verify with a probe request:
+
+```bash
+curl -i https://bytecode.news/wp-login.php
+sudo fail2ban-client status bytecode-abuse
+```
+
+Expected behavior:
+- nginx returns `403` for suspicious requests
+- suspicious requests are logged to `/var/log/nginx/bytecode-abuse.log`
+- fail2ban applies a temporary firewall ban (default `bantime = 7200` seconds)
+
+Notes:
+- This is host-level enforcement; fail2ban should run on the host, not inside frontend containers.
+- Reuse the same two nginx includes for future frontends (for example `ui-nextjs` after rewrite).
+
 ### 7. TLS Certificates
 
 #### Option 1: HTTP-01 Challenges (simpler)
