@@ -5,6 +5,7 @@ import com.enigmastation.streampack.ai.service.AiService
 import com.enigmastation.streampack.blog.model.DeriveTagsRequest
 import com.enigmastation.streampack.blog.model.DeriveTagsResponse
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
@@ -12,7 +13,6 @@ import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import com.enigmastation.streampack.taxonomy.model.TaxonomySnapshot
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
@@ -25,7 +25,7 @@ class DeriveTagsOperation(
     private val aiServiceProvider: ObjectProvider<AiService>,
 ) : TypedOperation<DeriveTagsRequest>(DeriveTagsRequest::class) {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     override fun handle(payload: DeriveTagsRequest, message: Message<*>): OperationOutcome {
         requireRole(message, Role.ADMIN)?.let {
@@ -174,7 +174,7 @@ class DeriveTagsOperation(
         return parsed
     }
 
-    private fun parseAiJson(response: String): com.fasterxml.jackson.databind.JsonNode? {
+    private fun parseAiJson(response: String): tools.jackson.databind.JsonNode? {
         val raw = response.trim()
         if (raw.isBlank()) return null
 

@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.dictionary.service
 
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.service.PageFetcher
 import com.enigmastation.streampack.dictionary.model.DictionaryResult
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 open class DictionaryLookupService(private val pageFetcher: PageFetcher) {
 
     private val logger = LoggerFactory.getLogger(DictionaryLookupService::class.java)
-    private val mapper = jacksonObjectMapper()
+    private val mapper = JacksonMappers.standard()
 
     /** Look up the first definition of a word, or null if the word is not found */
     open fun lookup(word: String): DictionaryResult? {

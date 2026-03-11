@@ -1,7 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component
 @Component
 class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
     private val logger = LoggerFactory.getLogger(HtmlTitleFetcher::class.java)
+    private val mapper = JacksonMappers.standard()
 
     private val titleCache: LoadingCache<String, Optional<String>> =
         CacheBuilder.newBuilder()
@@ -82,7 +83,7 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
         logger.debug("Fetching YouTube title via oembed for {}", url)
         val json = pageFetcher.fetch(oembedUrl) ?: return null
         return try {
-            val tree = ObjectMapper().readTree(json)
+            val tree = mapper.readTree(json)
             val title = tree.get("title")?.asText()
             if (title.isNullOrBlank()) {
                 logger.debug("YouTube oembed returned no title for {}", url)

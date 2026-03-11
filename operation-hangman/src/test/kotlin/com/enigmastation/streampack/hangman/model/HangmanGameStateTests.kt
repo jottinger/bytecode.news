@@ -1,16 +1,16 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.hangman.model
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.enigmastation.streampack.core.json.JacksonMappers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.convertValue
 
 class HangmanGameStateTests {
-    private val objectMapper: ObjectMapper = jacksonObjectMapper()
+    private val objectMapper: JsonMapper = JacksonMappers.standard()
 
     @Test
     fun `masked word hides unguessed letters`() {

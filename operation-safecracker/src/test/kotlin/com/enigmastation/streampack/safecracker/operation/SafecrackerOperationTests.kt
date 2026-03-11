@@ -2,6 +2,7 @@
 package com.enigmastation.streampack.safecracker.operation
 
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
@@ -9,8 +10,6 @@ import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.safecracker.model.SafecrackerGameState
 import com.enigmastation.streampack.safecracker.service.SafecrackerTimerService
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -25,6 +24,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
+import tools.jackson.module.kotlin.convertValue
 
 @SpringBootTest
 class SafecrackerOperationTests {
@@ -35,7 +35,7 @@ class SafecrackerOperationTests {
 
     @Qualifier("tickChannel") @Autowired lateinit var tickChannel: MessageChannel
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     private val provenance =
         Provenance(
