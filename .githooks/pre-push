@@ -2,3 +2,4 @@
 set -eu
 
 ./mvnw -q spotless:check
+./mvnw -q -N exec:exec@warn-operation-web-coupling

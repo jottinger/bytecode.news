@@ -77,7 +77,7 @@
         <module>service-mail</module>
         <module>service-discord</module>
         <module>service-blog</module>
-        <module>basic-ui</module>
+        <module>ui-basic</module>
         <module>service-irc</module>
         <module>service-github</module>
         <module>service-features</module>
@@ -489,6 +489,29 @@
                                     <version>3.8.0</version>
                                 </requireMavenVersion>
                             </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.2</version>
+                <executions>
+                    <execution>
+                        <id>warn-operation-web-coupling</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>sh</executable>
+                            <arguments>
+                                <argument>-c</argument>
+                                <argument>${maven.multiModuleProjectDirectory}/scripts/warn-operation-web-coupling.sh</argument>
+                            </arguments>
+                            <successCodes>
+                                <successCode>0</successCode>
+                            </successCodes>
                         </configuration>
                     </execution>
                 </executions>

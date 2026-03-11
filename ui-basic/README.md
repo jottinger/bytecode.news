@@ -1,4 +1,4 @@
-# basic-ui
+# ui-basic
 
 Minimal read-only Spring Boot frontend for blog content.
 
@@ -12,14 +12,14 @@ The app listens on port `3003`.
 ## Build and run with Docker
 
 ```bash
-./mvnw -am -pl basic-ui -DskipTests package
+./mvnw -am -pl ui-basic -DskipTests package
 
-docker build --no-cache -f basic-ui/Dockerfile -t basic-ui .
+docker build --no-cache -f ui-basic/Dockerfile -t ui-basic .
 
-docker run -d --name basic-ui \
+docker run -d --name ui-basic \
   -e BACKEND_SCHEME=https \
   -e BACKEND_HOST=api.bytecode.news \
   --add-host host.docker.internal:host-gateway \
   -p 3003:3003 \
-  basic-ui
+  ui-basic
 ```

@@ -173,7 +173,7 @@ docker build --no-cache \
   --build-arg VITE_API_BASE=https://api.bytecode.news \
   --build-arg VITE_UI_COMMIT=$(git rev-parse --short HEAD) \
   --build-arg VITE_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
-  -t reference-ui reference-ui/
+  -t ui-reference ui-reference/
 ```
 
 `VITE_API_BASE` is baked in at build time - the browser fetches directly from this URL.
@@ -182,12 +182,12 @@ Omit it for local dev (defaults to `/api`, which the Vite proxy or nginx forward
 ### Run
 
 ```bash
-docker run -d --name reference-ui \
+docker run -d --name ui-reference \
   -e BACKEND_SCHEME=http \
   -e BACKEND_HOST=host.docker.internal:8080 \
   --add-host host.docker.internal:host-gateway \
   -p 3001:3001 \
-  reference-ui
+  ui-reference
 ```
 
 `BACKEND_SCHEME` and `BACKEND_HOST` tell nginx where to proxy sitemap, RSS feed, and SSR requests.

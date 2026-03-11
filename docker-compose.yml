@@ -11,12 +11,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  frontend:
+  ui-nextjs:
     build:
-      context: ./frontend
+      context: ./ui-nextjs
       args:
         API_URL: ${API_URL:-http://backend:8080}
-    profiles: ["frontend"]
+    profiles: ["ui-nextjs"]
     ports:
       - "3000:3000"
     environment:
@@ -33,9 +33,9 @@ services:
       - "8025:8025"
     restart: unless-stopped
 
-  reference-ui:
-    build: ./reference-ui
-    profiles: ["reference-ui"]
+  ui-reference:
+    build: ./ui-reference
+    profiles: ["ui-reference"]
     ports:
       - "3001:3001"
     depends_on:
@@ -43,11 +43,11 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  basic-ui:
+  ui-basic:
     build:
       context: .
-      dockerfile: basic-ui/Dockerfile
-    profiles: ["basic-ui"]
+      dockerfile: ui-basic/Dockerfile
+    profiles: ["ui-basic"]
     ports:
       - "3003:3003"
     depends_on:
