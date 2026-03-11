@@ -1,0 +1,19 @@
+# Template jail for durable IP bans on suspicious web probes.
+# Copy to /etc/fail2ban/jail.d/bytecode-abuse.local and adjust as needed.
+
+[bytecode-abuse]
+enabled = true
+port = http,https
+filter = bytecode-abuse
+logpath = /var/log/nginx/bytecode-abuse.log
+
+# One suspicious hit triggers a ban.
+maxretry = 1
+findtime = 600
+
+# Default 2h ban window.
+bantime = 7200
+
+# Use your host firewall backend.
+banaction = nftables-multiport
+backend = auto
