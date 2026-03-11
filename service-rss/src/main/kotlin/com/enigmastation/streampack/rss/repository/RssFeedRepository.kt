@@ -8,5 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface RssFeedRepository : JpaRepository<RssFeed, UUID> {
     fun findByFeedUrl(feedUrl: String): RssFeed?
 
+    fun findBySiteUrl(siteUrl: String): RssFeed?
+
     fun findAllByActiveTrue(): List<RssFeed>
 }

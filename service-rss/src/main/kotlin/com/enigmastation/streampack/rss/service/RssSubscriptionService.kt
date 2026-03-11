@@ -33,6 +33,12 @@ class RssSubscriptionService(
     fun addFeed(url: String): AddFeedOutcome {
         val normalized = normalizeUrl(url)
 
+        // Fast-path dedup: avoid network dependency when this URL is already known.
+        findExistingByInputUrl(url, normalized)?.let { existing ->
+            logger.debug("Feed already exists: {}", existing.feedUrl)
+            return AddFeedOutcome.AlreadyExists(existing)
+        }
+
         // Try discovery with normalized URL first, then original if different
         val result =
             discoveryService.discover(normalized)
@@ -82,6 +88,24 @@ class RssSubscriptionService(
         entryRepository.saveAll(entries)
         logger.info("Added feed \"{}\" with {} entries", feed.title, entries.size)
         return AddFeedOutcome.Added(feed, entries.size)
+    }
+
+    private fun findExistingByInputUrl(url: String, normalized: String): RssFeed? {
+        feedRepository.findByFeedUrl(normalized)?.let {
+            return it
+        }
+        feedRepository.findBySiteUrl(normalized)?.let {
+            return it
+        }
+        if (normalized != url) {
+            feedRepository.findByFeedUrl(url)?.let {
+                return it
+            }
+            feedRepository.findBySiteUrl(url)?.let {
+                return it
+            }
+        }
+        return null
     }
 
     /** Subscribe a destination to a feed, resolving the feed URL if needed */

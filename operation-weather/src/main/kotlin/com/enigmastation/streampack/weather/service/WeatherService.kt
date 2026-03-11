@@ -4,8 +4,6 @@ package com.enigmastation.streampack.weather.service
 import com.enigmastation.streampack.weather.config.WeatherProperties
 import com.enigmastation.streampack.weather.model.GeocodingResult
 import com.enigmastation.streampack.weather.model.WeatherApiResponse
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import java.net.URI
 import java.net.URLEncoder
 import java.net.http.HttpClient
@@ -14,6 +12,8 @@ import java.net.http.HttpResponse
 import java.time.Duration
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 
 /** Geocodes locations via Nominatim and fetches current weather from OpenWeatherMap */
 @Service

@@ -9,8 +9,6 @@ import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.safecracker.model.SafecrackerGameState
 import com.enigmastation.streampack.safecracker.service.SafecrackerTimerService
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -25,6 +23,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
+import tools.jackson.module.kotlin.convertValue
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 @SpringBootTest
 class SafecrackerOperationTests {

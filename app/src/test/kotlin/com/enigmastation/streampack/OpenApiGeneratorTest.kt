@@ -1,11 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -15,6 +10,11 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Import
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.SerializationFeature
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.node.ArrayNode
+import tools.jackson.databind.node.ObjectNode
 
 /** Fetches the OpenAPI spec from the running app and writes it to docs/openapi.json */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -36,7 +36,7 @@ class OpenApiGeneratorTest {
             "Failed to fetch OpenAPI spec: ${response.statusCode()}"
         }
 
-        val mapper = ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
+        val mapper = JsonMapper.builder().enable(SerializationFeature.INDENT_OUTPUT).build()
         val root = mapper.readTree(response.body()) as ObjectNode
 
         // Replace random test port with a stable placeholder
@@ -45,7 +45,7 @@ class OpenApiGeneratorTest {
         server.put("url", "http://localhost:8080")
         server.put("description", "Local development server")
         servers.add(server)
-        root.set<ArrayNode>("servers", servers)
+        root.set("servers", servers)
 
         sortKeys(root)
 
@@ -58,11 +58,11 @@ class OpenApiGeneratorTest {
     private fun sortKeys(node: JsonNode) {
         when (node) {
             is ObjectNode -> {
-                node.fields().forEach { (_, value) -> sortKeys(value) }
-                val sorted = node.fieldNames().asSequence().sorted().toList()
+                node.properties().forEach { (_, value) -> sortKeys(value) }
+                val sorted = node.propertyNames().asSequence().sorted().toList()
                 val entries = sorted.map { it to node.get(it) }
                 node.removeAll()
-                entries.forEach { (key, value) -> node.set<JsonNode>(key, value) }
+                entries.forEach { (key, value) -> node.set(key, value) }
             }
             is ArrayNode -> node.forEach { sortKeys(it) }
         }

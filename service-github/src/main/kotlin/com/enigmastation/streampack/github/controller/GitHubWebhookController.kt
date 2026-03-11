@@ -9,8 +9,6 @@ import com.enigmastation.streampack.github.repository.GitHubRepoRepository
 import com.enigmastation.streampack.github.service.GitHubWebhookDeliveryTracker
 import com.enigmastation.streampack.github.service.GitHubWebhookService
 import com.enigmastation.streampack.github.service.WebhookSecretCipher
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -30,6 +28,8 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
 
 @RestController
 @RequestMapping("/webhooks/github")
@@ -39,7 +39,7 @@ class GitHubWebhookController(
     private val webhookService: GitHubWebhookService,
     private val deliveryTracker: GitHubWebhookDeliveryTracker,
 ) {
-    private val objectMapper = ObjectMapper()
+    private val objectMapper = JsonMapper.builder().build()
     private val logger = LoggerFactory.getLogger(GitHubWebhookController::class.java)
 
     @Operation(

@@ -17,8 +17,6 @@ import com.enigmastation.streampack.ideas.service.IdeaAuthorResolver
 import com.enigmastation.streampack.ideas.service.IdeaTimerService
 import com.enigmastation.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import com.enigmastation.streampack.taxonomy.model.TaxonomySnapshot
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Duration
 import java.time.Instant
 import org.springframework.beans.factory.ObjectProvider
@@ -26,6 +24,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.convertValue
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Captures article ideas through a stateful conversation flow across all protocols */
 @Component
@@ -439,7 +439,7 @@ class ArticleOperation(
         }
     }
 
-    private fun parseAiJson(response: String): com.fasterxml.jackson.databind.JsonNode? {
+    private fun parseAiJson(response: String): tools.jackson.databind.JsonNode? {
         val raw = response.trim()
         if (raw.isBlank()) return null
 

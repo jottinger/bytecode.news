@@ -143,6 +143,25 @@ class RssSubscriptionServiceTests {
     }
 
     @Test
+    fun `second add of known feed URL returns AlreadyExists even if discovery is down`() {
+        httpServer.createContext("/feed.xml") { exchange ->
+            val rss = sampleRss("Dupe Offline", 1)
+            exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+
+        val first = feedService.addFeed("$baseUrl/feed.xml")
+        assertInstanceOf(AddFeedOutcome.Added::class.java, first)
+
+        // Simulate transient outage for discovery/fetch on second add.
+        httpServer.stop(0)
+
+        val second = feedService.addFeed("$baseUrl/feed.xml")
+        assertInstanceOf(AddFeedOutcome.AlreadyExists::class.java, second)
+        assertEquals(1, feedRepository.count())
+    }
+
+    @Test
     fun `adding the same site URL twice returns AlreadyExists`() {
         httpServer.createContext("/") { exchange ->
             val html = htmlWithFeedLink("$baseUrl/rss")

@@ -16,14 +16,15 @@ import com.enigmastation.streampack.core.parser.HttpUrlArgType
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.ideas.service.FetchOutcome
 import com.enigmastation.streampack.ideas.service.SuggestedContentFetcher
-import com.fasterxml.jackson.core.json.JsonReadFeature
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
+import tools.jackson.core.json.JsonReadFeature
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Admin command: suggest a draft article from a source URL. */
 @Component
@@ -328,9 +329,10 @@ class SuggestArticleOperation(
 
 internal object AiJsonParser {
     private val lenientObjectMapper: ObjectMapper =
-        jacksonObjectMapper()
-            .enable(JsonReadFeature.ALLOW_TRAILING_COMMA.mappedFeature())
-            .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature())
+        JsonMapper.builder()
+            .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+            .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
+            .build()
 
     fun parse(response: String, objectMapper: ObjectMapper): JsonNode? {
         val raw = response.trim()

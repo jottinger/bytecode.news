@@ -8,7 +8,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "publishedAt" ],
         "type" : "object"
       },
       "AuthenticationFeatures" : {
@@ -20,7 +19,6 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "otp" ],
         "type" : "object"
       },
       "CategorySummary" : {
@@ -39,7 +37,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "id", "name", "slug" ],
         "type" : "object"
       },
       "CommentDetail" : {
@@ -63,7 +60,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "createdAt", "id", "postId", "renderedHtml" ],
         "type" : "object"
       },
       "CommentNode" : {
@@ -103,7 +99,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "children", "createdAt", "deleted", "editable", "id", "renderedHtml", "updatedAt" ],
         "type" : "object"
       },
       "CommentThreadResponse" : {
@@ -123,7 +118,6 @@
             "type" : "integer"
           }
         },
-        "required" : [ "comments", "postId", "totalActiveCount" ],
         "type" : "object"
       },
       "ContentDetail" : {
@@ -187,7 +181,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "commentCount", "createdAt", "id", "renderedHtml", "slug", "status", "tags", "title", "updatedAt" ],
         "type" : "object"
       },
       "ContentListResponse" : {
@@ -211,7 +204,6 @@
             "type" : "integer"
           }
         },
-        "required" : [ "page", "posts", "totalCount", "totalPages" ],
         "type" : "object"
       },
       "ContentOperationConfirmation" : {
@@ -224,7 +216,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "id", "message" ],
         "type" : "object"
       },
       "ContentSummary" : {
@@ -262,7 +253,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "id", "slug", "tags", "title" ],
         "type" : "object"
       },
       "CreateCategoryRequest" : {
@@ -275,7 +265,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "name" ],
         "type" : "object"
       },
       "CreateCategoryResponse" : {
@@ -294,7 +283,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "id", "name", "slug" ],
         "type" : "object"
       },
       "CreateCommentHttpRequest" : {
@@ -307,7 +295,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "markdownSource" ],
         "type" : "object"
       },
       "CreateContentHttpRequest" : {
@@ -398,7 +385,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "createdAt", "id", "slug", "status", "tags", "title" ],
         "type" : "object"
       },
       "DeleteAccountRequest" : {
@@ -435,7 +421,6 @@
             "type" : "array"
           }
         },
-        "required" : [ "tags" ],
         "type" : "object"
       },
       "EditCommentHttpRequest" : {
@@ -444,7 +429,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "markdownSource" ],
         "type" : "object"
       },
       "EditContentHttpRequest" : {
@@ -494,7 +478,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "rendered", "type" ],
         "type" : "object"
       },
       "FactoidDetailResponse" : {
@@ -527,7 +510,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessCount", "attributes", "locked", "selector", "updatedAt" ],
         "type" : "object"
       },
       "FactoidListResponse" : {
@@ -551,7 +533,6 @@
             "type" : "integer"
           }
         },
-        "required" : [ "factoids", "page", "totalCount", "totalPages" ],
         "type" : "object"
       },
       "FactoidSummaryResponse" : {
@@ -578,7 +559,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessCount", "locked", "selector", "updatedAt" ],
         "type" : "object"
       },
       "FeaturesResponse" : {
@@ -611,7 +591,6 @@
             "$ref" : "#/components/schemas/VersionInfo"
           }
         },
-        "required" : [ "adapters", "ai", "anonymousSubmission", "authentication", "operationGroups", "siteName", "version" ],
         "type" : "object"
       },
       "KarmaLeaderboardEntryResponse" : {
@@ -628,7 +607,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "lastUpdated", "score", "subject" ],
         "type" : "object"
       },
       "KarmaLeaderboardResponse" : {
@@ -650,7 +628,6 @@
             "type" : "array"
           }
         },
-        "required" : [ "bottom", "limit", "top" ],
         "type" : "object"
       },
       "LogDayResponse" : {
@@ -668,7 +645,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "day", "entries", "provenanceUri" ],
         "type" : "object"
       },
       "LogEntry" : {
@@ -688,7 +664,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "content", "direction", "sender", "timestamp" ],
         "type" : "object"
       },
       "LogProvenanceListResponse" : {
@@ -700,7 +675,6 @@
             "type" : "array"
           }
         },
-        "required" : [ "provenances" ],
         "type" : "object"
       },
       "LogProvenanceSummary" : {
@@ -728,7 +702,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "protocol", "provenanceUri", "replyTo" ],
         "type" : "object"
       },
       "LoginResponse" : {
@@ -740,7 +713,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "principal", "token" ],
         "type" : "object"
       },
       "OidcFeatures" : {
@@ -752,7 +724,6 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "github", "google" ],
         "type" : "object"
       },
       "OtpRequest" : {
@@ -761,7 +732,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "email" ],
         "type" : "object"
       },
       "OtpVerifyRequest" : {
@@ -773,7 +743,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "code", "email" ],
         "type" : "object"
       },
       "ProblemDetail" : {
@@ -810,7 +779,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "newRole" ],
         "type" : "object"
       },
       "SuggestTagsHttpRequest" : {
@@ -839,7 +807,6 @@
             "type" : "array"
           }
         },
-        "required" : [ "tags" ],
         "type" : "object"
       },
       "TaxonomySnapshot" : {
@@ -866,7 +833,6 @@
             "type" : "object"
           }
         },
-        "required" : [ "aggregate", "categories", "tags" ],
         "type" : "object"
       },
       "TokenRefreshRequest" : {
@@ -875,7 +841,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "token" ],
         "type" : "object"
       },
       "UserPrincipal" : {
@@ -895,7 +860,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "displayName", "id", "role", "username" ],
         "type" : "object"
       },
       "VersionInfo" : {
@@ -916,7 +880,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "name" ],
         "type" : "object"
       }
     },

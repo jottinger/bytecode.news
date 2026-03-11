@@ -1,10 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.ideas.operation
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 class AiJsonParserTests {
     private val mapper = jacksonObjectMapper()

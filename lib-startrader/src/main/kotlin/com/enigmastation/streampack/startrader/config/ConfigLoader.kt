@@ -1,9 +1,9 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.startrader.config
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 
 @Component
 class ConfigLoader {

@@ -7,8 +7,6 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TransformerChainService
 import com.enigmastation.streampack.safecracker.model.SafecrackerGameState
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -17,6 +15,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.convertValue
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Monitors active safecracker games for 30-second countdown and 5-minute timeout */
 @Component

@@ -8,10 +8,10 @@ import com.enigmastation.streampack.core.parser.*
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.matches.model.MatchesGameState
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.convertValue
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Take-turns game where players remove 1-3 matches from a pile of 21. Last match loses. */
 @Component

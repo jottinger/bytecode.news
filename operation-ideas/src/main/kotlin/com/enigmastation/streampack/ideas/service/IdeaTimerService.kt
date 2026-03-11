@@ -11,8 +11,6 @@ import com.enigmastation.streampack.core.service.TransformerChainService
 import com.enigmastation.streampack.ideas.config.IdeaProperties
 import com.enigmastation.streampack.ideas.model.ActiveIdeaSession
 import com.enigmastation.streampack.ideas.model.IdeaSessionState
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -21,6 +19,8 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.convertValue
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Monitors active article idea sessions for inactivity timeout */
 @Component

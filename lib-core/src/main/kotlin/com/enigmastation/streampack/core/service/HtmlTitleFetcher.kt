@@ -1,7 +1,6 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.core.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -12,6 +11,7 @@ import java.util.concurrent.TimeUnit
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import tools.jackson.databind.json.JsonMapper
 
 /**
  * TitleFetcher that extracts titles from HTML. Prefers og:title (designed for link sharing) over
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component
 @Component
 class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
     private val logger = LoggerFactory.getLogger(HtmlTitleFetcher::class.java)
+    private val mapper = JsonMapper.builder().build()
 
     private val titleCache: LoadingCache<String, Optional<String>> =
         CacheBuilder.newBuilder()
@@ -82,7 +83,7 @@ class HtmlTitleFetcher(private val pageFetcher: PageFetcher) : TitleFetcher {
         logger.debug("Fetching YouTube title via oembed for {}", url)
         val json = pageFetcher.fetch(oembedUrl) ?: return null
         return try {
-            val tree = ObjectMapper().readTree(json)
+            val tree = mapper.readTree(json)
             val title = tree.get("title")?.asText()
             if (title.isNullOrBlank()) {
                 logger.debug("YouTube oembed returned no title for {}", url)

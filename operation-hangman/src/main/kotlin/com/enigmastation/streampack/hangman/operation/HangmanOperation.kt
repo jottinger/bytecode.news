@@ -9,10 +9,10 @@ import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.hangman.model.HangmanGameState
 import com.enigmastation.streampack.hangman.service.HangmanService
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.convertValue
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Word guessing game where players reveal letters one at a time before running out of lives */
 @Component

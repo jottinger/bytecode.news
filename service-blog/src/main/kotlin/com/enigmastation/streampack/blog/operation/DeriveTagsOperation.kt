@@ -12,11 +12,11 @@ import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import com.enigmastation.streampack.taxonomy.model.TaxonomySnapshot
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Non-persistent admin operation that derives AI tag suggestions from editor content. */
 @Component
@@ -174,7 +174,7 @@ class DeriveTagsOperation(
         return parsed
     }
 
-    private fun parseAiJson(response: String): com.fasterxml.jackson.databind.JsonNode? {
+    private fun parseAiJson(response: String): tools.jackson.databind.JsonNode? {
         val raw = response.trim()
         if (raw.isBlank()) return null
 

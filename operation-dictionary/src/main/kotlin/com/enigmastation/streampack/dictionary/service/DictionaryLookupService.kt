@@ -3,9 +3,9 @@ package com.enigmastation.streampack.dictionary.service
 
 import com.enigmastation.streampack.core.service.PageFetcher
 import com.enigmastation.streampack.dictionary.model.DictionaryResult
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Fetches word definitions from the Free Dictionary API */
 @Service

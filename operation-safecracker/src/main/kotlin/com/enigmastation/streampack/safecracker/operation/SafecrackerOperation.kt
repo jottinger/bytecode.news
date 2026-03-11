@@ -9,11 +9,11 @@ import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.core.service.TypedOperation
 import com.enigmastation.streampack.safecracker.model.SafecrackerGameState
 import com.enigmastation.streampack.safecracker.service.SafecrackerTimerService
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Instant
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.convertValue
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 /** Competitive code-breaking game where players race to crack a 4-digit combination */
 @Component
