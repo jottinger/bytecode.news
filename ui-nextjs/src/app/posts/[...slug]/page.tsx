@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { ApiError, getCommentsBySlug, getPageBySlug, getPostBySlug } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { CommentThreadResponse, ContentDetail } from "@/lib/types";
@@ -7,20 +9,72 @@ import { CommentThread } from "@/components/comment-thread";
 import { HighlightedHtml } from "@/components/highlighted-html";
 import { PostActions } from "@/components/post-actions";
 
+const SUMMARY_FALLBACK = "Read the latest content on bytecode.news.";
+
+const getResolvedPost = cache(async (slugPath: string, isDatedPostPath: boolean) => {
+  return isDatedPostPath ? getPostBySlug(slugPath) : getPageBySlug(slugPath);
+});
+
+function normalizePath(slug: string[]) {
+  const slugPath = slug.join("/");
+  const [year = "", month = "", ...slugParts] = slug;
+  const shortSlug = slugParts.join("/");
+  const isDatedPostPath = Boolean(year && month && shortSlug);
+  return { slugPath, year, month, shortSlug, isDatedPostPath };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string[] }>;
+}): Promise<Metadata> {
+  const resolved = await params;
+  const { slugPath, isDatedPostPath } = normalizePath(resolved.slug);
+
+  try {
+    const post = await getResolvedPost(slugPath, isDatedPostPath);
+    const description = post.excerpt?.trim() || SUMMARY_FALLBACK;
+
+    return {
+      title: post.title,
+      description,
+      openGraph: {
+        title: post.title,
+        description,
+        type: "article",
+      },
+      twitter: {
+        card: "summary",
+        title: post.title,
+        description,
+      },
+    };
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return {
+        title: "Post Not Found",
+        description: "The requested post could not be found.",
+      };
+    }
+
+    return {
+      title: "Post Unavailable",
+      description: "The requested post is temporarily unavailable.",
+    };
+  }
+}
+
 export default async function PostPage({
   params,
 }: {
   params: Promise<{ slug: string[] }>;
 }) {
   const resolved = await params;
-  const slugPath = resolved.slug.join("/");
-  const [year = "", month = "", ...slugParts] = resolved.slug;
-  const shortSlug = slugParts.join("/");
-  const isDatedPostPath = Boolean(year && month && shortSlug);
+  const { slugPath, year, month, shortSlug, isDatedPostPath } = normalizePath(resolved.slug);
 
   let post: ContentDetail;
   try {
-    post = isDatedPostPath ? await getPostBySlug(slugPath) : await getPageBySlug(slugPath);
+    post = await getResolvedPost(slugPath, isDatedPostPath);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       notFound();

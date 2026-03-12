@@ -5,12 +5,17 @@ vi.mock("@/lib/api", () => ({
   listPosts: vi.fn(),
 }));
 
-import Home from "@/app/page";
+import Home, { metadata } from "@/app/page";
 import { listPosts } from "@/lib/api";
 
 const listPostsMock = vi.mocked(listPosts);
 
 describe("home page", () => {
+  it("exposes production homepage metadata", () => {
+    expect(metadata.title).toBe("bytecode.news");
+    expect(metadata.description).not.toContain("Next.js SSR UI");
+  });
+
   it("renders unavailable notice when posts API fails", async () => {
     listPostsMock.mockRejectedValueOnce(new Error("down"));
 

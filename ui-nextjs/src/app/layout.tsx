@@ -6,8 +6,21 @@ import { AuthNav } from "@/components/auth-nav";
 import { RefreshHomeLink } from "@/components/refresh-home-link";
 
 export const metadata: Metadata = {
-  title: "bytecode.news",
-  description: "Next.js SSR UI for bytecode.news",
+  title: {
+    default: "bytecode.news",
+    template: "%s | bytecode.news",
+  },
+  description: "ByteCode.News: articles, knowledge, and community context.",
+  openGraph: {
+    title: "bytecode.news",
+    description: "ByteCode.News: articles, knowledge, and community context.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "bytecode.news",
+    description: "ByteCode.News: articles, knowledge, and community context.",
+  },
 };
 
 export default async function RootLayout({
