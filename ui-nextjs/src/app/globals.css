@@ -344,6 +344,29 @@ a:hover {
   line-height: 1.7;
 }
 
+.post-body a {
+  color: var(--accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in oklab, var(--accent), white 12%);
+}
+
+.post-body a:visited {
+  color: var(--accent-soft);
+  text-decoration-color: color-mix(in oklab, var(--accent-soft), white 8%);
+}
+
+.post-body a:hover {
+  color: var(--accent);
+  text-decoration-thickness: 0.12em;
+}
+
+.post-body a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .post-body img {
   max-width: 100%;
   height: auto;
