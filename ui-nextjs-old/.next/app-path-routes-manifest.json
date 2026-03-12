@@ -1,0 +1,20 @@
+{
+  "/(auth)/forgot-password/page": "/forgot-password",
+  "/(auth)/login/page": "/login",
+  "/(auth)/register/page": "/register",
+  "/(auth)/reset-password/page": "/reset-password",
+  "/(auth)/verify/page": "/verify",
+  "/(blog)/posts/[year]/[month]/[slug]/page": "/posts/[year]/[month]/[slug]",
+  "/(blog)/posts/page": "/posts",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/account/page": "/account",
+  "/admin/categories/page": "/admin/categories",
+  "/admin/page": "/admin",
+  "/admin/posts/page": "/admin/posts",
+  "/admin/users/page": "/admin/users",
+  "/factoids/[selector]/page": "/factoids/[selector]",
+  "/factoids/page": "/factoids",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/"
+}

@@ -1,0 +1,3 @@
+module.exports=[23953,a=>{"use strict";var b=a.i(87924),c=a.i(99570);function d({reset:a}){return(0,b.jsxs)("div",{className:"container flex flex-col items-center justify-center gap-4 py-24",children:[(0,b.jsx)("h1",{className:"text-4xl font-bold",children:"Something went wrong"}),(0,b.jsx)("p",{className:"text-muted-foreground",children:"An unexpected error occurred."}),(0,b.jsx)(c.Button,{onClick:a,children:"Try again"})]})}a.s(["default",()=>d])}];
+
+//# sourceMappingURL=src_app_error_tsx_22278d09._.js.map

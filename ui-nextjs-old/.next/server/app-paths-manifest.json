@@ -1,0 +1,20 @@
+{
+  "/(auth)/forgot-password/page": "app/(auth)/forgot-password/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(auth)/register/page": "app/(auth)/register/page.js",
+  "/(auth)/reset-password/page": "app/(auth)/reset-password/page.js",
+  "/(auth)/verify/page": "app/(auth)/verify/page.js",
+  "/(blog)/posts/[year]/[month]/[slug]/page": "app/(blog)/posts/[year]/[month]/[slug]/page.js",
+  "/(blog)/posts/page": "app/(blog)/posts/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/account/page": "app/account/page.js",
+  "/admin/categories/page": "app/admin/categories/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/posts/page": "app/admin/posts/page.js",
+  "/admin/users/page": "app/admin/users/page.js",
+  "/factoids/[selector]/page": "app/factoids/[selector]/page.js",
+  "/factoids/page": "app/factoids/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
+}
