@@ -1,4 +1,5 @@
 import {
+  CategorySummary,
   CommentThreadResponse,
   ContentDetail,
   ContentListResponse,
@@ -8,6 +9,7 @@ import {
   LogDayResponse,
   LogProvenanceListResponse,
   FeaturesResponse,
+  TaxonomySnapshot,
 } from "@/lib/types";
 
 export class ApiError extends Error {
@@ -167,6 +169,31 @@ export async function getLogsDay(provenance: string, day: string): Promise<LogDa
     day,
   });
   return apiJson<LogDayResponse>(`/logs?${params.toString()}`, {
+    cache: "no-store",
+  });
+}
+
+export async function listPostsByTag(
+  tag: string,
+  page: number,
+  size = 20,
+): Promise<ContentListResponse> {
+  return apiJson<ContentListResponse>(
+    `/posts?tag=${encodeURIComponent(tag)}&page=${page}&size=${size}`,
+    {
+      cache: "no-store",
+    },
+  );
+}
+
+export async function listCategories(): Promise<CategorySummary[]> {
+  return apiJson<CategorySummary[]>("/categories", {
+    cache: "no-store",
+  });
+}
+
+export async function getTaxonomySnapshot(): Promise<TaxonomySnapshot> {
+  return apiJson<TaxonomySnapshot>("/taxonomy", {
     cache: "no-store",
   });
 }

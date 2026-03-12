@@ -15,7 +15,6 @@ export function AuthNav() {
     return onAuthChange(() => setAuthVersion((v) => v + 1));
   }, []);
 
-  // Avoid server/client auth-state mismatch during hydration.
   if (!mounted) {
     return null;
   }
@@ -38,31 +37,59 @@ export function AuthNav() {
 
   if (!auth.token || !auth.principal) {
     return (
-      <Link className="nav-link" href="/login">
-        Login
+      <Link
+        className="section-label text-muted-foreground hover:text-amber transition-colors duration-200"
+        href="/login"
+      >
+        Log in
       </Link>
     );
   }
 
+  const isAdmin = auth.principal.role === "ADMIN" || auth.principal.role === "SUPER_ADMIN";
+
   return (
-    <div className="auth-nav">
-      <Link className="nav-link" href="/profile">
+    <div className="inline-flex items-center gap-1">
+      <Link
+        className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+        href="/submit"
+      >
+        Submit
+      </Link>
+      <div className="h-4 w-px bg-border/40" />
+      <Link
+        className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+        href="/profile"
+      >
         {auth.principal.displayName}
       </Link>
-      {auth.principal.role === "ADMIN" || auth.principal.role === "SUPER_ADMIN" ? (
+      {isAdmin && (
         <>
-          <Link className="nav-link" href="/admin/pending">
+          <Link
+            className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+            href="/admin/pending"
+          >
             Pending
           </Link>
-          <Link className="nav-link" href="/admin/users">
+          <Link
+            className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+            href="/admin/users"
+          >
             Users
           </Link>
-          <Link className="nav-link" href="/admin/categories">
+          <Link
+            className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+            href="/admin/categories"
+          >
             Categories
           </Link>
         </>
-      ) : null}
-      <a href="/logout" className="nav-link" onClick={onLogout}>
+      )}
+      <a
+        href="/logout"
+        className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+        onClick={onLogout}
+      >
         Logout
       </a>
     </div>

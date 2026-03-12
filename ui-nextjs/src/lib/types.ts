@@ -25,6 +25,18 @@ export interface FeaturesResponse {
   version: VersionInfo;
 }
 
+export interface CategorySummary {
+  id: string;
+  name: string;
+  parentName?: string | null;
+}
+
+export interface TaxonomySnapshot {
+  tags: Record<string, number>;
+  categories: Record<string, number>;
+  aggregate: Record<string, number>;
+}
+
 export interface ContentSummary {
   id: string;
   title: string;

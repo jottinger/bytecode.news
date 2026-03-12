@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ApiError, getCommentsBySlug, getPageBySlug, getPostBySlug } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatUpdatedTime } from "@/lib/format";
 import { CommentThreadResponse, ContentDetail } from "@/lib/types";
 import { CommentCreateForm } from "@/components/comment-create-form";
 import { CommentThread } from "@/components/comment-thread";
@@ -80,9 +80,11 @@ export default async function PostPage({
       notFound();
     }
     return (
-      <section className="notice">
-        <h2>Post Unavailable</h2>
-        <p>The backend is temporarily unavailable. Please refresh shortly.</p>
+      <section className="container max-w-screen-xl py-12">
+        <div className="notice">
+          <h2 className="font-display text-xl">Post Unavailable</h2>
+          <p className="text-muted-foreground mt-2">The backend is temporarily unavailable. Please refresh shortly.</p>
+        </div>
       </section>
     );
   }
@@ -97,41 +99,57 @@ export default async function PostPage({
     }
   }
 
+  const updatedTime = formatUpdatedTime(post.updatedAt);
+
   return (
-    <article className="post">
-      <header>
-        <h1>{post.title}</h1>
-        <p className="meta">
-          {formatDate(post.publishedAt)} | {post.authorDisplayName}
-        </p>
-      </header>
+    <section className="py-8 md:py-12">
+      <article className="max-w-3xl mx-auto px-6 md:px-8">
+        <header>
+          <div className="border-t-2 border-amber mb-6" />
+          <h1 className="headline-lead text-foreground mb-4">{post.title}</h1>
+          <div className="byline text-muted-foreground flex items-center gap-1.5 flex-wrap">
+            <span>By {post.authorDisplayName}</span>
+            <span className="text-border/60 mx-1">|</span>
+            <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+            {updatedTime && (
+              <>
+                <span className="text-border/60 mx-1">|</span>
+                <span>{updatedTime}</span>
+              </>
+            )}
+          </div>
+        </header>
 
-      {post.tags.length > 0 ? (
-        <div className="tags">
-          {post.tags.map((tag) => (
-            <span className="tag" key={tag}>
-              {tag}
-            </span>
-          ))}
-        </div>
-      ) : null}
+        {post.tags.length > 0 && (
+          <div className="tags mt-4">
+            {post.tags.map((tag) => (
+              <a className="tag" key={tag} href={`/tags/${encodeURIComponent(tag)}`}>{tag}</a>
+            ))}
+          </div>
+        )}
 
-      <HighlightedHtml className="post-body" html={post.renderedHtml} />
+        <div className="border-t border-border/40 mt-6 mb-6" />
 
-      <PostActions postId={post.id} />
-      {commentsAllowed ? (
-        <section className="comment-block">
-          <h2 className="comment-title">Comments ({thread?.totalActiveCount ?? 0})</h2>
-          {isDatedPostPath ? <CommentCreateForm year={year} month={month} slug={shortSlug} /> : null}
-          {thread === null ? (
-            <p>Comments are temporarily unavailable.</p>
-          ) : thread.comments.length === 0 ? (
-            <p>No comments yet.</p>
-          ) : (
-            <CommentThread comments={thread.comments} />
-          )}
-        </section>
-      ) : null}
-    </article>
+        <HighlightedHtml className="post-body" html={post.renderedHtml} />
+
+        <PostActions postId={post.id} />
+
+        {commentsAllowed && (
+          <section className="mt-10 border-t border-border/40 pt-6">
+            <h2 className="font-display text-xl mb-4">
+              Comments ({thread?.totalActiveCount ?? 0})
+            </h2>
+            {isDatedPostPath && <CommentCreateForm year={year} month={month} slug={shortSlug} />}
+            {thread === null ? (
+              <p className="text-muted-foreground">Comments are temporarily unavailable.</p>
+            ) : thread.comments.length === 0 ? (
+              <p className="text-muted-foreground">No comments yet.</p>
+            ) : (
+              <CommentThread comments={thread.comments} />
+            )}
+          </section>
+        )}
+      </article>
+    </section>
   );
 }
