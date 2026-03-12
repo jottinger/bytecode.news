@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const notFoundSentinel = new Error("NOT_FOUND");
@@ -33,7 +33,7 @@ vi.mock("@/lib/api", () => {
   };
 });
 
-import PostPage from "@/app/posts/[...slug]/page";
+import PostPage, { generateMetadata } from "@/app/posts/[...slug]/page";
 import { ApiError, getCommentsBySlug, getPageBySlug, getPostBySlug } from "@/lib/api";
 
 const getPostBySlugMock = vi.mocked(getPostBySlug);
@@ -41,6 +41,10 @@ const getPageBySlugMock = vi.mocked(getPageBySlug);
 const getCommentsBySlugMock = vi.mocked(getCommentsBySlug);
 
 describe("post page", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders unavailable notice when post API is down", async () => {
     getPostBySlugMock.mockRejectedValueOnce(new ApiError(503, "/posts/a"));
 
@@ -136,5 +140,42 @@ describe("post page", () => {
 
     expect(getCommentsBySlugMock).toHaveBeenCalledWith("article-1");
     expect(html).toContain("No comments yet.");
+  });
+
+  it("derives metadata from post content", async () => {
+    getPostBySlugMock.mockResolvedValueOnce({
+      id: "meta-1",
+      title: "Metadata Post",
+      slug: "2026/03/metadata-post",
+      renderedHtml: "<p>Body</p>",
+      excerpt: "Metadata excerpt",
+      authorDisplayName: "dreamreal",
+      publishedAt: "2026-03-12T12:00:00Z",
+      createdAt: "2026-03-12T12:00:00Z",
+      updatedAt: "2026-03-12T12:00:00Z",
+      commentCount: 0,
+      categories: [],
+      tags: [],
+    });
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ slug: ["2026", "03", "metadata-post"] }),
+    });
+
+    expect(metadata.title).toBe("Metadata Post");
+    expect(metadata.description).toBe("Metadata excerpt");
+    expect(metadata.openGraph?.title).toBe("Metadata Post");
+    expect(metadata.twitter?.title).toBe("Metadata Post");
+  });
+
+  it("uses fallback metadata when post API is unavailable", async () => {
+    getPostBySlugMock.mockRejectedValueOnce(new Error("backend down"));
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ slug: ["2026", "03", "metadata-post"] }),
+    });
+
+    expect(metadata.title).toBe("Post Unavailable");
+    expect(metadata.description).toBe("The requested post is temporarily unavailable.");
   });
 });

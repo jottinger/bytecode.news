@@ -1,7 +1,23 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { listPosts } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { ContentListResponse } from "@/lib/types";
+
+export const metadata: Metadata = {
+  title: "bytecode.news",
+  description: "ByteCode.News: articles, knowledge, and community context.",
+  openGraph: {
+    title: "bytecode.news",
+    description: "ByteCode.News: articles, knowledge, and community context.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "bytecode.news",
+    description: "ByteCode.News: articles, knowledge, and community context.",
+  },
+};
 
 export default async function Home({
   searchParams,
