@@ -1,11 +1,15 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.controller
 
+import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.entity.Comment
 import com.enigmastation.streampack.blog.entity.Post
+import com.enigmastation.streampack.blog.entity.PostCategory
 import com.enigmastation.streampack.blog.entity.Slug
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CategoryRepository
 import com.enigmastation.streampack.blog.repository.CommentRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.core.entity.User
@@ -38,6 +42,8 @@ class CommentControllerTests {
     @Autowired lateinit var mockMvc: MockMvc
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
+    @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var postCategoryRepository: PostCategoryRepository
     @Autowired lateinit var slugRepository: SlugRepository
     @Autowired lateinit var commentRepository: CommentRepository
     @Autowired lateinit var jwtService: JwtService
@@ -232,6 +238,25 @@ class CommentControllerTests {
             .andExpect {
                 status { isBadRequest() }
                 jsonPath("$.detail") { value("Comment content is required") }
+            }
+    }
+
+    @Test
+    fun `POST to sidebar content returns 400`() {
+        val sidebarCategory =
+            categoryRepository.findByName("_sidebar")
+                ?: categoryRepository.save(Category(name = "_sidebar", slug = "_sidebar"))
+        postCategoryRepository.save(PostCategory(post = publishedPost, category = sidebarCategory))
+
+        mockMvc
+            .post("/posts/$slugPath/comments") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $verifiedUserToken")
+                content = """{"markdownSource":"A comment."}"""
+            }
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.detail") { value("Comments are disabled for sidebar content") }
             }
     }
 

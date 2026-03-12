@@ -18,9 +18,12 @@
           },
           "otp" : {
             "type" : "boolean"
+          },
+          "otpFrom" : {
+            "type" : "string"
           }
         },
-        "required" : [ "otp" ],
+        "required" : [ "otp", "otpFrom" ],
         "type" : "object"
       },
       "CategorySummary" : {
@@ -93,6 +96,9 @@
           },
           "id" : {
             "format" : "uuid",
+            "type" : "string"
+          },
+          "markdownSource" : {
             "type" : "string"
           },
           "renderedHtml" : {
@@ -238,6 +244,10 @@
             },
             "type" : "array"
           },
+          "commentCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
           "excerpt" : {
             "type" : "string"
           },
@@ -262,7 +272,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "id", "slug", "tags", "title" ],
+        "required" : [ "authorDisplayName", "categories", "commentCount", "id", "slug", "tags", "title" ],
         "type" : "object"
       },
       "CreateCategoryRequest" : {
@@ -2429,6 +2439,24 @@
         "tags" : [ "Authentication" ]
       }
     },
+    "/blog/atom.xml" : {
+      "get" : {
+        "operationId" : "atomFeed",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "rss-feed-controller" ]
+      }
+    },
     "/blog/rss.xml" : {
       "get" : {
         "operationId" : "rssFeed",
@@ -2696,9 +2724,27 @@
         "tags" : [ "features-controller" ]
       }
     },
-    "/feed.xml" : {
+    "/feed.atom" : {
       "get" : {
         "operationId" : "feed",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/xml" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "blog-feed-controller" ]
+      }
+    },
+    "/feed.xml" : {
+      "get" : {
+        "operationId" : "feed_1",
         "responses" : {
           "200" : {
             "content" : {
@@ -3219,7 +3265,7 @@
         "tags" : [ "Posts" ]
       },
       "put" : {
-        "description" : "Updates an existing post's title, content, tags, and/or categories. Authors can edit their own drafts. Only admins can edit approved posts. Edits re-render HTML from the updated markdown source.",
+        "description" : "Updates an existing post's title, content, tags, and/or categories. Editing is admin-only. Edits re-render HTML from the updated markdown source.",
         "operationId" : "editPost",
         "parameters" : [ {
           "description" : "Post UUIDv7",
@@ -3309,7 +3355,7 @@
                 }
               }
             },
-            "description" : "Not the post author and not an admin"
+            "description" : "Admin access required"
           },
           "404" : {
             "content" : {

@@ -25,7 +25,11 @@
         <h2>
           <a th:href="${'/posts/' + post.slug}" th:text="${post.title}">Post title</a>
         </h2>
-        <p class="meta" th:text="${post.authorDisplayName}">Author</p>
+        <p class="meta">
+          <span th:text="${post.authorDisplayName}">Author</span>
+          <span th:if="${post.commentCount > 0}"
+                th:text="${' | ' + post.commentCount + ' comment' + (post.commentCount == 1 ? '' : 's')}"> | 2 comments</span>
+        </p>
         <p th:text="${post.excerpt != null ? post.excerpt : ''}">Excerpt</p>
       </article>
     </li>

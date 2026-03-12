@@ -149,10 +149,10 @@ class EditContentOperationTests {
             .build()
 
     @Test
-    fun `author edits own draft successfully`() {
+    fun `admin edits draft successfully`() {
         val request =
             EditContentRequest(draftPost.id, "Updated Title", "# Updated\n\nNew content here.")
-        val result = eventGateway.process(editMessage(request, author))
+        val result = eventGateway.process(editMessage(request, admin))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
@@ -166,7 +166,7 @@ class EditContentOperationTests {
     fun `edit response includes markdownSource`() {
         val request =
             EditContentRequest(draftPost.id, "Updated Title", "# Updated\n\nNew content here.")
-        val result = eventGateway.process(editMessage(request, author))
+        val result = eventGateway.process(editMessage(request, admin))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
@@ -217,7 +217,7 @@ class EditContentOperationTests {
     @Test
     fun `blank title returns error`() {
         val request = EditContentRequest(draftPost.id, "", "Content here.")
-        val result = eventGateway.process(editMessage(request, author))
+        val result = eventGateway.process(editMessage(request, admin))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Title is required", (result as OperationResult.Error).message)
@@ -226,7 +226,7 @@ class EditContentOperationTests {
     @Test
     fun `blank markdownSource returns error`() {
         val request = EditContentRequest(draftPost.id, "Title", "")
-        val result = eventGateway.process(editMessage(request, author))
+        val result = eventGateway.process(editMessage(request, admin))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Content is required", (result as OperationResult.Error).message)
@@ -235,16 +235,16 @@ class EditContentOperationTests {
     @Test
     fun `nonexistent post returns error`() {
         val request = EditContentRequest(UUID.randomUUID(), "Title", "Content")
-        val result = eventGateway.process(editMessage(request, author))
+        val result = eventGateway.process(editMessage(request, admin))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals("Post not found", (result as OperationResult.Error).message)
     }
 
     @Test
-    fun `slug unchanged after edit`() {
+    fun `slug unchanged after admin edit`() {
         val request = EditContentRequest(draftPost.id, "Completely Different Title", "New content.")
-        val result = eventGateway.process(editMessage(request, author))
+        val result = eventGateway.process(editMessage(request, admin))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
@@ -264,7 +264,7 @@ class EditContentOperationTests {
                 "Updated content.",
                 tags = listOf("newtag1", "newtag2"),
             )
-        val result = eventGateway.process(editMessage(request, author))
+        val result = eventGateway.process(editMessage(request, admin))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
@@ -286,7 +286,7 @@ class EditContentOperationTests {
                 "Updated content.",
                 categoryIds = listOf(cat2.id),
             )
-        val result = eventGateway.process(editMessage(request, author))
+        val result = eventGateway.process(editMessage(request, admin))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail

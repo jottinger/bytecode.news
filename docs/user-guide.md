@@ -528,6 +528,11 @@ The Kotlin operation handles Spring integration and message log access; the actu
 Register and subscribe to RSS/Atom feeds.
 New entries are announced in subscribed channels.
 
+**Site feed endpoints**:
+- `/feed.xml` returns RSS 2.0
+- `/feed.atom` returns Atom 1.0
+- Legacy aliases: `/blog/rss.xml` and `/blog/atom.xml`
+
 **Commands** (addressed, Admin for add/remove):
 
 | Command | Effect |
@@ -903,6 +908,8 @@ For example, an "About" page in both categories appears in the sidebar and is vi
 - The `sortOrder` field controls the display order of sidebar items.
 Lower numbers appear first.
 Posts with the same sort order are ordered by publish date.
+- Sidebar content (`_sidebar`) is non-discussion content: comment creation is rejected by the backend.
+- If category entry in the web UI reports unknown categories, use existing names or submit without categories and ask an admin to create the needed category first.
 
 ## Quick Reference
 

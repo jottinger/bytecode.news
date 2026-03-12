@@ -15,14 +15,18 @@ services:
     build:
       context: ./ui-nextjs
       args:
-        API_URL: ${API_URL:-http://backend:8080}
+        NEXT_PUBLIC_UI_COMMIT: ${NEXT_PUBLIC_UI_COMMIT:-unknown}
+        NEXT_PUBLIC_UI_BRANCH: ${NEXT_PUBLIC_UI_BRANCH:-unknown}
     profiles: ["ui-nextjs"]
     ports:
       - "3000:3000"
     environment:
       - HOSTNAME=0.0.0.0
+      - BACKEND_SCHEME=http
+      - BACKEND_HOST=backend:8080
     depends_on:
-      - db
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
   mailpit:

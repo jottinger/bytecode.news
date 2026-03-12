@@ -27,6 +27,7 @@ class FeaturesControllerTests {
             jsonPath("$.version.name") { exists() }
             jsonPath("$.authentication") { exists() }
             jsonPath("$.authentication.otp") { isBoolean() }
+            jsonPath("$.authentication.otpFrom") { isNotEmpty() }
             jsonPath("$.operationGroups") { isArray() }
             jsonPath("$.adapters") { isArray() }
             jsonPath("$.ai") { isBoolean() }
@@ -63,6 +64,7 @@ class FeaturesControllerTests {
         mockMvc.get("/features").andExpect {
             status { isOk() }
             jsonPath("$.authentication.otp") { isBoolean() }
+            jsonPath("$.authentication.otpFrom") { isNotEmpty() }
         }
     }
 

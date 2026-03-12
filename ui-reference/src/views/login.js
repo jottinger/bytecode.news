@@ -10,6 +10,7 @@ export async function render(container, params, search) {
   const features = getCachedFeatures();
 
   const hasOtp = !features || features.authentication?.otp !== false;
+  const otpFrom = features?.authentication?.otpFrom || "noreply@bytecode.news";
   const hasGoogle = features?.authentication?.oidc?.google === true;
   const hasGithub = features?.authentication?.oidc?.github === true;
   const hasOidc = hasGoogle || hasGithub;
@@ -22,6 +23,7 @@ export async function render(container, params, search) {
         <input type="email" id="email" name="email" required placeholder="you@example.com" />
         <button type="submit">Send sign-in code</button>
       </form>
+      <p><small>Codes are sent from <code>${otpFrom}</code>. Check spam if needed.</small></p>
       <form id="otp-verify-form" hidden>
         <label for="code">Enter the 6-digit code sent to your email</label>
         <input type="text" id="code" name="code" required placeholder="123456" pattern="[0-9]{6}" maxlength="6" inputmode="numeric" />

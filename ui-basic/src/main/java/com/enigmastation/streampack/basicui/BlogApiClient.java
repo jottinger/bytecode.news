@@ -87,6 +87,7 @@ public class BlogApiClient {
       String excerpt,
       String authorDisplayName,
       Instant publishedAt,
+      int commentCount,
       List<String> tags,
       List<String> categories) {}
 

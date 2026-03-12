@@ -48,7 +48,7 @@ class BlogControllerTests {
             withSuccess(
                 """
                 {
-                  "posts":[{"id":"00000000-0000-0000-0000-000000000001","title":"Entry One","slug":"2026/03/entry-one","excerpt":"Short summary","authorDisplayName":"dreamreal","publishedAt":"2026-03-10T12:00:00Z","tags":[],"categories":[]}],
+                  "posts":[{"id":"00000000-0000-0000-0000-000000000001","title":"Entry One","slug":"2026/03/entry-one","excerpt":"Short summary","authorDisplayName":"dreamreal","publishedAt":"2026-03-10T12:00:00Z","commentCount":2,"tags":[],"categories":[]}],
                   "page":0,
                   "totalPages":1,
                   "totalCount":1
@@ -60,7 +60,8 @@ class BlogControllerTests {
         .perform(get("/"))
         .andExpect(status().isOk())
         .andExpect(content().string(org.hamcrest.Matchers.containsString("Entry One")))
-        .andExpect(content().string(org.hamcrest.Matchers.containsString("/posts/2026/03/entry-one")));
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("/posts/2026/03/entry-one")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString("2 comments")));
 
     server.verify();
   }

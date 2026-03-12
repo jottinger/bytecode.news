@@ -44,6 +44,7 @@ streampack:
     enabled: ${CONSOLE_ENABLED:false}
   mail:
     enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:noreply@bytecode.news}
   irc:
     enabled: ${IRC_ENABLED:false}
     identity: ${IRC_IDENTITY:Nevet IRC Bridge}

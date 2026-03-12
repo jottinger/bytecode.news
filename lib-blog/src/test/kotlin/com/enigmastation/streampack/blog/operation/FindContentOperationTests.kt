@@ -505,7 +505,7 @@ class FindContentOperationTests {
     }
 
     @Test
-    fun `author receives markdownSource for own post`() {
+    fun `author does not receive markdownSource for own post`() {
         val result =
             eventGateway.process(
                 findMessage(FindContentRequest.FindBySlug("2026/02/published-post"), author)
@@ -513,7 +513,7 @@ class FindContentOperationTests {
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
-        assertEquals("# Published", detail.markdownSource)
+        assertNull(detail.markdownSource)
     }
 
     @Test
@@ -541,13 +541,13 @@ class FindContentOperationTests {
     }
 
     @Test
-    fun `FindById as author includes markdownSource`() {
+    fun `FindById as author excludes markdownSource`() {
         val result =
             eventGateway.process(findMessage(FindContentRequest.FindById(publishedPost.id), author))
 
         assertInstanceOf(OperationResult.Success::class.java, result)
         val detail = (result as OperationResult.Success).payload as ContentDetail
-        assertEquals("# Published", detail.markdownSource)
+        assertNull(detail.markdownSource)
     }
 
     @Test

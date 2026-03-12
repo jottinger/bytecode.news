@@ -1,0 +1,42 @@
+import { describe, expect, it } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { MarkdownPreview } from "@/components/markdown-preview";
+
+describe("MarkdownPreview", () => {
+  it("renders headings, paragraph, and list", () => {
+    const html = renderToStaticMarkup(<MarkdownPreview source={"# Title\n\ntext\n\n- a\n- b"} />);
+    expect(html).toContain("<h1>Title</h1>");
+    expect(html).toContain("<p>text</p>");
+    expect(html).toContain("<ul>");
+    expect(html).toContain("<li>a</li>");
+  });
+
+  it("does not execute raw html", () => {
+    const html = renderToStaticMarkup(<MarkdownPreview source={"<script>alert(1)</script>"} />);
+    expect(html).not.toContain("<script>");
+  });
+
+  it("applies inline formatting", () => {
+    const html = renderToStaticMarkup(<MarkdownPreview source={"**bold** *em* `code`"} />);
+    expect(html).toContain("<strong>bold</strong>");
+    expect(html).toContain("<em>em</em>");
+    expect(html).toContain("<code>code</code>");
+  });
+
+  it("renders links", () => {
+    const html = renderToStaticMarkup(<MarkdownPreview source="[site](https://example.com)" />);
+    expect(html).toContain('href="https://example.com"');
+    expect(html).toContain("site");
+  });
+
+  it("renders fenced code blocks", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownPreview source={"```kotlin\nval x = 1 < 2\n```\n"} />
+    );
+    expect(html).toContain("<pre><code");
+    expect(html).toContain("language-kotlin");
+    expect(html).toContain("hljs");
+    expect(html).toContain("&lt;");
+    expect(html).toContain("</code></pre>");
+  });
+});

@@ -244,7 +244,7 @@ class PostControllerTests {
     // --- PUT /posts/{id} ---
 
     @Test
-    fun `PUT edits post owned by author`() {
+    fun `PUT by non-admin author returns 403`() {
         val draftPost =
             postRepository.save(
                 Post(
@@ -266,8 +266,8 @@ class PostControllerTests {
                 content = """{"title":"Updated Title","markdownSource":"Updated content."}"""
             }
             .andExpect {
-                status { isOk() }
-                jsonPath("$.title") { value("Updated Title") }
+                status { isForbidden() }
+                jsonPath("$.detail") { value("Not authorized to edit this post") }
             }
     }
 

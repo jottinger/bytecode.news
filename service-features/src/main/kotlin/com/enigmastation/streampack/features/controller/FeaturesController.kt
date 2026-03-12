@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.features.controller
 
+import com.enigmastation.streampack.core.config.StreampackProperties
 import com.enigmastation.streampack.core.service.Operation
 import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.features.model.AuthenticationFeatures
@@ -39,6 +40,7 @@ class FeaturesController(
     @Value("\${streampack.blog.anonymous-submission:false}")
     private val anonymousSubmission: Boolean,
     @Value("\${streampack.blog.site-name:Nevet}") private val siteName: String,
+    private val streampackProperties: StreampackProperties,
 ) {
 
     private val cachedResponse: FeaturesResponse = buildResponse()
@@ -90,7 +92,11 @@ class FeaturesController(
         val otp = operations.any { it::class.java.simpleName.startsWith("Otp") }
         val oidc = detectOidcProviders()
 
-        return AuthenticationFeatures(otp = otp, oidc = oidc)
+        return AuthenticationFeatures(
+            otp = otp,
+            otpFrom = streampackProperties.mail.from,
+            oidc = oidc,
+        )
     }
 
     @Suppress("UNCHECKED_CAST")

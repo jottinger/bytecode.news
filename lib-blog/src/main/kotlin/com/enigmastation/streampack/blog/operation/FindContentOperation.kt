@@ -94,6 +94,7 @@ class FindContentOperation(
                     excerpt = post.excerpt,
                     authorDisplayName = post.author?.displayName ?: "Anonymous",
                     publishedAt = post.publishedAt,
+                    commentCount = commentRepository.countActiveByPost(post.id).toInt(),
                     tags = tagNamesForPost(post.id),
                     categories = categoryNamesForPost(post.id),
                 )
@@ -129,6 +130,7 @@ class FindContentOperation(
                     excerpt = post.excerpt,
                     authorDisplayName = post.author?.displayName ?: "Anonymous",
                     publishedAt = post.publishedAt,
+                    commentCount = commentRepository.countActiveByPost(post.id).toInt(),
                     tags = tagNamesForPost(post.id),
                     categories = categoryNamesForPost(post.id),
                 )
@@ -159,6 +161,7 @@ class FindContentOperation(
                     excerpt = post.excerpt,
                     authorDisplayName = post.author?.displayName ?: "Anonymous",
                     publishedAt = post.publishedAt,
+                    commentCount = commentRepository.countActiveByPost(post.id).toInt(),
                     tags = tagNamesForPost(post.id),
                     categories = categoryNamesForPost(post.id),
                 )
@@ -203,11 +206,7 @@ class FindContentOperation(
     }
 
     private fun toDetail(post: Post, slug: String, user: UserPrincipal? = null): ContentDetail {
-        val canEdit =
-            user != null &&
-                (user.role == Role.ADMIN ||
-                    user.role == Role.SUPER_ADMIN ||
-                    (post.author != null && post.author.id == user.id))
+        val canEdit = user != null && (user.role == Role.ADMIN || user.role == Role.SUPER_ADMIN)
 
         return ContentDetail(
             id = post.id,

@@ -97,4 +97,19 @@ class MarkdownRenderingServiceTests {
         assertTrue(result.contains("<code"))
         assertTrue(result.contains("fun main()"))
     }
+
+    @Test
+    fun `gfm strikethrough renders correctly`() {
+        val result = markdownRenderingService.render("Use ~~old~~ new")
+        assertTrue(result.contains("<del>old</del>"))
+    }
+
+    @Test
+    fun `gfm task list renders correctly`() {
+        val result = markdownRenderingService.render("- [x] done\n- [ ] todo")
+        assertTrue(result.contains("<ul>"))
+        assertTrue(result.contains("type=\"checkbox\""))
+        assertTrue(result.contains("done"))
+        assertTrue(result.contains("todo"))
+    }
 }

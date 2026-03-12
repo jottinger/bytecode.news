@@ -2,6 +2,8 @@
 package com.enigmastation.streampack.blog.service
 
 import com.vladsch.flexmark.ext.autolink.AutolinkExtension
+import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension
+import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension
 import com.vladsch.flexmark.ext.tables.TablesExtension
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
@@ -17,7 +19,15 @@ class MarkdownRenderingService {
 
     init {
         val options = MutableDataSet()
-        options.set(Parser.EXTENSIONS, listOf(TablesExtension.create(), AutolinkExtension.create()))
+        options.set(
+            Parser.EXTENSIONS,
+            listOf(
+                TablesExtension.create(),
+                AutolinkExtension.create(),
+                StrikethroughSubscriptExtension.create(),
+                TaskListExtension.create(),
+            ),
+        )
         // Strip raw HTML tags from markdown input
         options.set(HtmlRenderer.ESCAPE_HTML, true)
         parser = Parser.builder(options).build()

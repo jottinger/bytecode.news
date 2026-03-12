@@ -174,6 +174,7 @@ class FindCommentsOperationTests {
         assertEquals("[deleted]", response.comments[0].renderedHtml)
         assertEquals("Anonymous", response.comments[0].authorDisplayName)
         assertNull(response.comments[0].authorId)
+        assertNull(response.comments[0].markdownSource)
         assertTrue(response.comments[0].deleted)
     }
 
@@ -290,6 +291,7 @@ class FindCommentsOperationTests {
 
         val response = findComments(publishedPost.id, admin)
         assertTrue(response.comments[0].editable)
+        assertEquals("Old.", response.comments[0].markdownSource)
     }
 
     @Test
@@ -308,6 +310,7 @@ class FindCommentsOperationTests {
 
         val response = findComments(publishedPost.id, otherUser)
         assertFalse(response.comments[0].editable)
+        assertNull(response.comments[0].markdownSource)
     }
 
     @Test
@@ -326,6 +329,7 @@ class FindCommentsOperationTests {
 
         val response = findComments(publishedPost.id, author)
         assertFalse(response.comments[0].editable)
+        assertNull(response.comments[0].markdownSource)
     }
 
     @Test
@@ -375,6 +379,7 @@ class FindCommentsOperationTests {
         val response = findComments(publishedPost.id, null)
         assertEquals(1, response.comments.size)
         assertFalse(response.comments[0].editable)
+        assertNull(response.comments[0].markdownSource)
     }
 
     private fun findComments(postId: UUID, user: User?): CommentThreadResponse {

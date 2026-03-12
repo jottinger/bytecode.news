@@ -1,12 +1,16 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.operation
 
+import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.entity.Comment
 import com.enigmastation.streampack.blog.entity.Post
+import com.enigmastation.streampack.blog.entity.PostCategory
 import com.enigmastation.streampack.blog.model.CommentDetail
 import com.enigmastation.streampack.blog.model.CreateCommentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
+import com.enigmastation.streampack.blog.repository.CategoryRepository
 import com.enigmastation.streampack.blog.repository.CommentRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.integration.EventGateway
@@ -38,6 +42,8 @@ class CreateCommentOperationTests {
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var commentRepository: CommentRepository
+    @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var postCategoryRepository: PostCategoryRepository
 
     private lateinit var verifiedUser: User
     private lateinit var unverifiedUser: User
@@ -230,6 +236,23 @@ class CreateCommentOperationTests {
         assertInstanceOf(OperationResult.Error::class.java, result)
         assertEquals(
             "Parent comment belongs to a different post",
+            (result as OperationResult.Error).message,
+        )
+    }
+
+    @Test
+    fun `comments disabled for sidebar content`() {
+        val sidebarCategory =
+            categoryRepository.findByName("_sidebar")
+                ?: categoryRepository.save(Category(name = "_sidebar", slug = "_sidebar"))
+        postCategoryRepository.save(PostCategory(post = publishedPost, category = sidebarCategory))
+
+        val request = CreateCommentRequest(publishedPost.id, null, "Should fail.")
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            "Comments are disabled for sidebar content",
             (result as OperationResult.Error).message,
         )
     }
