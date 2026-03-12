@@ -6,7 +6,7 @@ export function TagLink({ tag, postId }: { tag: string; postId?: string }) {
       className="tag"
       href={`/tags/${encodeURIComponent(tag)}`}
       onClick={(e) => e.stopPropagation()}
-      key={postId ? `${postId}-${tag}` : tag}
+      data-post-id={postId || ""}
     >
       {tag}
     </a>

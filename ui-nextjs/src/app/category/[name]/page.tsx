@@ -122,43 +122,41 @@ export default async function CategoryPage({
 function ArticleRow({ post, first }: { post: ContentSummary; first: boolean }) {
   const href = buildPostHref(post);
   return (
-    <Link href={href} className="group block">
-      <article className={`py-6 ${first ? "" : "border-t border-border/30"}`}>
-        <div className="flex items-start gap-6">
-          <div className="flex-1 min-w-0">
-            <h2 className="headline-secondary text-foreground group-hover:text-amber transition-colors duration-200 mb-2">
-              {post.title}
-            </h2>
-            {post.excerpt && (
-              <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2 mb-3">
-                {post.excerpt}
-              </p>
+    <article className={`group py-6 ${first ? "" : "border-t border-border/30"}`}>
+      <div className="flex items-start gap-6">
+        <div className="flex-1 min-w-0">
+          <h2 className="headline-secondary text-foreground group-hover:text-amber transition-colors duration-200 mb-2">
+            <Link href={href}>{post.title}</Link>
+          </h2>
+          {post.excerpt && (
+            <p className="text-muted-foreground text-sm leading-relaxed line-clamp-2 mb-3">
+              {post.excerpt}
+            </p>
+          )}
+          <div className="byline text-muted-foreground/50 flex items-center gap-1.5 flex-wrap">
+            <span>By {post.authorDisplayName}</span>
+            <span className="text-border/40 mx-0.5">|</span>
+            <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+            {post.commentCount > 0 && (
+              <>
+                <span className="text-border/40 mx-0.5">|</span>
+                <span>{post.commentCount} comment{post.commentCount === 1 ? "" : "s"}</span>
+              </>
             )}
-            <div className="byline text-muted-foreground/50 flex items-center gap-1.5 flex-wrap">
-              <span>By {post.authorDisplayName}</span>
-              <span className="text-border/40 mx-0.5">|</span>
-              <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
-              {post.commentCount > 0 && (
-                <>
-                  <span className="text-border/40 mx-0.5">|</span>
-                  <span>{post.commentCount} comment{post.commentCount === 1 ? "" : "s"}</span>
-                </>
-              )}
-            </div>
-          </div>
-          {/* Arrow indicator */}
-          <div className="hidden sm:flex items-center pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <span className="text-amber text-lg">&rarr;</span>
           </div>
         </div>
-        {post.tags.length > 0 && (
-          <div className="tags mt-3">
-            {post.tags.map((tag) => (
-              <TagLink key={`${post.id}-${tag}`} tag={tag} postId={post.id} />
-            ))}
-          </div>
-        )}
-      </article>
-    </Link>
+        {/* Arrow indicator */}
+        <div className="hidden sm:flex items-center pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <span className="text-amber text-lg">&rarr;</span>
+        </div>
+      </div>
+      {post.tags.length > 0 && (
+        <div className="tags mt-3">
+          {post.tags.map((tag) => (
+            <TagLink key={`${post.id}-${tag}`} tag={tag} postId={post.id} />
+          ))}
+        </div>
+      )}
+    </article>
   );
 }

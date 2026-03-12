@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listPosts } from "@/lib/api";
+import { getTaxonomySnapshot } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Tags",
@@ -8,15 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default async function TagsPage() {
-  const tags: Record<string, number> = {};
+  let tags: Record<string, number> = {};
 
   try {
-    const list = await listPosts(0, 200);
-    for (const post of list.posts) {
-      for (const tag of post.tags) {
-        tags[tag] = (tags[tag] || 0) + 1;
-      }
-    }
+    const snapshot = await getTaxonomySnapshot();
+    tags = snapshot.tags || {};
   } catch {
     return (
       <section className="container max-w-screen-xl py-12">

@@ -43,7 +43,7 @@ describe("factoids page", () => {
     expect(html).toContain("Knowledge Base");
     expect(html).toContain("mvnd");
     expect(html).toContain("dreamreal");
-    expect(html).toContain(">7<");
+    expect(html).toContain("7 hits");
     expect(html).toContain("/factoids/mvnd?page=0");
   });
 

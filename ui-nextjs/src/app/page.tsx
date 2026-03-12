@@ -186,98 +186,97 @@ export default async function Home({
 function LeadCard({ post }: { post: ContentSummary }) {
   const href = buildPostHref(post);
   return (
-    <Link href={href} className="group block">
-      <article>
-        <div className="byline text-muted-foreground mb-4 flex items-center gap-2">
-          <span>By {post.authorDisplayName}</span>
-          <span className="text-border">|</span>
-          <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
-          {post.commentCount > 0 && (
-            <>
-              <span className="text-border">|</span>
-              <span>{post.commentCount} comment{post.commentCount === 1 ? "" : "s"}</span>
-            </>
-          )}
-        </div>
-
-        <h2 className="headline-lead text-foreground group-hover:text-amber transition-colors duration-200">
-          {post.title}
-        </h2>
-
-        {post.excerpt && (
-          <p className="article-excerpt mt-4 max-w-2xl">
-            {post.excerpt}
-          </p>
+    <article className="group">
+      <div className="byline text-muted-foreground mb-4 flex items-center gap-2">
+        <span>By {post.authorDisplayName}</span>
+        <span className="text-border">|</span>
+        <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+        {post.commentCount > 0 && (
+          <>
+            <span className="text-border">|</span>
+            <span>{post.commentCount} comment{post.commentCount === 1 ? "" : "s"}</span>
+          </>
         )}
+      </div>
 
-        {post.tags.length > 0 && (
-          <div className="tags mt-4">
-            {post.tags.map((tag) => (
-              <a className="tag" key={`${post.id}-${tag}`} href={`/tags/${encodeURIComponent(tag)}`}>{tag}</a>
-            ))}
-          </div>
-        )}
+      <h2 className="headline-lead text-foreground group-hover:text-amber transition-colors duration-200">
+        <Link href={href}>{post.title}</Link>
+      </h2>
 
-        <div className="mt-5 flex items-center gap-2">
-          <div className="h-px w-6 bg-amber/40 transition-all duration-300 group-hover:w-10 group-hover:bg-amber" />
-          <span className="section-label text-amber-dim group-hover:text-amber transition-colors">
-            Read article
-          </span>
+      {post.excerpt && (
+        <p className="article-excerpt mt-4 max-w-2xl">
+          {post.excerpt}
+        </p>
+      )}
+
+      {post.tags.length > 0 && (
+        <div className="tags mt-4">
+          {post.tags.map((tag) => (
+            <a className="tag" key={`${post.id}-${tag}`} href={`/tags/${encodeURIComponent(tag)}`}>
+              {tag}
+            </a>
+          ))}
         </div>
-      </article>
-    </Link>
+      )}
+
+      <div className="mt-5 flex items-center gap-2">
+        <div className="h-px w-6 bg-amber/40 transition-all duration-300 group-hover:w-10 group-hover:bg-amber" />
+        <Link
+          href={href}
+          className="section-label text-amber-dim group-hover:text-amber transition-colors"
+        >
+          Read article
+        </Link>
+      </div>
+    </article>
   );
 }
 
 function SecondaryCard({ post }: { post: ContentSummary }) {
   const href = buildPostHref(post);
   return (
-    <Link href={href} className="group block">
-      <article>
-        <div className="byline text-muted-foreground/70 mb-2.5 flex items-center gap-2">
-          <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
-        </div>
+    <article className="group">
+      <div className="byline text-muted-foreground/70 mb-2.5 flex items-center gap-2">
+        <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+      </div>
 
-        <h3 className="headline-secondary text-foreground group-hover:text-amber transition-colors duration-200">
-          {post.title}
-        </h3>
+      <h3 className="headline-secondary text-foreground group-hover:text-amber transition-colors duration-200">
+        <Link href={href}>{post.title}</Link>
+      </h3>
 
-        {post.excerpt && (
-          <p className="text-muted-foreground text-sm leading-relaxed mt-2.5 line-clamp-3">
-            {post.excerpt}
-          </p>
-        )}
-
-        <p className="byline text-muted-foreground/50 mt-3">
-          By {post.authorDisplayName}
+      {post.excerpt && (
+        <p className="text-muted-foreground text-sm leading-relaxed mt-2.5 line-clamp-3">
+          {post.excerpt}
         </p>
-      </article>
-    </Link>
+      )}
+
+      <p className="byline text-muted-foreground/50 mt-3">
+        By {post.authorDisplayName}
+      </p>
+    </article>
   );
 }
 
 function BriefCard({ post }: { post: ContentSummary }) {
   const href = buildPostHref(post);
   return (
-    <Link href={href} className="group block">
-      <article>
-        <h4 className="headline-brief text-foreground group-hover:text-amber transition-colors duration-200">
-          {post.title}
-        </h4>
+    <article className="group">
+      <h4 className="headline-brief text-foreground group-hover:text-amber transition-colors duration-200">
+        <Link href={href}>{post.title}</Link>
+      </h4>
 
-        {post.excerpt && (
-          <p className="text-muted-foreground/70 text-sm leading-relaxed mt-2 line-clamp-2">
-            {post.excerpt}
-          </p>
-        )}
+      {post.excerpt && (
+        <p className="text-muted-foreground/70 text-sm leading-relaxed mt-2 line-clamp-2">
+          {post.excerpt}
+        </p>
+      )}
 
-        <div className="byline text-muted-foreground/50 mt-2.5 flex items-center gap-2">
-          <span>{post.authorDisplayName}</span>
-          <span className="text-border/40">|</span>
-          <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
-        </div>
-      </article>
-    </Link>
+      <div className="byline text-muted-foreground/50 mt-2.5 flex items-center gap-2">
+        <span>{post.authorDisplayName}</span>
+        <span className="text-border/40">|</span>
+        <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+      </div>
+    </article>
   );
 }
 

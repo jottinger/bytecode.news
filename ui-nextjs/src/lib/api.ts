@@ -9,6 +9,7 @@ import {
   LogDayResponse,
   LogProvenanceListResponse,
   FeaturesResponse,
+  TaxonomySnapshot,
 } from "@/lib/types";
 
 export class ApiError extends Error {
@@ -187,6 +188,12 @@ export async function listPostsByTag(
 
 export async function listCategories(): Promise<CategorySummary[]> {
   return apiJson<CategorySummary[]>("/categories", {
+    cache: "no-store",
+  });
+}
+
+export async function getTaxonomySnapshot(): Promise<TaxonomySnapshot> {
+  return apiJson<TaxonomySnapshot>("/taxonomy", {
     cache: "no-store",
   });
 }
