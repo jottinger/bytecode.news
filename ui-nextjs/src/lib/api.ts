@@ -1,4 +1,5 @@
 import {
+  CategorySummary,
   CommentThreadResponse,
   ContentDetail,
   ContentListResponse,
@@ -167,6 +168,25 @@ export async function getLogsDay(provenance: string, day: string): Promise<LogDa
     day,
   });
   return apiJson<LogDayResponse>(`/logs?${params.toString()}`, {
+    cache: "no-store",
+  });
+}
+
+export async function listPostsByTag(
+  tag: string,
+  page: number,
+  size = 20,
+): Promise<ContentListResponse> {
+  return apiJson<ContentListResponse>(
+    `/posts?tag=${encodeURIComponent(tag)}&page=${page}&size=${size}`,
+    {
+      cache: "no-store",
+    },
+  );
+}
+
+export async function listCategories(): Promise<CategorySummary[]> {
+  return apiJson<CategorySummary[]>("/categories", {
     cache: "no-store",
   });
 }

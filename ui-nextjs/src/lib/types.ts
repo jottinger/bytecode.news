@@ -25,6 +25,12 @@ export interface FeaturesResponse {
   version: VersionInfo;
 }
 
+export interface CategorySummary {
+  id: string;
+  name: string;
+  parentName?: string | null;
+}
+
 export interface ContentSummary {
   id: string;
   title: string;
