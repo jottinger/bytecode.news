@@ -4,6 +4,7 @@ package com.enigmastation.streampack.ideas.operation
 import com.enigmastation.streampack.ai.service.AiService
 import com.enigmastation.streampack.core.extensions.compress
 import com.enigmastation.streampack.core.integration.EventGateway
+import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
@@ -17,8 +18,6 @@ import com.enigmastation.streampack.ideas.service.IdeaAuthorResolver
 import com.enigmastation.streampack.ideas.service.IdeaTimerService
 import com.enigmastation.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import com.enigmastation.streampack.taxonomy.model.TaxonomySnapshot
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import java.time.Duration
 import java.time.Instant
 import org.springframework.beans.factory.ObjectProvider
@@ -26,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
+import tools.jackson.module.kotlin.convertValue
 
 /** Captures article ideas through a stateful conversation flow across all protocols */
 @Component
@@ -40,7 +40,7 @@ class ArticleOperation(
     @Value("\${streampack.ideas.max-log-messages:100}") private val maxLogMessages: Int = 100,
 ) : TypedOperation<String>(String::class) {
 
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     override val priority: Int = 50
     override val addressed: Boolean = true
@@ -439,7 +439,7 @@ class ArticleOperation(
         }
     }
 
-    private fun parseAiJson(response: String): com.fasterxml.jackson.databind.JsonNode? {
+    private fun parseAiJson(response: String): tools.jackson.databind.JsonNode? {
         val raw = response.trim()
         if (raw.isBlank()) return null
 

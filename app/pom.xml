@@ -184,6 +184,18 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <!--
+          OpenAPI generation compatibility:
+          springdoc/swagger-core currently derives Kotlin required/nullability metadata
+          via Jackson 2 Kotlin module paths. Keep this test-scoped bridge so
+          docs/openapi.json generation retains required fields while runtime code
+          continues to use Jackson 3 (tools.jackson.*).
+        -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -1,16 +1,16 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.safecracker.model
 
-import com.fasterxml.jackson.module.kotlin.convertValue
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.enigmastation.streampack.core.json.JacksonMappers
 import java.time.Duration
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import tools.jackson.module.kotlin.convertValue
 
 class SafecrackerGameStateTests {
-    private val objectMapper = jacksonObjectMapper()
+    private val objectMapper = JacksonMappers.standard()
 
     @Test
     fun `feedback shows equals for correct digits`() {
