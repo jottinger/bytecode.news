@@ -1,18 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-
-export default function Error({
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+export default function ErrorPage() {
   return (
-    <div className="container flex flex-col items-center justify-center gap-4 py-24">
-      <h1 className="text-4xl font-bold">Something went wrong</h1>
-      <p className="text-muted-foreground">An unexpected error occurred.</p>
-      <Button onClick={reset}>Try again</Button>
-    </div>
+    <section className="notice">
+      <h2>Error</h2>
+      <p>Something went wrong while rendering this page.</p>
+    </section>
   );
 }

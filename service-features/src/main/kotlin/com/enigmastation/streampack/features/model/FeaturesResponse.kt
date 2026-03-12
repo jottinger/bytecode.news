@@ -22,7 +22,7 @@ data class VersionInfo(
 )
 
 /** Authentication method availability */
-data class AuthenticationFeatures(val otp: Boolean, val oidc: OidcFeatures?)
+data class AuthenticationFeatures(val otp: Boolean, val otpFrom: String, val oidc: OidcFeatures?)
 
 /** Per-provider OIDC availability */
 data class OidcFeatures(val google: Boolean, val github: Boolean)

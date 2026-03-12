@@ -18,9 +18,12 @@
           },
           "otp" : {
             "type" : "boolean"
+          },
+          "otpFrom" : {
+            "type" : "string"
           }
         },
-        "required" : [ "otp" ],
+        "required" : [ "otp", "otpFrom" ],
         "type" : "object"
       },
       "CategorySummary" : {

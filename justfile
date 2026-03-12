@@ -22,15 +22,29 @@ coverage:
 build-if-needed:
     [ -f app/target/app-1.0.jar ] && [ -f ui-basic/target/ui-basic-1.0.jar ] || just build
 
-# Start db, app, ui-reference, ui-basic, and mailpit for local development
+# Start db, app, ui-nextjs, ui-reference, ui-basic, and mailpit for local development
 deploy-dev: build-if-needed
-    docker compose --profile backend --profile ui-reference --profile ui-basic --profile mail build --no-cache
-    docker compose --profile backend --profile ui-reference --profile ui-basic --profile mail up
+    NEXT_PUBLIC_UI_COMMIT=$(git rev-parse --short HEAD) NEXT_PUBLIC_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) docker compose --profile backend --profile ui-nextjs --profile ui-reference --profile ui-basic --profile mail build --no-cache
+    docker compose --profile backend --profile ui-nextjs --profile ui-reference --profile ui-basic --profile mail up
 
-# Start db, app, ui-reference, and ui-basic
+# Start db, app, ui-nextjs, ui-reference, and ui-basic
 deploy: build-if-needed
-    docker compose --profile backend --profile ui-reference --profile ui-basic build --no-cache
-    docker compose --profile backend --profile ui-reference --profile ui-basic up
+    NEXT_PUBLIC_UI_COMMIT=$(git rev-parse --short HEAD) NEXT_PUBLIC_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) docker compose --profile backend --profile ui-nextjs --profile ui-reference --profile ui-basic build --no-cache
+    docker compose --profile backend --profile ui-nextjs --profile ui-reference --profile ui-basic up
+
+# Rebuild and redeploy only the ui-nextjs container
+redeploy-ui-nextjs:
+    docker rm -f ui-nextjs || true
+    docker build --no-cache \
+      --build-arg NEXT_PUBLIC_UI_COMMIT=$(git rev-parse --short HEAD) \
+      --build-arg NEXT_PUBLIC_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
+      -t ui-nextjs ui-nextjs/
+    docker run -d --name ui-nextjs \
+      -e BACKEND_SCHEME=https \
+      -e BACKEND_HOST=api.bytecode.news \
+      --add-host host.docker.internal:host-gateway \
+      -p 3000:3000 \
+      ui-nextjs
 
 # Rebuild and redeploy only the ui-reference container
 redeploy-ui-reference:
@@ -62,6 +76,7 @@ redeploy-ui-basic:
 
 # Rebuild and redeploy both UI containers
 redeploy-uis:
+    just redeploy-ui-nextjs
     just redeploy-ui-reference
     just redeploy-ui-basic
 
