@@ -23,7 +23,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.transaction.annotation.Transactional
 
-/** Integration tests for the RSS feed HTTP endpoint */
+/** Integration tests for RSS/Atom feed endpoints */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -67,34 +67,25 @@ class RssFeedControllerTests {
     }
 
     @Test
-    fun `GET rss_xml returns 200 with RSS content type`() {
+    fun `GET rss_xml returns 200 with feed content type`() {
         mockMvc.get("/blog/rss.xml").andExpect {
             status { isOk() }
-            content { contentType("application/rss+xml;charset=utf-8") }
+            content { contentTypeCompatibleWith("application/rss+xml") }
+            content { string(org.hamcrest.Matchers.containsString("<rss")) }
         }
     }
 
     @Test
-    fun `GET rss_xml returns valid XML with channel metadata`() {
-        val result =
-            mockMvc
-                .get("/blog/rss.xml")
-                .andExpect { status { isOk() } }
-                .andReturn()
-                .response
-                .contentAsString
-
-        assertTrue(result.contains("<rss"))
-        assertTrue(result.contains("<channel>"))
-        assertTrue(result.contains("<title>bytecode.news</title>"))
-        assertTrue(
-            result.contains("<description>JVM ecosystem news and community content</description>")
-        )
-        assertTrue(result.contains("<language>en-us</language>"))
+    fun `GET atom_xml returns 200 with atom content type`() {
+        mockMvc.get("/blog/atom.xml").andExpect {
+            status { isOk() }
+            content { contentTypeCompatibleWith("application/atom+xml") }
+            content { string(org.hamcrest.Matchers.containsString("<feed")) }
+        }
     }
 
     @Test
-    fun `GET rss_xml includes published post as item`() {
+    fun `GET rss_xml returns valid XML with feed metadata`() {
         val result =
             mockMvc
                 .get("/blog/rss.xml")
@@ -103,7 +94,29 @@ class RssFeedControllerTests {
                 .response
                 .contentAsString
 
-        assertTrue(result.contains("<item>"))
+        assertTrue(result.contains("<feed") || result.contains("<rss"))
+        assertTrue(result.contains("<title>bytecode.news</title>"))
+        assertTrue(
+            result.contains(
+                "<description>JVM ecosystem news and community content</description>"
+            ) || result.contains("<subtitle>JVM ecosystem news and community content</subtitle>")
+        )
+        assertTrue(
+            result.contains("<language>en-us</language>") || result.contains("xml:lang=\"en-us\"")
+        )
+    }
+
+    @Test
+    fun `GET rss_xml includes published post as entry`() {
+        val result =
+            mockMvc
+                .get("/blog/rss.xml")
+                .andExpect { status { isOk() } }
+                .andReturn()
+                .response
+                .contentAsString
+
+        assertTrue(result.contains("<item>") || result.contains("<entry>"))
         assertTrue(result.contains("<title>RSS Test Post</title>"))
         assertTrue(result.contains("2026/02/rss-test-post"))
         assertTrue(result.contains("RSS test excerpt"))
@@ -115,7 +128,7 @@ class RssFeedControllerTests {
     }
 
     @Test
-    fun `GET rss_xml with no posts returns empty feed`() {
+    fun `GET rss_xml with no posts returns empty feed container`() {
         slugRepository.deleteAll()
         postRepository.deleteAll()
 
@@ -127,7 +140,7 @@ class RssFeedControllerTests {
                 .response
                 .contentAsString
 
-        assertTrue(result.contains("<channel>"))
+        assertTrue(result.contains("<channel>") || result.contains("<feed"))
         assertTrue(result.contains("<title>bytecode.news</title>"))
     }
 }

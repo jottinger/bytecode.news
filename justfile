@@ -5,9 +5,16 @@ default:
 build: clean
     mvnd -DskipTests=true package
 
+clean-docker:
+    docker builder prune -af
+    docker container prune -f
+    docker image prune -af
+
 clean:
     find . -name "output.log*" -exec rm {} \;
     mvnd clean
+
+clean-all: clean-docker clean
 
 # Build with tests
 test: clean
@@ -24,7 +31,7 @@ build-if-needed:
 
 # Start db, app, ui-nextjs, ui-reference, ui-basic, and mailpit for local development
 deploy-dev: build-if-needed
-    NEXT_PUBLIC_UI_COMMIT=$(git rev-parse --short HEAD) NEXT_PUBLIC_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) docker compose --profile backend --profile ui-nextjs --profile ui-reference --profile ui-basic --profile mail build --no-cache
+    NEXT_PUBLIC_UI_COMMIT=$(git rev-parse --short HEAD) NEXT_PUBLIC_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) docker compose --profile backend --profile ui-nextjs --profile ui-reference --profile ui-basic --profile mail build
     docker compose --profile backend --profile ui-nextjs --profile ui-reference --profile ui-basic --profile mail up
 
 # Start db, app, ui-nextjs, ui-reference, and ui-basic
@@ -35,7 +42,7 @@ deploy: build-if-needed
 # Rebuild and redeploy only the ui-nextjs container
 redeploy-ui-nextjs:
     docker rm -f ui-nextjs || true
-    docker build --no-cache \
+    docker build \
       --build-arg NEXT_PUBLIC_UI_COMMIT=$(git rev-parse --short HEAD) \
       --build-arg NEXT_PUBLIC_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
       -t ui-nextjs ui-nextjs/
@@ -49,7 +56,7 @@ redeploy-ui-nextjs:
 # Rebuild and redeploy only the ui-reference container
 redeploy-ui-reference:
     docker rm -f ui-reference || true
-    docker build --no-cache \
+    docker build  \
       --build-arg VITE_UI_COMMIT=$(git rev-parse --short HEAD) \
       --build-arg VITE_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
       -t ui-reference ui-reference/
@@ -64,7 +71,7 @@ redeploy-ui-reference:
 redeploy-ui-basic:
     docker rm -f ui-basic || true
     ./mvnw -am -pl ui-basic -DskipTests package
-    docker build --no-cache \
+    docker build  \
       -f ui-basic/Dockerfile \
       -t ui-basic .
     docker run -d --name ui-basic \

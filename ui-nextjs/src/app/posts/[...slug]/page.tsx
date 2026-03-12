@@ -1,30 +1,11 @@
 import { notFound } from "next/navigation";
-import { ApiError, getCommentsBySlug, getPostBySlug } from "@/lib/api";
+import { ApiError, getCommentsBySlug, getPageBySlug, getPostBySlug } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import { CommentNode, CommentThreadResponse, ContentDetail } from "@/lib/types";
+import { CommentThreadResponse, ContentDetail } from "@/lib/types";
 import { CommentCreateForm } from "@/components/comment-create-form";
-
-function CommentTree({ node }: { node: CommentNode }) {
-  return (
-    <article className="comment">
-      <p className="meta">
-        {node.authorDisplayName} at {formatDate(node.createdAt)}
-      </p>
-      {node.deleted ? (
-        <p>[deleted]</p>
-      ) : (
-        <div className="post-body" dangerouslySetInnerHTML={{ __html: node.renderedHtml }} />
-      )}
-      {node.children.length > 0 ? (
-        <div className="comment-children">
-          {node.children.map((child) => (
-            <CommentTree key={child.id} node={child} />
-          ))}
-        </div>
-      ) : null}
-    </article>
-  );
-}
+import { CommentThread } from "@/components/comment-thread";
+import { HighlightedHtml } from "@/components/highlighted-html";
+import { PostActions } from "@/components/post-actions";
 
 export default async function PostPage({
   params,
@@ -35,10 +16,11 @@ export default async function PostPage({
   const slugPath = resolved.slug.join("/");
   const [year = "", month = "", ...slugParts] = resolved.slug;
   const shortSlug = slugParts.join("/");
+  const isDatedPostPath = Boolean(year && month && shortSlug);
 
   let post: ContentDetail;
   try {
-    post = await getPostBySlug(slugPath);
+    post = isDatedPostPath ? await getPostBySlug(slugPath) : await getPageBySlug(slugPath);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       notFound();
@@ -52,10 +34,13 @@ export default async function PostPage({
   }
 
   let thread: CommentThreadResponse | null = null;
-  try {
-    thread = await getCommentsBySlug(slugPath);
-  } catch {
-    // Show post even if comments endpoint is currently unavailable.
+  const commentsAllowed = !post.categories.includes("_sidebar");
+  if (commentsAllowed) {
+    try {
+      thread = await getCommentsBySlug(slugPath);
+    } catch {
+      // Show post even if comments endpoint is currently unavailable.
+    }
   }
 
   return (
@@ -77,21 +62,22 @@ export default async function PostPage({
         </div>
       ) : null}
 
-      <section className="post-body" dangerouslySetInnerHTML={{ __html: post.renderedHtml }} />
+      <HighlightedHtml className="post-body" html={post.renderedHtml} />
 
-      <section className="comment-block">
-        <h2 className="comment-title">Comments ({thread?.totalActiveCount ?? 0})</h2>
-        {year && month && shortSlug ? (
-          <CommentCreateForm year={year} month={month} slug={shortSlug} />
-        ) : null}
-        {thread === null ? (
-          <p>Comments are temporarily unavailable.</p>
-        ) : thread.comments.length === 0 ? (
-          <p>No comments yet.</p>
-        ) : (
-          thread.comments.map((comment) => <CommentTree key={comment.id} node={comment} />)
-        )}
-      </section>
+      <PostActions postId={post.id} />
+      {commentsAllowed ? (
+        <section className="comment-block">
+          <h2 className="comment-title">Comments ({thread?.totalActiveCount ?? 0})</h2>
+          {isDatedPostPath ? <CommentCreateForm year={year} month={month} slug={shortSlug} /> : null}
+          {thread === null ? (
+            <p>Comments are temporarily unavailable.</p>
+          ) : thread.comments.length === 0 ? (
+            <p>No comments yet.</p>
+          ) : (
+            <CommentThread comments={thread.comments} />
+          )}
+        </section>
+      ) : null}
     </article>
   );
 }

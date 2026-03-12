@@ -36,6 +36,7 @@ export default async function Home({
             <article className="story-card" key={post.id}>
               <div className="meta">
                 {formatDate(post.publishedAt)} | {post.authorDisplayName}
+                {post.commentCount > 0 ? ` | ${post.commentCount} comment${post.commentCount == 1 ? "" : "s"}` : ""}
               </div>
               <h2 className="story-title">
                 <Link href={`/posts/${post.slug}`}>{post.title}</Link>

@@ -5,6 +5,7 @@ import com.enigmastation.streampack.blog.entity.Comment
 import com.enigmastation.streampack.blog.model.CommentDetail
 import com.enigmastation.streampack.blog.model.CreateCommentRequest
 import com.enigmastation.streampack.blog.repository.CommentRepository
+import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.blog.service.MarkdownRenderingService
 import com.enigmastation.streampack.core.model.OperationOutcome
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component
 class CreateCommentOperation(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository,
+    private val postCategoryRepository: PostCategoryRepository,
     private val userRepository: UserRepository,
     private val markdownRenderingService: MarkdownRenderingService,
 ) : TypedOperation<CreateCommentRequest>(CreateCommentRequest::class) {
@@ -49,6 +51,10 @@ class CreateCommentOperation(
         val post =
             postRepository.findActiveById(payload.postId)
                 ?: return OperationResult.Error("Post not found")
+        val categories = postCategoryRepository.findByPost(post.id).map { it.category.name }
+        if (categories.any { it.equals("_sidebar", ignoreCase = true) }) {
+            return OperationResult.Error("Comments are disabled for sidebar content")
+        }
 
         val parentComment =
             if (payload.parentCommentId != null) {

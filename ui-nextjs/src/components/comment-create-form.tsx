@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getAuthState } from "@/lib/client-auth";
+import { MarkdownPreview } from "@/components/markdown-preview";
 
 interface CommentCreateFormProps {
   year: string;
@@ -77,9 +78,19 @@ export function CommentCreateForm({ year, month, slug }: CommentCreateFormProps)
         onChange={(event) => setMarkdownSource(event.target.value)}
         required
       />
-      <button type="submit" className="auth-button" disabled={busy}>
-        {busy ? "Posting..." : "Post comment"}
-      </button>
+      <div className="markdown-preview" aria-live="polite">
+        <p className="auth-label">Preview</p>
+        {markdownSource.trim().length === 0 ? (
+          <p className="auth-note">Preview appears here as you type markdown.</p>
+        ) : (
+          <MarkdownPreview source={markdownSource} className="post-body" />
+        )}
+      </div>
+      <div className="auth-actions">
+        <button type="submit" className="auth-button" disabled={busy}>
+          {busy ? "Posting..." : "Post comment"}
+        </button>
+      </div>
       {status ? <p className="auth-status">{status}</p> : null}
       {error ? <p className="auth-error">{error}</p> : null}
     </form>

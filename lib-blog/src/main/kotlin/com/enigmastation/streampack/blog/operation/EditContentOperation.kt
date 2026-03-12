@@ -7,7 +7,6 @@ import com.enigmastation.streampack.blog.entity.PostTag
 import com.enigmastation.streampack.blog.entity.Tag
 import com.enigmastation.streampack.blog.model.ContentDetail
 import com.enigmastation.streampack.blog.model.EditContentRequest
-import com.enigmastation.streampack.blog.model.PostStatus
 import com.enigmastation.streampack.blog.repository.*
 import com.enigmastation.streampack.blog.service.MarkdownRenderingService
 import com.enigmastation.streampack.blog.service.SlugGenerationService
@@ -46,21 +45,15 @@ class EditContentOperation(
                 ?: return OperationResult.Error("Post not found")
 
         val isAdmin = principal.role == Role.ADMIN || principal.role == Role.SUPER_ADMIN
-        val isAuthor = post.author != null && post.author.id == principal.id
         if ((payload.title ?: "").trim().isBlank()) {
             return OperationResult.Error("Title is required")
         }
         if ((payload.markdownSource ?: "").trim().isBlank()) {
             return OperationResult.Error("Content is required")
         }
-        // Author can edit own drafts; admin can edit anything
+        // Editing is admin-only; submissions are fire-and-forget for non-admin users.
         if (!isAdmin) {
-            if (!isAuthor) {
-                return OperationResult.Error("Not authorized to edit this post")
-            }
-            if (post.status != PostStatus.DRAFT) {
-                return OperationResult.Error("Not authorized to edit this post")
-            }
+            return OperationResult.Error("Not authorized to edit this post")
         }
 
         val updated = postRepository.save(payload.applyTo(post, markdownRenderingService))

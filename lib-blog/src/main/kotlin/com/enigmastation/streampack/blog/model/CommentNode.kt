@@ -10,6 +10,7 @@ data class CommentNode(
     val authorId: UUID?,
     val authorDisplayName: String,
     val renderedHtml: String,
+    val markdownSource: String? = null,
     val createdAt: Instant,
     val updatedAt: Instant,
     val deleted: Boolean,

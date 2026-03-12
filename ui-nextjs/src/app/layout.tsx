@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
-import { getFeatures } from "@/lib/api";
+import { getFeatures, listPostsByCategory } from "@/lib/api";
 import { AuthNav } from "@/components/auth-nav";
 import { RefreshHomeLink } from "@/components/refresh-home-link";
 
@@ -10,15 +10,6 @@ export const metadata: Metadata = {
   description: "Next.js SSR UI for bytecode.news",
 };
 
-function formatEditionDate(): string {
-  return new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -26,6 +17,10 @@ export default async function RootLayout({
 }>) {
   let siteName = "bytecode.news";
   let backendVersionText = "unknown";
+  let anonymousSubmissionEnabled = false;
+  let factoidsEnabled = false;
+  let karmaEnabled = false;
+  let sidebarPosts: Array<{ id: string; title: string; slug: string }> = [];
   const frontendCommit = (process.env.NEXT_PUBLIC_UI_COMMIT || "unknown").substring(0, 7);
   const frontendBranch = process.env.NEXT_PUBLIC_UI_BRANCH || "unknown";
   const frontendVersionText = `${frontendCommit} (${frontendBranch})`;
@@ -33,11 +28,29 @@ export default async function RootLayout({
   try {
     const features = await getFeatures();
     siteName = features.siteName;
+    anonymousSubmissionEnabled = features.anonymousSubmission;
+    factoidsEnabled =
+      features.operationGroups.includes("factoid") ||
+      features.adapters.some((adapter) => adapter.toLowerCase().includes("factoid"));
+    karmaEnabled =
+      features.operationGroups.includes("karma") ||
+      features.adapters.some((adapter) => adapter.toLowerCase().includes("karma"));
     const commit = features.version.commit ? features.version.commit.substring(0, 7) : "unknown";
     const branch = features.version.branch || "unknown";
     backendVersionText = `${commit} (${branch})`;
   } catch {
     // Keep rendering during backend interruptions.
+  }
+
+  try {
+    const sidebar = await listPostsByCategory("_sidebar", 0, 20);
+    sidebarPosts = (sidebar.posts || []).map((post) => ({
+      id: post.id,
+      title: post.title,
+      slug: post.slug,
+    }));
+  } catch {
+    // Sidebar content is optional.
   }
 
   return (
@@ -55,18 +68,36 @@ export default async function RootLayout({
                 </RefreshHomeLink>
               </div>
               <div>
-                <div className="dateline">{formatEditionDate()}</div>
                 <nav className="site-nav">
-                  <RefreshHomeLink className="nav-link">Front Page</RefreshHomeLink>
-                  <Link className="nav-link" href="/submit">
-                    Submit
-                  </Link>
                   <a className="nav-link" href="/feed.xml">
                     RSS
                   </a>
                   <AuthNav />
                 </nav>
               </div>
+            </div>
+            <div className="container">
+              <nav className="feature-tabs" aria-label="Features">
+                <RefreshHomeLink className="feature-tab">Blog</RefreshHomeLink>
+                {factoidsEnabled ? (
+                  <Link className="feature-tab" href="/factoids">
+                    Factoids
+                  </Link>
+                ) : null}
+                {karmaEnabled ? (
+                  <Link className="feature-tab" href="/karma">
+                    Karma
+                  </Link>
+                ) : null}
+                <Link className="feature-tab" href="/logs">
+                  Logs
+                </Link>
+                {anonymousSubmissionEnabled ? (
+                  <Link className="feature-tab" href="/submit">
+                    Submit Post
+                  </Link>
+                ) : null}
+              </nav>
             </div>
           </header>
 
@@ -80,10 +111,18 @@ export default async function RootLayout({
                 bytecode<span className="brand-dot">.</span>news
               </div>
               <div className="footer-meta">
-                <div className="dateline">Read-only Next.js view over the public API</div>
                 <div className="versionline">
                   Backend {backendVersionText} || Frontend {frontendVersionText}
                 </div>
+                {sidebarPosts.length > 0 ? (
+                  <nav className="site-nav" aria-label="Footer pages">
+                    {sidebarPosts.map((post) => (
+                      <Link key={post.id} className="nav-link" href={`/posts/${post.slug}`}>
+                        {post.title}
+                      </Link>
+                    ))}
+                  </nav>
+                ) : null}
               </div>
             </div>
           </footer>

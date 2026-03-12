@@ -258,7 +258,7 @@ class PostController(
         summary = "Edit a post",
         description =
             "Updates an existing post's title, content, tags, and/or categories. " +
-                "Authors can edit their own drafts. Only admins can edit approved posts. " +
+                "Editing is admin-only. " +
                 "Edits re-render HTML from the updated markdown source.",
         operationId = "editPost",
     )
@@ -275,7 +275,7 @@ class PostController(
     )
     @ApiResponse(
         responseCode = "403",
-        description = "Not the post author and not an admin",
+        description = "Admin access required",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
     @ApiResponse(

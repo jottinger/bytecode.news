@@ -77,6 +77,94 @@ describe("auth api routes", () => {
     expect(headers.get("Authorization")).toBe("Bearer abc");
   });
 
+  it("proxies profile update payload to backend", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"id":"1","username":"u","displayName":"New","role":"USER"}', {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { PUT } = await import("@/app/api/auth/profile/route");
+    const request = new Request("http://localhost:3000/api/auth/profile", {
+      method: "PUT",
+      headers: {
+        Authorization: "Bearer abc",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ displayName: "New" }),
+    });
+
+    const response = await PUT(request);
+    expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/profile");
+  });
+
+  it("proxies account export to backend", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"username":"u"}', {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { GET } = await import("@/app/api/auth/export/route");
+    const request = new Request("http://localhost:3000/api/auth/export", {
+      method: "GET",
+      headers: { Authorization: "Bearer abc" },
+    });
+
+    const response = await GET(request);
+    expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/export");
+  });
+
+  it("proxies account delete to backend", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"ok":true}', {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { DELETE } = await import("@/app/api/auth/account/route");
+    const request = new Request("http://localhost:3000/api/auth/account", {
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer abc",
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    });
+
+    const response = await DELETE(request);
+    expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/account");
+  });
+
+  it("proxies admin user listing by status", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response("[]", {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { GET } = await import("@/app/api/admin/users/route");
+    const request = new Request("http://localhost:3000/api/admin/users?status=SUSPENDED", {
+      method: "GET",
+      headers: { Authorization: "Bearer admin" },
+    });
+
+    const response = await GET(request);
+    expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/admin/users?status=SUSPENDED");
+  });
+
   it("redirects oauth2 authorization route to backend", async () => {
     const { GET } = await import("@/app/api/oauth2/authorization/[provider]/route");
 

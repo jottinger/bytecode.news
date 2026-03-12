@@ -30,6 +30,7 @@ describe("home page", () => {
           excerpt: "Short summary",
           authorDisplayName: "dreamreal",
           publishedAt: "2026-03-10T12:00:00Z",
+          commentCount: 3,
           categories: [],
           tags: ["java"],
         },
@@ -45,5 +46,6 @@ describe("home page", () => {
     expect(html).toContain("Test Article");
     expect(html).toContain("Short summary");
     expect(html).toContain("java");
+    expect(html).toContain("3 comments");
   });
 });

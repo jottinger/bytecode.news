@@ -16,21 +16,22 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
-/** Generates an RSS 2.0 feed of published blog posts */
+/** Generates an RSS or Atom feed of published blog posts based on request URL */
 @RestController
 class BlogFeedController(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
     private val blogProperties: BlogProperties,
 ) {
-    @GetMapping("/feed.xml", produces = [MediaType.APPLICATION_XML_VALUE])
+    @GetMapping(value = ["/feed.xml", "/feed.atom"], produces = [MediaType.APPLICATION_XML_VALUE])
     fun feed(request: HttpServletRequest): ResponseEntity<String> {
         val now = Instant.now()
         val posts = postRepository.findPublished(now)
         val baseUrl = resolveBaseUrl(request)
+        val atomRequested = request.requestURI.endsWith(".atom")
 
         val feed = SyndFeedImpl()
-        feed.feedType = "rss_2.0"
+        feed.feedType = if (atomRequested) "atom_1.0" else "rss_2.0"
         feed.title = blogProperties.siteName
         feed.link = baseUrl
         feed.description = "Latest posts on ${blogProperties.siteName}"
@@ -57,7 +58,13 @@ class BlogFeedController(
         val output = SyndFeedOutput()
         val xml = output.outputString(feed)
 
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_XML).body(xml)
+        val contentType =
+            if (atomRequested) {
+                MediaType.parseMediaType("application/atom+xml; charset=utf-8")
+            } else {
+                MediaType.parseMediaType("application/rss+xml; charset=utf-8")
+            }
+        return ResponseEntity.ok().contentType(contentType).body(xml)
     }
 
     private fun resolveBaseUrl(request: HttpServletRequest): String {

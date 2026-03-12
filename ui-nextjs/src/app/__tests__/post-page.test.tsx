@@ -28,14 +28,16 @@ vi.mock("@/lib/api", () => {
   return {
     ApiError,
     getPostBySlug: vi.fn(),
+    getPageBySlug: vi.fn(),
     getCommentsBySlug: vi.fn(),
   };
 });
 
 import PostPage from "@/app/posts/[...slug]/page";
-import { ApiError, getCommentsBySlug, getPostBySlug } from "@/lib/api";
+import { ApiError, getCommentsBySlug, getPageBySlug, getPostBySlug } from "@/lib/api";
 
 const getPostBySlugMock = vi.mocked(getPostBySlug);
+const getPageBySlugMock = vi.mocked(getPageBySlug);
 const getCommentsBySlugMock = vi.mocked(getCommentsBySlug);
 
 describe("post page", () => {
@@ -81,5 +83,58 @@ describe("post page", () => {
     expect(html).toContain("Renderable Post");
     expect(html).toContain("Hello content");
     expect(html).toContain("Comments are temporarily unavailable");
+  });
+
+  it("resolves non-dated slug via page endpoint", async () => {
+    getPageBySlugMock.mockResolvedValueOnce({
+      id: "02",
+      title: "About",
+      slug: "about-2",
+      renderedHtml: "<p>About page</p>",
+      excerpt: "",
+      authorDisplayName: "dreamreal",
+      publishedAt: "2026-03-12T12:00:00Z",
+      createdAt: "2026-03-12T12:00:00Z",
+      updatedAt: "2026-03-12T12:00:00Z",
+      commentCount: 0,
+      categories: ["_sidebar"],
+      tags: [],
+    });
+
+    const element = await PostPage({ params: Promise.resolve({ slug: ["about-2"] }) });
+    const html = renderToStaticMarkup(element);
+
+    expect(getPostBySlugMock).not.toHaveBeenCalled();
+    expect(getCommentsBySlugMock).not.toHaveBeenCalled();
+    expect(html).toContain("About");
+    expect(html).not.toContain("Comments (");
+  });
+
+  it("loads comments for non-dated non-sidebar page", async () => {
+    getPageBySlugMock.mockResolvedValueOnce({
+      id: "03",
+      title: "Article",
+      slug: "article-1",
+      renderedHtml: "<p>Article body</p>",
+      excerpt: "",
+      authorDisplayName: "dreamreal",
+      publishedAt: "2026-03-12T12:00:00Z",
+      createdAt: "2026-03-12T12:00:00Z",
+      updatedAt: "2026-03-12T12:00:00Z",
+      commentCount: 0,
+      categories: ["_pages"],
+      tags: [],
+    });
+    getCommentsBySlugMock.mockResolvedValueOnce({
+      postId: "03",
+      comments: [],
+      totalActiveCount: 0,
+    });
+
+    const element = await PostPage({ params: Promise.resolve({ slug: ["article-1"] }) });
+    const html = renderToStaticMarkup(element);
+
+    expect(getCommentsBySlugMock).toHaveBeenCalledWith("article-1");
+    expect(html).toContain("No comments yet.");
   });
 });

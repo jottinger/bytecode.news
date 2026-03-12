@@ -2,6 +2,11 @@ import {
   CommentThreadResponse,
   ContentDetail,
   ContentListResponse,
+  FactoidDetailResponse,
+  FactoidListResponse,
+  KarmaLeaderboardResponse,
+  LogDayResponse,
+  LogProvenanceListResponse,
   FeaturesResponse,
 } from "@/lib/types";
 
@@ -67,19 +72,38 @@ export async function getFeatures(): Promise<FeaturesResponse> {
 
 export async function listPosts(page: number, size = 20): Promise<ContentListResponse> {
   return apiJson<ContentListResponse>(`/posts?page=${page}&size=${size}`, {
-    next: { revalidate: 30 },
+    cache: "no-store",
   });
+}
+
+export async function listPostsByCategory(
+  category: string,
+  page: number,
+  size = 20,
+): Promise<ContentListResponse> {
+  return apiJson<ContentListResponse>(
+    `/posts?category=${encodeURIComponent(category)}&page=${page}&size=${size}`,
+    {
+      cache: "no-store",
+    },
+  );
 }
 
 export async function getPostBySlug(slug: string): Promise<ContentDetail> {
   return apiJson<ContentDetail>(`/posts/${slug}`, {
-    next: { revalidate: 30 },
+    cache: "no-store",
+  });
+}
+
+export async function getPageBySlug(slug: string): Promise<ContentDetail> {
+  return apiJson<ContentDetail>(`/pages/${encodeURIComponent(slug)}`, {
+    cache: "no-store",
   });
 }
 
 export async function getCommentsBySlug(slug: string): Promise<CommentThreadResponse> {
   return apiJson<CommentThreadResponse>(`/posts/${slug}/comments`, {
-    next: { revalidate: 30 },
+    cache: "no-store",
   });
 }
 
@@ -99,4 +123,50 @@ export async function getFeedXml(): Promise<{ body: string; contentType: string 
     body: await response.text(),
     contentType: response.headers.get("content-type") || "application/xml; charset=utf-8",
   };
+}
+
+export async function listFactoids(
+  page: number,
+  size = 20,
+  query?: string,
+): Promise<FactoidListResponse> {
+  const q = query?.trim();
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+  if (q) {
+    params.set("q", q);
+  }
+  return apiJson<FactoidListResponse>(`/factoids?${params.toString()}`, {
+    cache: "no-store",
+  });
+}
+
+export async function getFactoid(selector: string): Promise<FactoidDetailResponse> {
+  return apiJson<FactoidDetailResponse>(`/factoids/${encodeURIComponent(selector)}`, {
+    cache: "no-store",
+  });
+}
+
+export async function getKarmaLeaderboard(limit: number): Promise<KarmaLeaderboardResponse> {
+  return apiJson<KarmaLeaderboardResponse>(`/karma/leaderboard?limit=${encodeURIComponent(String(limit))}`, {
+    cache: "no-store",
+  });
+}
+
+export async function getLogProvenances(): Promise<LogProvenanceListResponse> {
+  return apiJson<LogProvenanceListResponse>("/logs/provenances", {
+    cache: "no-store",
+  });
+}
+
+export async function getLogsDay(provenance: string, day: string): Promise<LogDayResponse> {
+  const params = new URLSearchParams({
+    provenance,
+    day,
+  });
+  return apiJson<LogDayResponse>(`/logs?${params.toString()}`, {
+    cache: "no-store",
+  });
 }

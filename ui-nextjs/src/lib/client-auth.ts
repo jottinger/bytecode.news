@@ -60,6 +60,14 @@ export function setAuth(login: LoginResponse): void {
   notifyAuthChange();
 }
 
+export function setPrincipal(principal: UserPrincipal): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.localStorage.setItem(PRINCIPAL_KEY, JSON.stringify(principal));
+  notifyAuthChange();
+}
+
 export function clearAuth(): void {
   if (typeof window === "undefined") {
     return;
