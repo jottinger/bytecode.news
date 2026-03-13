@@ -96,6 +96,16 @@ redeploy-uis:
     just redeploy-ui-reference
     just redeploy-ui-basic
 
+# Full rebuild + staged UI redeploy for production-style updates
+full-redeploy:
+    git pull
+    mvnd clean package -DskipTests
+    @echo "Pause: restart backend now (in another terminal/session)."
+    @read -r -p "Press Enter after backend restart is complete... " _
+    just redeploy-ui-basic
+    just redeploy-ui-reference
+    just redeploy-ui-nextjs
+
 # Run non-blocking warnings for operation-layer web coupling drift
 warn-operation-web-coupling:
     ./mvnw -q -N exec:exec@warn-operation-web-coupling
