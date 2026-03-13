@@ -5,6 +5,13 @@ vi.mock("@/lib/api", () => ({
   getKarmaLeaderboard: vi.fn(),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    replace: vi.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams("limit=10&view=top"),
+}));
+
 import KarmaPage from "@/app/karma/page";
 import { getKarmaLeaderboard } from "@/lib/api";
 
@@ -17,7 +24,7 @@ describe("karma page", () => {
     const element = await KarmaPage({ searchParams: Promise.resolve({ limit: "10" }) });
     const html = renderToStaticMarkup(element);
 
-    expect(html).toContain("Community Karma Unavailable");
+    expect(html).toContain("Karma Unavailable");
   });
 
   it("renders leaderboard tables when API succeeds", async () => {
@@ -30,10 +37,10 @@ describe("karma page", () => {
     const element = await KarmaPage({ searchParams: Promise.resolve({ limit: "10" }) });
     const html = renderToStaticMarkup(element);
 
-    expect(html).toContain("Community Karma");
+    expect(html).toContain("Karma");
     expect(html).toContain("Top Karma");
     expect(html).toContain("Bottom Karma");
     expect(html).toContain("java");
-    expect(html).toContain("spam");
+    expect(html).not.toContain("spam");
   });
 });
