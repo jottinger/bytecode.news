@@ -7,6 +7,9 @@ import com.enigmastation.streampack.blog.model.ContentListResponse
 import com.enigmastation.streampack.blog.model.CreateContentHttpRequest
 import com.enigmastation.streampack.blog.model.CreateContentRequest
 import com.enigmastation.streampack.blog.model.CreateContentResponse
+import com.enigmastation.streampack.blog.model.DeriveSummaryHttpRequest
+import com.enigmastation.streampack.blog.model.DeriveSummaryRequest
+import com.enigmastation.streampack.blog.model.DeriveSummaryResponse
 import com.enigmastation.streampack.blog.model.EditContentHttpRequest
 import com.enigmastation.streampack.blog.model.EditContentRequest
 import com.enigmastation.streampack.blog.model.FindContentRequest
@@ -192,6 +195,8 @@ class PostController(
                 "Authentication is required unless anonymous submission is enabled " +
                 "(see GET /features for the anonymousSubmission flag). " +
                 "Authenticated users must have a verified email. " +
+                "If a `summary` is provided, it is persisted as the post excerpt. " +
+                "Otherwise an excerpt is derived heuristically. " +
                 "Includes honeypot and timing-based spam prevention - frontends should " +
                 "include the 'website' field as a CSS-hidden input (left empty) and set " +
                 "'formLoadedAt' to Date.now() when the form renders.",
@@ -250,6 +255,7 @@ class PostController(
                 markdownSource = request.markdownSource,
                 tags = request.tags,
                 categoryIds = request.categoryIds,
+                summary = request.summary,
             )
         return dispatchCreated(payload, "posts/create", user) { result -> mapError(result) }
     }
@@ -259,7 +265,8 @@ class PostController(
         description =
             "Updates an existing post's title, content, tags, and/or categories. " +
                 "Editing is admin-only. " +
-                "Edits re-render HTML from the updated markdown source.",
+                "Edits re-render HTML from the updated markdown source. " +
+                "If a `summary` is provided, it is persisted as the post excerpt.",
         operationId = "editPost",
     )
     @SecurityRequirement(name = "bearerAuth")
@@ -297,6 +304,7 @@ class PostController(
                 markdownSource = request.markdownSource,
                 tags = request.tags,
                 categoryIds = request.categoryIds,
+                summary = request.summary,
             )
         return dispatch(payload, "posts/edit", user) { result -> mapError(result) }
     }
@@ -335,6 +343,48 @@ class PostController(
                 existingTags = request.existingTags ?: emptyList(),
             )
         return dispatch(payload, "posts/derive-tags", user) { result -> mapError(result) }
+    }
+
+    @Operation(
+        summary = "Derive a summary heuristically from unsaved draft content",
+        description =
+            "Returns a non-persistent summary generated from title + markdown content. " +
+                "Requires authentication. The returned value is the same text shape used for " +
+                "persisted excerpts unless manually overridden.",
+        operationId = "deriveSummary",
+    )
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Derived summary",
+        content = [Content(schema = Schema(implementation = DeriveSummaryResponse::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Authentication required",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "Invalid input",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @PostMapping(
+        "/posts/derive-summary",
+        produces = ["application/json"],
+        consumes = ["application/json"],
+    )
+    fun deriveSummary(
+        @RequestBody request: DeriveSummaryHttpRequest,
+        httpRequest: HttpServletRequest,
+    ): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Authentication required")
+        val payload =
+            DeriveSummaryRequest(
+                title = request.title ?: "",
+                markdownSource = request.markdownSource ?: "",
+            )
+        return dispatch(payload, "posts/derive-summary", user) { result -> mapError(result) }
     }
 
     /** Extracts and validates the Bearer token from the Authorization header */

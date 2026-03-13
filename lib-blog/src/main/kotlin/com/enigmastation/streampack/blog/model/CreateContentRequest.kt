@@ -7,4 +7,6 @@ data class CreateContentRequest(
     val markdownSource: String,
     val tags: List<String>? = emptyList(),
     val categoryIds: List<java.util.UUID>? = emptyList(),
+    /** Optional UI-facing summary value, persisted internally as excerpt. */
+    val summary: String? = null,
 )

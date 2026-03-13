@@ -157,6 +157,31 @@ describe("post submit api routes", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/posts/derive-tags");
   });
 
+  it("proxies summary derivation to backend with auth passthrough", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"summary":"S"}', {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { POST } = await import("@/app/api/posts/derive-summary/route");
+
+    const request = new Request("http://localhost:3000/api/posts/derive-summary", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer abc",
+      },
+      body: JSON.stringify({ title: "T", markdownSource: "M" }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/posts/derive-summary");
+  });
+
   it("proxies admin AI tag derivation to backend", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response('{"tags":["java","ai"]}', {

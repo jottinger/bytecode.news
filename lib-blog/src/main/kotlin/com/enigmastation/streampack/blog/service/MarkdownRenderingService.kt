@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service
 
 /** Converts markdown source to sanitized HTML and generates plain-text excerpts */
 @Service
-class MarkdownRenderingService {
+class MarkdownRenderingService(private val excerptSummarizerService: ExcerptSummarizerService) {
 
     private val parser: Parser
     private val renderer: HtmlRenderer
@@ -42,12 +42,19 @@ class MarkdownRenderingService {
     }
 
     /** Generate a plain-text excerpt by stripping markup and truncating at word boundary */
-    fun excerpt(markdownSource: String, maxLength: Int = 200): String {
+    fun excerpt(markdownSource: String, maxLength: Int = 400, maxSentences: Int = 3): String {
         if (markdownSource.isBlank()) return ""
         val plainText = stripMarkup(markdownSource)
-        if (plainText.length <= maxLength) return plainText
+        if (plainText.isBlank()) return ""
+        val summarized =
+            excerptSummarizerService
+                .summarize(plainText, maxSentences)
+                .replace(Regex("\\s+"), " ")
+                .trim()
+                .ifBlank { plainText }
+        if (summarized.length <= maxLength) return summarized
         // Truncate at last space before maxLength to avoid cutting words
-        val truncated = plainText.substring(0, maxLength)
+        val truncated = summarized.substring(0, maxLength)
         val lastSpace = truncated.lastIndexOf(' ')
         return if (lastSpace > 0) truncated.substring(0, lastSpace) + "..." else truncated + "..."
     }
@@ -59,8 +66,28 @@ class MarkdownRenderingService {
         val html = renderer.render(document)
         return html
             .replace(Regex("<[^>]+>"), "") // strip HTML tags
-            .replace(Regex("&[a-zA-Z]+;"), " ") // replace HTML entities with space
+            .replace("&nbsp;", " ")
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .replace("&#39;", "'")
             .replace(Regex("\\s+"), " ") // collapse whitespace
+            .replace(Regex("\\s+([,.;:!?])"), "$1") // no space before punctuation
+            .replace(Regex("(\\(|\\[|\\{)\\s+"), "$1") // no leading space inside brackets
+            .replace(Regex("\\s+(\\)|\\]|\\})"), "$1") // no trailing space before bracket close
+            .replace(Regex("(\\d)\\s*-\\s*([A-Za-z])"), "$1-$2") // 4- player -> 4-player
+            // Recover common Java generic patterns flattened by upstream text extraction.
+            .replace(
+                Regex(
+                    "\\b([A-Za-z_][A-Za-z0-9_]*)\\s+([A-Z])\\s+extends\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+\\2\\b"
+                ),
+                "$1<$2> extends $3<$2>",
+            )
+            .replace(
+                Regex("\\bextend\\s+([A-Za-z_][A-Za-z0-9_]*)\\s+([A-Z][A-Za-z0-9_]*)\\b"),
+                "extend $1<$2>",
+            )
             .trim()
     }
 }

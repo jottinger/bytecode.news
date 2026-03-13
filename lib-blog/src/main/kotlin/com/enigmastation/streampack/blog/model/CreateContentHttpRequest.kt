@@ -28,6 +28,14 @@ data class CreateContentHttpRequest(
     val categoryIds: List<UUID>? = emptyList(),
     @Schema(
         description =
+            "Optional manual summary text from the UI. This value is persisted as the post " +
+                "excerpt. If omitted or blank, the backend derives excerpt text heuristically " +
+                "from markdown content.",
+        required = false,
+    )
+    val summary: String? = null,
+    @Schema(
+        description =
             "Honeypot field for spam prevention. Frontends render this as a CSS-hidden " +
                 "input. Legitimate users never see or fill it. Must be empty or absent.",
         hidden = true,

@@ -8,6 +8,7 @@ import { ContentDetail } from "@/lib/types";
 
 type ProblemLike = { detail?: string; title?: string; message?: string };
 type TagsResponse = { tags?: unknown };
+type SummaryResponse = { summary?: string };
 type CategorySummary = { id: string; name?: string };
 
 function splitTags(value: string): string[] {
@@ -50,6 +51,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [markdownSource, setMarkdownSource] = useState("");
+  const [summary, setSummary] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [categoriesInput, setCategoriesInput] = useState("");
   const [categoryOptions, setCategoryOptions] = useState<CategorySummary[]>([]);
@@ -66,6 +68,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   const isAdmin = canDeriveAiTags;
   const canAdminPublishDraft = canDeriveAiTags && postStatus === "DRAFT";
   const canSuggestTags = title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
+  const canDeriveSummary = title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
   const previewText = useMemo(() => markdownSource, [markdownSource]);
 
   function splitCategories(value: string): string[] {
@@ -103,6 +106,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         }
         setTitle(post.title || "");
         setMarkdownSource(post.markdownSource);
+        setSummary(post.excerpt || "");
         setTagsInput((post.tags || []).join(", "));
         setCategoriesInput((post.categories || []).join(", "));
         setPostStatus(post.status || "DRAFT");
@@ -170,6 +174,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         body: JSON.stringify({
           title,
           markdownSource,
+          summary,
           tags: splitTags(tagsInput),
           categoryIds,
         }),
@@ -234,6 +239,44 @@ export function EditPostForm({ postId }: EditPostFormProps) {
       }
     } catch (tagError) {
       setError(tagError instanceof Error ? tagError.message : "Could not derive tags.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function applySummary() {
+    if (!auth.token) {
+      setError("Sign in to derive a summary.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const response = await fetch("/api/posts/derive-summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          markdownSource: markdownSource.trim(),
+        }),
+      });
+      const payload = (await response.json()) as SummaryResponse & ProblemLike;
+      if (!response.ok) {
+        throw new Error(detailMessage(payload, "Could not derive summary."));
+      }
+      const generated = String(payload.summary || "").trim();
+      if (!generated) {
+        setStatus("No summary could be derived from the current content.");
+        return;
+      }
+      setSummary(generated);
+      setStatus("Applied heuristic summary to the form. Review before saving.");
+    } catch (summaryError) {
+      setError(summaryError instanceof Error ? summaryError.message : "Could not derive summary.");
     } finally {
       setBusy(false);
     }
@@ -359,6 +402,18 @@ export function EditPostForm({ postId }: EditPostFormProps) {
           )}
         </div>
 
+        <label className="auth-label" htmlFor="edit-summary">
+          Summary (optional)
+        </label>
+        <textarea
+          id="edit-summary"
+          className="auth-input"
+          rows={4}
+          value={summary}
+          onChange={(event) => setSummary(event.target.value)}
+          placeholder="Optional manual summary for feed/front page excerpts."
+        />
+
         <label className="auth-label" htmlFor="edit-tags">
           Tags (comma-separated)
         </label>
@@ -389,6 +444,14 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         ) : null}
 
         <div className="auth-actions">
+          <button
+            type="button"
+            className="auth-button secondary"
+            disabled={!canDeriveSummary}
+            onClick={applySummary}
+          >
+            Generate Summary
+          </button>
           <button
             type="button"
             className="auth-button secondary"

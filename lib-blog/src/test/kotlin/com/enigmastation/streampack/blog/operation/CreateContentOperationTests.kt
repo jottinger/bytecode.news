@@ -137,12 +137,17 @@ class CreateContentOperationTests {
     }
 
     @Test
-    fun `excerpt falls back to title when markdown has no plain text`() {
-        val request = CreateContentRequest("Fallback Title", "***")
+    fun `provided summary is persisted as excerpt`() {
+        val request =
+            CreateContentRequest(
+                title = "Test Post",
+                markdownSource = "This is the content of the post.",
+                summary = "Manual summary from submitter.",
+            )
         val result = eventGateway.process(createMessage(request, verifiedUser))
 
         val response = (result as OperationResult.Success).payload as CreateContentResponse
-        assertEquals("Fallback Title", response.excerpt)
+        assertEquals("Manual summary from submitter.", response.excerpt)
     }
 
     @Test

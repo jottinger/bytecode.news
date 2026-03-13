@@ -163,6 +163,22 @@ class EditContentOperationTests {
     }
 
     @Test
+    fun `provided summary overrides derived excerpt on edit`() {
+        val request =
+            EditContentRequest(
+                id = draftPost.id,
+                title = "Updated Title",
+                markdownSource = "# Updated\n\nNew content here.",
+                summary = "Manual edit summary.",
+            )
+        val result = eventGateway.process(editMessage(request, admin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("Manual edit summary.", detail.excerpt)
+    }
+
+    @Test
     fun `edit response includes markdownSource`() {
         val request =
             EditContentRequest(draftPost.id, "Updated Title", "# Updated\n\nNew content here.")

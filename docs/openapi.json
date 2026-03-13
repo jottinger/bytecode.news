@@ -346,6 +346,11 @@
             "example" : "Virtual threads change the concurrency model...",
             "type" : "string"
           },
+          "summary" : {
+            "default" : "##default",
+            "description" : "Optional manual summary text from the UI. This value is persisted as the post excerpt. If omitted or blank, the backend derives excerpt text heuristically from markdown content.",
+            "type" : "string"
+          },
           "tags" : {
             "default" : "##default",
             "description" : "Tag names to associate with the post. Created automatically if new.",
@@ -419,6 +424,26 @@
         },
         "type" : "object"
       },
+      "DeriveSummaryHttpRequest" : {
+        "properties" : {
+          "markdownSource" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "DeriveSummaryResponse" : {
+        "properties" : {
+          "summary" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "summary" ],
+        "type" : "object"
+      },
       "DeriveTagsHttpRequest" : {
         "properties" : {
           "existingTags" : {
@@ -467,6 +492,9 @@
             "type" : "array"
           },
           "markdownSource" : {
+            "type" : "string"
+          },
+          "summary" : {
             "type" : "string"
           },
           "tags" : {
@@ -2979,7 +3007,7 @@
         "tags" : [ "Posts" ]
       },
       "post" : {
-        "description" : "Submits a new post as a DRAFT awaiting admin approval. Authentication is required unless anonymous submission is enabled (see GET /features for the anonymousSubmission flag). Authenticated users must have a verified email. Includes honeypot and timing-based spam prevention - frontends should include the 'website' field as a CSS-hidden input (left empty) and set 'formLoadedAt' to Date.now() when the form renders.",
+        "description" : "Submits a new post as a DRAFT awaiting admin approval. Authentication is required unless anonymous submission is enabled (see GET /features for the anonymousSubmission flag). Authenticated users must have a verified email. If a `summary` is provided, it is persisted as the post excerpt. Otherwise an excerpt is derived heuristically. Includes honeypot and timing-based spam prevention - frontends should include the 'website' field as a CSS-hidden input (left empty) and set 'formLoadedAt' to Date.now() when the form renders.",
         "operationId" : "createPost",
         "requestBody" : {
           "content" : {
@@ -3066,6 +3094,98 @@
           "bearerAuth" : [ ]
         } ],
         "summary" : "Create a new blog post draft",
+        "tags" : [ "Posts" ]
+      }
+    },
+    "/posts/derive-summary" : {
+      "post" : {
+        "description" : "Returns a non-persistent summary generated from title + markdown content. Requires authentication. The returned value is the same text shape used for persisted excerpts unless manually overridden.",
+        "operationId" : "deriveSummary",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeriveSummaryHttpRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DeriveSummaryResponse",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Derived summary"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Invalid input"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProblemDetail",
+                  "additionalProperties" : {
+                    "default" : "##default"
+                  },
+                  "contains" : {
+                    "default" : "##default"
+                  },
+                  "default" : "##default",
+                  "items" : {
+                    "default" : "##default"
+                  },
+                  "unevaluatedItems" : {
+                    "default" : "##default"
+                  }
+                }
+              }
+            },
+            "description" : "Authentication required"
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ],
+        "summary" : "Derive a summary heuristically from unsaved draft content",
         "tags" : [ "Posts" ]
       }
     },
@@ -3265,7 +3385,7 @@
         "tags" : [ "Posts" ]
       },
       "put" : {
-        "description" : "Updates an existing post's title, content, tags, and/or categories. Editing is admin-only. Edits re-render HTML from the updated markdown source.",
+        "description" : "Updates an existing post's title, content, tags, and/or categories. Editing is admin-only. Edits re-render HTML from the updated markdown source. If a `summary` is provided, it is persisted as the post excerpt.",
         "operationId" : "editPost",
         "parameters" : [ {
           "description" : "Post UUIDv7",

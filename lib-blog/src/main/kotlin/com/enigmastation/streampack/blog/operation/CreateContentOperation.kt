@@ -66,9 +66,14 @@ class CreateContentOperation(
         }
 
         val renderedHtml = markdownRenderingService.render(payload.markdownSource)
+        val providedSummary = payload.summary?.trim().orEmpty()
         val excerpt =
-            markdownRenderingService.excerpt(payload.markdownSource).ifBlank {
-                payload.title.trim()
+            if (providedSummary.isNotBlank()) {
+                providedSummary
+            } else {
+                markdownRenderingService.excerpt(payload.markdownSource).ifBlank {
+                    payload.title.trim()
+                }
             }
         val now = java.time.Instant.now()
 

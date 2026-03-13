@@ -2,13 +2,14 @@ import { getFeatures } from "@/lib/api";
 import { SubmitPostForm } from "@/components/submit-post-form";
 
 export default async function SubmitPage() {
-  let anonymousSubmission = false;
+  let anonymousSubmission = true;
 
   try {
     const features = await getFeatures();
     anonymousSubmission = features.anonymousSubmission;
   } catch {
-    // Keep strict default when feature service is unavailable.
+    // Keep permissive fallback when feature service is unavailable.
+    // Backend still enforces anonymous submission policy.
   }
 
   return <SubmitPostForm anonymousSubmission={anonymousSubmission} />;
