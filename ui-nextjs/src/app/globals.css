@@ -140,7 +140,7 @@
 
 @layer components {
   .container {
-    @apply px-6 md:px-8;
+    @apply w-full mx-auto px-6 md:px-8;
   }
   .font-display {
     font-family: var(--font-display), Georgia, serif;
