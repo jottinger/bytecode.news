@@ -152,6 +152,7 @@ class AdminPostController(
                 markdownSource = request.markdownSource,
                 tags = request.tags,
                 categoryIds = request.categoryIds,
+                summary = request.summary,
             )
         return dispatch(payload, "admin/posts/edit", user) { result -> mapError(result) }
     }

@@ -52,6 +52,7 @@ export default async function RootLayout({
   let siteName = "bytecode.news";
   let backendVersionText = "unknown";
   let factoidsEnabled = false;
+  let anonymousSubmissionEnabled = true;
   let sidebarPosts: Array<{ id: string; title: string; slug: string }> = [];
   const frontendCommit = (process.env.NEXT_PUBLIC_UI_COMMIT || "unknown").substring(0, 7);
   const frontendBranch = process.env.NEXT_PUBLIC_UI_BRANCH || "unknown";
@@ -63,6 +64,7 @@ export default async function RootLayout({
     factoidsEnabled =
       features.operationGroups.includes("factoid") ||
       features.adapters.some((adapter) => adapter.toLowerCase().includes("factoid"));
+    anonymousSubmissionEnabled = features.anonymousSubmission;
     const commit = features.version.commit ? features.version.commit.substring(0, 7) : "unknown";
     const branch = features.version.branch || "unknown";
     backendVersionText = `${commit} (${branch})`;
@@ -150,7 +152,7 @@ export default async function RootLayout({
                       <div className="h-4 w-px bg-border/40" />
                       <ThemeToggle />
                       <div className="h-4 w-px bg-border/40" />
-                      <AuthNav />
+                      <AuthNav allowAnonymousSubmission={anonymousSubmissionEnabled} />
                     </div>
                   </div>
 

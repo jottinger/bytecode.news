@@ -11,6 +11,7 @@ interface SubmitPostFormProps {
 
 type CategorySummary = { id: string; name?: string };
 type TagsResponse = { tags?: unknown };
+type SummaryResponse = { summary?: string };
 type ProblemLike = { detail?: string; title?: string; message?: string };
 
 function splitTags(value: string): string[] {
@@ -47,6 +48,7 @@ function toErrorMessage(status: number): string {
 export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
   const [title, setTitle] = useState("");
   const [markdownSource, setMarkdownSource] = useState("");
+  const [summary, setSummary] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [categoriesInput, setCategoriesInput] = useState("");
   const [categoryOptions, setCategoryOptions] = useState<CategorySummary[]>([]);
@@ -62,6 +64,8 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
     auth.principal?.role === "ADMIN" || auth.principal?.role === "SUPER_ADMIN";
   const isAdmin = canDeriveAiTags;
   const canSuggestTags = title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
+  const canDeriveSummary =
+    Boolean(auth.token) && title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
 
   function splitCategories(value: string): string[] {
     return value
@@ -157,6 +161,55 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
     }
   }
 
+  async function applyDerivedSummary(): Promise<void> {
+    const titleValue = title.trim();
+    const markdownValue = markdownSource.trim();
+    if (!auth.token) {
+      setError("Sign in to derive a summary.");
+      setStatus(null);
+      return;
+    }
+    if (!titleValue) {
+      setError("Title is required before deriving a summary.");
+      setStatus(null);
+      return;
+    }
+    if (!markdownValue) {
+      setError("Content is required before deriving a summary.");
+      setStatus(null);
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    setStatus(null);
+    try {
+      const response = await fetch("/api/posts/derive-summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({ title: titleValue, markdownSource: markdownValue }),
+      });
+      const payload = (await response.json()) as SummaryResponse & ProblemLike;
+      if (!response.ok) {
+        throw new Error(payload.detail || payload.message || payload.title || "Could not derive summary.");
+      }
+      const generated = String(payload.summary || "").trim();
+      if (!generated) {
+        setStatus("No summary could be derived from the current content.");
+        return;
+      }
+      setSummary(generated);
+      setStatus("Applied heuristic summary to the form. Review before submitting.");
+    } catch (summaryError) {
+      setError(summaryError instanceof Error ? summaryError.message : "Could not derive summary.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -196,6 +249,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
           markdownSource,
           tags: splitTags(tagsInput),
           categoryIds,
+          ...(auth.token ? { summary } : {}),
           formLoadedAt: loadedAt,
         }),
       });
@@ -209,6 +263,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
       setCreatedPostId(created.id || null);
       setTitle("");
       setMarkdownSource("");
+      setSummary("");
       setTagsInput("");
       setCategoriesInput("");
     } catch (submitError) {
@@ -269,6 +324,22 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
           )}
         </div>
 
+        {auth.token ? (
+          <>
+            <label className="auth-label" htmlFor="post-summary">
+              Summary (optional)
+            </label>
+            <textarea
+              id="post-summary"
+              className="auth-input"
+              rows={4}
+              value={summary}
+              onChange={(event) => setSummary(event.target.value)}
+              placeholder="Optional manual summary for feed/front page excerpts."
+            />
+          </>
+        ) : null}
+
         <label className="auth-label" htmlFor="post-tags">
           Tags (comma-separated)
         </label>
@@ -301,6 +372,16 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
         ) : null}
 
         <div className="auth-actions">
+          {auth.token ? (
+            <button
+              type="button"
+              className="auth-button secondary"
+              disabled={!canDeriveSummary}
+              onClick={applyDerivedSummary}
+            >
+              Generate Summary
+            </button>
+          ) : null}
           <button
             type="button"
             className="auth-button secondary"

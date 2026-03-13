@@ -5,7 +5,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { MouseEvent } from "react";
 import { clearAuth, getAuthState, onAuthChange } from "@/lib/client-auth";
 
-export function AuthNav() {
+type AuthNavProps = {
+  allowAnonymousSubmission?: boolean;
+};
+
+export function AuthNav({ allowAnonymousSubmission = false }: AuthNavProps) {
   const [mounted, setMounted] = useState(false);
   const [authVersion, setAuthVersion] = useState(0);
   const auth = useMemo(() => getAuthState(), [authVersion]);
@@ -37,12 +41,25 @@ export function AuthNav() {
 
   if (!auth.token || !auth.principal) {
     return (
-      <Link
-        className="section-label text-muted-foreground hover:text-amber transition-colors duration-200"
-        href="/login"
-      >
-        Log in
-      </Link>
+      <div className="inline-flex items-center gap-1">
+        {allowAnonymousSubmission && (
+          <>
+            <Link
+              className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+              href="/submit"
+            >
+              Submit
+            </Link>
+            <div className="h-4 w-px bg-border/40" />
+          </>
+        )}
+        <Link
+          className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+          href="/login"
+        >
+          Log in
+        </Link>
+      </div>
     );
   }
 

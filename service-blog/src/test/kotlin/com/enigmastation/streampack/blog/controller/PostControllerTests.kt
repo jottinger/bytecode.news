@@ -241,6 +241,34 @@ class PostControllerTests {
             }
     }
 
+    @Test
+    fun `POST derive-summary authenticated returns summary`() {
+        mockMvc
+            .post("/posts/derive-summary") {
+                contentType = MediaType.APPLICATION_JSON
+                header("Authorization", "Bearer $verifiedUserToken")
+                content =
+                    """{"title":"Summary Title","markdownSource":"Sentence one. Sentence two. Sentence three."}"""
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.summary") { isNotEmpty() }
+            }
+    }
+
+    @Test
+    fun `POST derive-summary unauthenticated returns 401`() {
+        mockMvc
+            .post("/posts/derive-summary") {
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"title":"Summary Title","markdownSource":"Sentence one."}"""
+            }
+            .andExpect {
+                status { isUnauthorized() }
+                jsonPath("$.detail") { value("Authentication required") }
+            }
+    }
+
     // --- PUT /posts/{id} ---
 
     @Test

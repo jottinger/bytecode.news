@@ -13,13 +13,24 @@ data class EditContentRequest(
     val markdownSource: String?,
     val tags: List<String>? = emptyList(),
     val categoryIds: List<UUID>? = emptyList(),
+    /** Optional UI-facing summary value, persisted internally as excerpt. */
+    val summary: String? = null,
 ) {
     fun applyTo(post: Post, markdownRenderingService: MarkdownRenderingService): Post {
+        val resolvedTitle = title ?: post.title
+        val resolvedMarkdown = markdownSource ?: post.markdownSource
+        val providedSummary = summary?.trim().orEmpty()
+        val excerpt =
+            if (providedSummary.isNotBlank()) {
+                providedSummary
+            } else {
+                markdownRenderingService.excerpt(resolvedMarkdown).ifBlank { resolvedTitle.trim() }
+            }
         return post.copy(
-            title = title ?: post.title,
-            markdownSource = markdownSource ?: post.markdownSource,
-            renderedHtml = markdownRenderingService.render(markdownSource ?: post.markdownSource),
-            excerpt = markdownRenderingService.excerpt(markdownSource ?: post.markdownSource),
+            title = resolvedTitle,
+            markdownSource = resolvedMarkdown,
+            renderedHtml = markdownRenderingService.render(resolvedMarkdown),
+            excerpt = excerpt,
             updatedAt = Instant.now(),
         )
     }

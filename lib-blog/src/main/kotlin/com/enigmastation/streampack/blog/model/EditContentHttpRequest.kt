@@ -9,4 +9,6 @@ data class EditContentHttpRequest(
     val markdownSource: String? = "",
     val tags: List<String>? = emptyList(),
     val categoryIds: List<UUID>? = emptyList(),
+    /** Optional UI-facing summary value. Persisted internally as excerpt. */
+    val summary: String? = null,
 )

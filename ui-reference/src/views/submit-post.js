@@ -1,4 +1,5 @@
 import { get, post as apiPost } from "../api.js";
+import { getPrincipal } from "../auth.js";
 import { escapeHtml } from "../escape.js";
 import { createEditor } from "../editor.js";
 import { renderError } from "../components/error-display.js";
@@ -20,6 +21,8 @@ function normalizeTags(payload) {
 
 /** Draft post creation form */
 export async function render(container) {
+  const principal = getPrincipal();
+  const isAuthenticated = Boolean(principal);
   let categories = [];
   try {
     categories = await get("/categories");
@@ -40,6 +43,11 @@ export async function render(container) {
       <label for="markdownSource">Content (Markdown)</label>
       <textarea id="markdownSource" name="markdownSource"></textarea>
 
+      ${isAuthenticated ? `
+      <label for="summary">Summary (optional)</label>
+      <textarea id="summary" name="summary" rows="4" placeholder="Optional manual summary for feed/front page excerpts."></textarea>
+      ` : ""}
+
       <label for="tags">Tags (comma-separated)</label>
       <input type="text" id="tags" name="tags" placeholder="java, concurrency, loom" />
 
@@ -50,6 +58,7 @@ export async function render(container) {
       </div>
 
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        ${isAuthenticated ? `<button type="button" id="derive-summary-btn">Generate Summary</button>` : ""}
         <button type="button" id="suggest-tags-btn">Suggest Tags</button>
         <button type="submit">Submit Draft</button>
       </div>
@@ -62,6 +71,37 @@ export async function render(container) {
   const form = document.getElementById("submit-form");
   const tagsInput = document.getElementById("tags");
   const status = document.getElementById("submit-status");
+  const summaryInput = document.getElementById("summary");
+
+  if (isAuthenticated) {
+    document.getElementById("derive-summary-btn").addEventListener("click", async () => {
+      const fd = new FormData(form);
+      const markdownSource = editor.value();
+      if (!fd.get("title")?.toString().trim()) {
+        status.innerHTML = "<p>Title is required.</p>";
+        return;
+      }
+      if (!markdownSource.trim()) {
+        status.innerHTML = "<p>Content is required.</p>";
+        return;
+      }
+      try {
+        const result = await apiPost("/posts/derive-summary", {
+          title: fd.get("title"),
+          markdownSource,
+        });
+        const summary = String(result?.summary || "").trim();
+        if (!summary) {
+          status.innerHTML = "<p>No summary could be derived.</p>";
+          return;
+        }
+        summaryInput.value = summary;
+        status.innerHTML = "<p>Applied heuristic summary to the form. Review before submitting.</p>";
+      } catch (err) {
+        renderError(status, err);
+      }
+    });
+  }
 
   document.getElementById("suggest-tags-btn").addEventListener("click", async () => {
     const fd = new FormData(form);
@@ -112,6 +152,7 @@ export async function render(container) {
       const result = await apiPost("/posts", {
         title: fd.get("title"),
         markdownSource,
+        ...(isAuthenticated ? { summary: fd.get("summary") } : {}),
         tags,
         categoryIds,
         website: fd.get("website"),

@@ -137,6 +137,20 @@ class CreateContentOperationTests {
     }
 
     @Test
+    fun `provided summary is persisted as excerpt`() {
+        val request =
+            CreateContentRequest(
+                title = "Test Post",
+                markdownSource = "This is the content of the post.",
+                summary = "Manual summary from submitter.",
+            )
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals("Manual summary from submitter.", response.excerpt)
+    }
+
+    @Test
     fun `anonymous request creates draft`() {
         val request = CreateContentRequest("Test", "Content")
         val result = eventGateway.process(createMessage(request, null))

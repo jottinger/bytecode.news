@@ -61,6 +61,9 @@ export async function render(container, params) {
         <label for="markdownSource">Content (Markdown)</label>
         <textarea id="markdownSource" name="markdownSource"></textarea>
 
+        <label for="summary">Summary (optional)</label>
+        <textarea id="summary" name="summary" rows="4">${escapeHtml(postDetail.excerpt || "")}</textarea>
+
         <label for="tags">Tags (comma-separated)</label>
         <input type="text" id="tags" name="tags" value="${escapeAttr(currentTags)}" />
 
@@ -68,6 +71,7 @@ export async function render(container, params) {
 
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
           <button type="submit">Save Changes</button>
+          <button type="button" id="derive-summary-btn">Generate Summary</button>
           ${canSuggestTags ? `<button type="button" id="suggest-tags-btn">Suggest Tags</button>` : ""}
           ${canDeriveAiTags ? `<button type="button" id="derive-tags-btn">Derive AI Tags</button>` : ""}
           ${canPublishDraft ? `<button type="button" id="publish-btn" class="contrast">Publish</button>` : ""}
@@ -94,11 +98,13 @@ export async function render(container, params) {
         ? fd.get("tags").split(",").map((t) => t.trim()).filter(Boolean)
         : [];
       const categoryIds = fd.getAll("categoryIds");
+      const summary = fd.get("summary");
 
       try {
         const result = await put(`/posts/${postId}`, {
           title: fd.get("title"),
           markdownSource,
+          summary,
           tags,
           categoryIds,
         });
@@ -117,9 +123,39 @@ export async function render(container, params) {
     };
 
     const form = document.getElementById("edit-form");
+    const summaryInput = document.getElementById("summary");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       await savePost(form);
+    });
+
+    document.getElementById("derive-summary-btn").addEventListener("click", async () => {
+      const status = document.getElementById("edit-status");
+      const fd = new FormData(form);
+      const markdownSource = editor.value();
+      if (!fd.get("title")?.toString().trim()) {
+        status.innerHTML = "<p>Title is required.</p>";
+        return;
+      }
+      if (!markdownSource.trim()) {
+        status.innerHTML = "<p>Content is required.</p>";
+        return;
+      }
+      try {
+        const result = await post(`/posts/derive-summary`, {
+          title: fd.get("title"),
+          markdownSource,
+        });
+        const summary = String(result?.summary || "").trim();
+        if (!summary) {
+          status.innerHTML = "<p>No summary could be derived.</p>";
+          return;
+        }
+        summaryInput.value = summary;
+        status.innerHTML = "<p>Applied heuristic summary to the form. Review before saving.</p>";
+      } catch (err) {
+        renderError(status, err);
+      }
     });
 
     if (canSuggestTags) {

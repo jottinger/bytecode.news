@@ -4,12 +4,13 @@ package com.enigmastation.streampack.blog.service
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
 class MarkdownRenderingServiceTests {
-
+    val logger = LoggerFactory.getLogger(this::class.java)
     @Autowired lateinit var markdownRenderingService: MarkdownRenderingService
 
     @Test
@@ -82,6 +83,42 @@ class MarkdownRenderingServiceTests {
         assertTrue(!result.contains("<"))
         assertTrue(result.contains("Bold"))
         assertTrue(result.contains("italic"))
+    }
+
+    @Test
+    fun `excerpt normalizes punctuation spacing`() {
+        val markdown =
+            "When a base builder class returns `this`, subclass methods lose type information."
+        val result = markdownRenderingService.excerpt(markdown, maxLength = 500, maxSentences = 3)
+        assertTrue(result.contains("this, subclass"))
+        assertTrue(!result.contains("this ,"))
+    }
+
+    @Test
+    fun `excerpt normalizes hyphen spacing`() {
+        val markdown = "The strategy is simple (so 4- player choice each round)."
+        val result = markdownRenderingService.excerpt(markdown, maxLength = 500, maxSentences = 3)
+        assertTrue(result.contains("4-player"))
+        assertTrue(!result.contains("4- player"))
+    }
+
+    @Test
+    fun `excerpt prefers three sentence summary`() {
+        val markdown =
+            """
+            Kotlin is practical for backend systems.
+            It integrates well with existing Java libraries.
+            This project also uses Clojure interop for selected components.
+            Excerpts should include the most representative points.
+            Extra details can stay in the full article.
+            """
+                .trimIndent()
+        val result = markdownRenderingService.excerpt(markdown, maxLength = 1000, maxSentences = 3)
+        val sentenceCount = Regex("[.!?](\\s|$)").findAll(result).count()
+        logger.info("Result: {}", result)
+        assertTrue(sentenceCount <= 3)
+        assertTrue(result.isNotBlank())
+        assertTrue(result.contains("Clojure interop"))
     }
 
     @Test
