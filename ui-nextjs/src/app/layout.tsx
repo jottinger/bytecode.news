@@ -204,6 +204,9 @@ export default async function RootLayout({
                             Factoids
                           </Link>
                         )}
+                        <Link href="/karma" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
+                          Karma
+                        </Link>
                         <Link href="/logs" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
                           Logs
                         </Link>
