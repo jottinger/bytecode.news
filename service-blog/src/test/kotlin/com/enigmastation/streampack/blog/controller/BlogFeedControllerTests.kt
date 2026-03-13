@@ -105,6 +105,14 @@ class BlogFeedControllerTests {
             content { string(org.hamcrest.Matchers.containsString("Feed Test Post")) }
             content { string(org.hamcrest.Matchers.containsString(slugPath)) }
             content { string(org.hamcrest.Matchers.containsString("Feed Author")) }
+            content { string(org.hamcrest.Matchers.containsString("A post for feed testing")) }
+            content {
+                string(
+                    org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("<p>Feed content</p>")
+                    )
+                )
+            }
         }
     }
 
@@ -115,6 +123,14 @@ class BlogFeedControllerTests {
             content { contentTypeCompatibleWith("application/atom+xml") }
             content { string(org.hamcrest.Matchers.containsString("<feed")) }
             content { string(org.hamcrest.Matchers.containsString("Feed Test Post")) }
+            content { string(org.hamcrest.Matchers.containsString("A post for feed testing")) }
+            content {
+                string(
+                    org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("<p>Feed content</p>")
+                    )
+                )
+            }
         }
     }
 
@@ -194,5 +210,47 @@ class BlogFeedControllerTests {
                     )
                 }
             }
+    }
+
+    @Test
+    fun `feed falls back to derived summary when excerpt is missing`() {
+        val now = Instant.now()
+        val author =
+            userRepository.findByUsername("feedauthor") ?: error("Expected test author to exist")
+
+        val postWithoutExcerpt =
+            postRepository.save(
+                Post(
+                    title = "No Excerpt Post",
+                    markdownSource = "Derived summary body for feed fallback.",
+                    renderedHtml = "<p>Derived summary body for feed fallback.</p>",
+                    excerpt = null,
+                    status = PostStatus.APPROVED,
+                    publishedAt = now.minus(30, ChronoUnit.MINUTES),
+                    author = author,
+                )
+            )
+        val publishedAt = postWithoutExcerpt.publishedAt!!
+        val dateTime = publishedAt.atZone(ZoneOffset.UTC)
+        val fallbackSlug = "${dateTime.year}/${"%02d".format(dateTime.monthValue)}/no-excerpt-post"
+        slugRepository.save(Slug(path = fallbackSlug, post = postWithoutExcerpt, canonical = true))
+
+        mockMvc.get("/feed.xml").andExpect {
+            status { isOk() }
+            content {
+                string(
+                    org.hamcrest.Matchers.containsString("Derived summary body for feed fallback.")
+                )
+            }
+            content {
+                string(
+                    org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(
+                            "<p>Derived summary body for feed fallback.</p>"
+                        )
+                    )
+                )
+            }
+        }
     }
 }

@@ -252,6 +252,16 @@ class EditContentOperationTests {
     }
 
     @Test
+    fun `edit falls back excerpt to title when markdown has no plain text`() {
+        val request = EditContentRequest(draftPost.id, "Fallback Edit Title", "***")
+        val result = eventGateway.process(editMessage(request, admin))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val detail = (result as OperationResult.Success).payload as ContentDetail
+        assertEquals("Fallback Edit Title", detail.excerpt)
+    }
+
+    @Test
     fun `edit with tags replaces existing tags`() {
         // First create a tag association
         val oldTag = tagRepository.save(Tag(name = "oldtag", slug = "oldtag"))
