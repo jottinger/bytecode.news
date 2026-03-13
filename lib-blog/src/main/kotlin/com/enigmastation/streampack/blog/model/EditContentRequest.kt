@@ -15,11 +15,15 @@ data class EditContentRequest(
     val categoryIds: List<UUID>? = emptyList(),
 ) {
     fun applyTo(post: Post, markdownRenderingService: MarkdownRenderingService): Post {
+        val resolvedTitle = title ?: post.title
+        val resolvedMarkdown = markdownSource ?: post.markdownSource
+        val excerpt =
+            markdownRenderingService.excerpt(resolvedMarkdown).ifBlank { resolvedTitle.trim() }
         return post.copy(
-            title = title ?: post.title,
-            markdownSource = markdownSource ?: post.markdownSource,
-            renderedHtml = markdownRenderingService.render(markdownSource ?: post.markdownSource),
-            excerpt = markdownRenderingService.excerpt(markdownSource ?: post.markdownSource),
+            title = resolvedTitle,
+            markdownSource = resolvedMarkdown,
+            renderedHtml = markdownRenderingService.render(resolvedMarkdown),
+            excerpt = excerpt,
             updatedAt = Instant.now(),
         )
     }

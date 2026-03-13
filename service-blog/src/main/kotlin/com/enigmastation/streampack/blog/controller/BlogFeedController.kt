@@ -4,6 +4,7 @@ package com.enigmastation.streampack.blog.controller
 import com.enigmastation.streampack.blog.config.BlogProperties
 import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
+import com.enigmastation.streampack.blog.service.MarkdownRenderingService
 import com.rometools.rome.feed.synd.SyndContentImpl
 import com.rometools.rome.feed.synd.SyndEntryImpl
 import com.rometools.rome.feed.synd.SyndFeedImpl
@@ -22,6 +23,7 @@ class BlogFeedController(
     private val postRepository: PostRepository,
     private val slugRepository: SlugRepository,
     private val blogProperties: BlogProperties,
+    private val markdownRenderingService: MarkdownRenderingService,
 ) {
     @GetMapping(value = ["/feed.xml", "/feed.atom"], produces = [MediaType.APPLICATION_XML_VALUE])
     fun feed(request: HttpServletRequest): ResponseEntity<String> {
@@ -48,8 +50,10 @@ class BlogFeedController(
                 entry.author = post.author?.displayName ?: "Anonymous"
 
                 val content = SyndContentImpl()
-                content.type = "text/html"
-                content.value = post.renderedHtml
+                content.type = "text/plain"
+                content.value =
+                    post.excerpt?.takeIf { it.isNotBlank() }
+                        ?: markdownRenderingService.excerpt(post.markdownSource)
                 entry.description = content
 
                 entry

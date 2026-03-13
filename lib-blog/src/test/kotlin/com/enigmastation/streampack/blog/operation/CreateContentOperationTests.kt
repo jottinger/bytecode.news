@@ -137,6 +137,15 @@ class CreateContentOperationTests {
     }
 
     @Test
+    fun `excerpt falls back to title when markdown has no plain text`() {
+        val request = CreateContentRequest("Fallback Title", "***")
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        val response = (result as OperationResult.Success).payload as CreateContentResponse
+        assertEquals("Fallback Title", response.excerpt)
+    }
+
+    @Test
     fun `anonymous request creates draft`() {
         val request = CreateContentRequest("Test", "Content")
         val result = eventGateway.process(createMessage(request, null))
