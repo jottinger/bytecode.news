@@ -255,6 +255,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
         <textarea
           id="post-markdown"
           className="auth-input submit-textarea"
+          rows={18}
           value={markdownSource}
           onChange={(event) => setMarkdownSource(event.target.value)}
           required

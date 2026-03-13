@@ -41,6 +41,7 @@ export function AdminUsers() {
         headers: {
           Authorization: `Bearer ${auth.token}`,
         },
+        cache: "no-store",
       });
       const payload = (await response.json()) as unknown;
       if (!response.ok) {
@@ -99,6 +100,9 @@ export function AdminUsers() {
         throw new Error(detailMessage(payload, "Role update failed."));
       }
       setNotice(`Updated ${username} to ${newRole}.`);
+      setUsers((current) =>
+        current.map((user) => (user.username === username ? { ...user, role: newRole } : user)),
+      );
       await loadUsers(status);
     } catch (roleError) {
       setError(roleError instanceof Error ? roleError.message : "Role update failed.");

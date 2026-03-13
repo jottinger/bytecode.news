@@ -41,45 +41,54 @@ deploy: build-if-needed
 
 # Rebuild and redeploy only the ui-nextjs container
 redeploy-ui-nextjs:
-    docker rm -f ui-nextjs || true
     docker build \
       --build-arg NEXT_PUBLIC_UI_COMMIT=$(git rev-parse --short HEAD) \
       --build-arg NEXT_PUBLIC_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
-      -t ui-nextjs ui-nextjs/
+      -t ui-nextjs:next ui-nextjs/
+    docker rm -f ui-nextjs-old || true
+    docker rename ui-nextjs ui-nextjs-old || true
+    docker stop ui-nextjs-old || true
     docker run -d --name ui-nextjs \
       -e BACKEND_SCHEME=https \
       -e BACKEND_HOST=api.bytecode.news \
       --add-host host.docker.internal:host-gateway \
       -p 3000:3000 \
-      ui-nextjs
+      ui-nextjs:next
+    docker rm -f ui-nextjs-old || true
 
 # Rebuild and redeploy only the ui-reference container
 redeploy-ui-reference:
-    docker rm -f ui-reference || true
     docker build  \
       --build-arg VITE_UI_COMMIT=$(git rev-parse --short HEAD) \
       --build-arg VITE_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
-      -t ui-reference ui-reference/
+      -t ui-reference:next ui-reference/
+    docker rm -f ui-reference-old || true
+    docker rename ui-reference ui-reference-old || true
+    docker stop ui-reference-old || true
     docker run -d --name ui-reference \
       -e BACKEND_SCHEME=https \
       -e BACKEND_HOST=api.bytecode.news \
       --add-host host.docker.internal:host-gateway \
       -p 3001:3001 \
-      ui-reference
+      ui-reference:next
+    docker rm -f ui-reference-old || true
 
 # Rebuild and redeploy only the ui-basic container
 redeploy-ui-basic:
-    docker rm -f ui-basic || true
     ./mvnw -am -pl ui-basic -DskipTests package
     docker build  \
       -f ui-basic/Dockerfile \
-      -t ui-basic .
+      -t ui-basic:next .
+    docker rm -f ui-basic-old || true
+    docker rename ui-basic ui-basic-old || true
+    docker stop ui-basic-old || true
     docker run -d --name ui-basic \
       -e BACKEND_SCHEME=https \
       -e BACKEND_HOST=api.bytecode.news \
       --add-host host.docker.internal:host-gateway \
       -p 3003:3003 \
-      ui-basic
+      ui-basic:next
+    docker rm -f ui-basic-old || true
 
 # Rebuild and redeploy both UI containers
 redeploy-uis:
