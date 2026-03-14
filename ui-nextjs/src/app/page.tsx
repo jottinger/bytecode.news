@@ -43,7 +43,7 @@ export default async function Home({
 
   let list: ContentListResponse | null = null;
   try {
-    list = await listPosts(safePage, 20);
+    list = await listPosts(safePage, 9);
   } catch {
     return (
       <section className="container max-w-screen-xl py-12">

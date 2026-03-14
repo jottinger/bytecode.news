@@ -52,5 +52,32 @@ describe("home page", () => {
     expect(html).toContain("Short summary");
     expect(html).toContain("java");
     expect(html).toContain("3 comments");
+    expect(listPostsMock).toHaveBeenCalledWith(0, 9);
+  });
+
+  it("shows next link when additional pages exist", async () => {
+    listPostsMock.mockResolvedValueOnce({
+      posts: [
+        {
+          id: "01",
+          title: "Test Article",
+          slug: "2026/03/test-article",
+          excerpt: "Short summary",
+          authorDisplayName: "dreamreal",
+          publishedAt: "2026-03-10T12:00:00Z",
+          commentCount: 0,
+          categories: [],
+          tags: [],
+        },
+      ],
+      page: 0,
+      totalPages: 2,
+      totalCount: 10,
+    });
+
+    const element = await Home({ searchParams: Promise.resolve({ page: "0" }) });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain("Next");
   });
 });
