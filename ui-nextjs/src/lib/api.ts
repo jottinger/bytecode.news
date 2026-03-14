@@ -186,6 +186,21 @@ export async function listPostsByTag(
   );
 }
 
+export async function listSearchPosts(
+  query: string,
+  page: number,
+  size = 20,
+): Promise<ContentListResponse> {
+  const params = new URLSearchParams({
+    q: query,
+    page: String(page),
+    size: String(size),
+  });
+  return apiJson<ContentListResponse>(`/posts/search?${params.toString()}`, {
+    cache: "no-store",
+  });
+}
+
 export async function listCategories(): Promise<CategorySummary[]> {
   return apiJson<CategorySummary[]>("/categories", {
     cache: "no-store",
