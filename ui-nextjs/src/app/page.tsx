@@ -59,6 +59,7 @@ export default async function Home({
   const lead = posts[0] ?? null;
   const secondary = posts.slice(1, 3);
   const belowFold = posts.slice(3, 9);
+  const isFrontPage = safePage === 0;
 
   return (
     <>
@@ -113,50 +114,66 @@ export default async function Home({
           <EmptyEdition />
         ) : (
           <div className="animate-press-in">
-            {/* Lead + secondary grid */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-0">
-              {lead && (
-                <div className="md:col-span-3 md:border-r md:border-border/30 md:pr-8">
-                  <LeadCard post={lead} />
-                </div>
-              )}
-
-              {secondary.length > 0 && (
-                <div className="md:col-span-2 md:pl-8 mt-8 md:mt-0">
-                  {secondary.map((post, i) => (
-                    <div
-                      key={post.id}
-                      className={i > 0 ? "border-t border-border/30 pt-6 mt-6" : ""}
-                    >
-                      <SecondaryCard post={post} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Below fold */}
-            {belowFold.length > 0 && (
+            {isFrontPage ? (
               <>
-                <div className="my-10 relative">
-                  <div className="border-t-2 border-amber/20" />
-                  <span className="section-label text-amber/40 absolute left-0 -top-2.5 bg-background px-2 pl-0">
-                    More Stories
-                  </span>
+                {/* Lead + secondary grid */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-0">
+                  {lead && (
+                    <div className="md:col-span-3 md:border-r md:border-border/30 md:pr-8">
+                      <LeadCard post={lead} />
+                    </div>
+                  )}
+
+                  {secondary.length > 0 && (
+                    <div className="md:col-span-2 md:pl-8 mt-8 md:mt-0">
+                      {secondary.map((post, i) => (
+                        <div
+                          key={post.id}
+                          className={i > 0 ? "border-t border-border/30 pt-6 mt-6" : ""}
+                        >
+                          <SecondaryCard post={post} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-0">
-                  {belowFold.map((post, i) => (
-                    <div
-                      key={post.id}
-                      className="border-t border-border/20 py-6 first:border-t-0 sm:[&:nth-child(-n+2)]:border-t-0 lg:[&:nth-child(-n+3)]:border-t-0"
-                      style={{ animationDelay: `${(i + 3) * 80}ms` }}
-                    >
-                      <BriefCard post={post} />
+                {/* Below fold */}
+                {belowFold.length > 0 && (
+                  <>
+                    <div className="my-10 relative">
+                      <div className="border-t-2 border-amber/20" />
+                      <span className="section-label text-amber/40 absolute left-0 -top-2.5 bg-background px-2 pl-0">
+                        More Stories
+                      </span>
                     </div>
-                  ))}
-                </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-0">
+                      {belowFold.map((post, i) => (
+                        <div
+                          key={post.id}
+                          className="border-t border-border/20 py-6 first:border-t-0 sm:[&:nth-child(-n+2)]:border-t-0 lg:[&:nth-child(-n+3)]:border-t-0"
+                          style={{ animationDelay: `${(i + 3) * 80}ms` }}
+                        >
+                          <BriefCard post={post} />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-0">
+                {posts.map((post, i) => (
+                  <div
+                    key={post.id}
+                    className="border-t border-border/20 py-6 first:border-t-0 sm:[&:nth-child(-n+2)]:border-t-0 lg:[&:nth-child(-n+3)]:border-t-0"
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  >
+                    <BriefCard post={post} />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
