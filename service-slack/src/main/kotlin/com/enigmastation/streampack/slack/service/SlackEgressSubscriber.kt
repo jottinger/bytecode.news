@@ -44,7 +44,7 @@ class SlackEgressSubscriber(
 
         val isMuted = channelControlService.getOptions(provenance.encode())?.automute ?: false
         if (isMuted) {
-            logger.debug(
+            logger.trace(
                 "Channel '{}' is muted on '{}', suppressing reply",
                 provenance.replyTo,
                 workspaceName,

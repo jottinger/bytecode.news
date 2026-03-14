@@ -30,8 +30,8 @@ class SlackServiceTests {
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")
         assertNotNull(workspace)
-        assertEquals("xoxb-test-token", workspace!!.botToken)
-        assertEquals("xapp-test-token", workspace.appToken)
+        assertEquals("xoxb-test-token", workspace!!.botToken.asStoredValue())
+        assertEquals("xapp-test-token", workspace.appToken.asStoredValue())
     }
 
     @Test
@@ -41,8 +41,8 @@ class SlackServiceTests {
         assertTrue(result.contains("Connecting"))
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
-        assertEquals("xoxb-new", workspace.botToken)
-        assertEquals("xapp-new", workspace.appToken)
+        assertEquals("xoxb-new", workspace.botToken.asStoredValue())
+        assertEquals("xapp-new", workspace.appToken.asStoredValue())
     }
 
     @Test
@@ -53,7 +53,7 @@ class SlackServiceTests {
         assertTrue(result.contains("Connecting"))
 
         val workspace = workspaceRepository.findByNameAndDeletedFalse("jvm-news")!!
-        assertEquals("xoxb-test", workspace.botToken)
+        assertEquals("xoxb-test", workspace.botToken.asStoredValue())
     }
 
     @Test

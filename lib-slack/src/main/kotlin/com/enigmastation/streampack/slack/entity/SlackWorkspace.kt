@@ -1,7 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.slack.entity
 
+import com.enigmastation.streampack.core.model.SecretRef
+import com.enigmastation.streampack.core.persistence.SecretRefConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -15,8 +18,12 @@ import org.hibernate.annotations.UuidGenerator
 data class SlackWorkspace(
     @Id @UuidGenerator(style = UuidGenerator.Style.VERSION_7) val id: UUID = UUID(0, 0),
     @Column(nullable = false, unique = true, length = 100) val name: String = "",
-    @Column(nullable = false, length = 500) val botToken: String = "",
-    @Column(nullable = false, length = 500) val appToken: String = "",
+    @Convert(converter = SecretRefConverter::class)
+    @Column(nullable = false, length = 500)
+    val botToken: SecretRef = SecretRef.literal(""),
+    @Convert(converter = SecretRefConverter::class)
+    @Column(nullable = false, length = 500)
+    val appToken: SecretRef = SecretRef.literal(""),
     @Column(length = 10) val signalCharacter: String? = null,
     @Column(nullable = false) val autoconnect: Boolean = false,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),

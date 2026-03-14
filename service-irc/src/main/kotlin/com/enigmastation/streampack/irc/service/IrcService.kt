@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.irc.service
 
+import com.enigmastation.streampack.core.model.SecretRef
 import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.core.service.ProvenanceStateService
 import com.enigmastation.streampack.irc.entity.IrcChannel
@@ -48,8 +49,8 @@ class IrcService(
                         existing.copy(
                             host = host,
                             nick = nick,
-                            saslAccount = saslAccount,
-                            saslPassword = saslPassword,
+                            saslAccount = saslAccount?.let { SecretRef.literal(it) },
+                            saslPassword = saslPassword?.let { SecretRef.literal(it) },
                             updatedAt = Instant.now(),
                         )
                     )
@@ -63,8 +64,8 @@ class IrcService(
                             name = name,
                             host = host!!,
                             nick = nick!!,
-                            saslAccount = saslAccount,
-                            saslPassword = saslPassword,
+                            saslAccount = saslAccount?.let { SecretRef.literal(it) },
+                            saslPassword = saslPassword?.let { SecretRef.literal(it) },
                         )
                     )
                     .also { logger.info("Registered IRC network '{}'", name) }

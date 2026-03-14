@@ -7,6 +7,7 @@ import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.core.service.ProtocolAdapter
 import com.enigmastation.streampack.core.service.ProvenanceStateService
+import com.enigmastation.streampack.core.service.SecretRefEnvironment
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.irc.config.IrcProperties
 import com.enigmastation.streampack.irc.entity.IrcNetwork
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.core.env.Environment
 import org.springframework.stereotype.Component
 
 /**
@@ -28,10 +30,12 @@ import org.springframework.stereotype.Component
 @Component
 @ConditionalOnProperty("streampack.irc.enabled", havingValue = "true")
 class IrcConnectionManager(
+    @Suppress("unused") private val secretRefStartupGuard: IrcSecretRefStartupGuard,
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,
     private val provenanceStateService: ProvenanceStateService,
+    private val springEnvironment: Environment,
     private val ircProperties: IrcProperties,
     private val networkRepository: IrcNetworkRepository,
     private val channelRepository: IrcChannelRepository,
@@ -87,8 +91,18 @@ class IrcConnectionManager(
                 .then()
                 .build()
 
-        val account = network.saslAccount
-        val password = network.saslPassword
+        val account =
+            network.saslAccount?.let { secret ->
+                SecretRefEnvironment.resolve(secret) { key ->
+                    System.getenv(key) ?: springEnvironment.getProperty(key)
+                }
+            }
+        val password =
+            network.saslPassword?.let { secret ->
+                SecretRefEnvironment.resolve(secret) { key ->
+                    System.getenv(key) ?: springEnvironment.getProperty(key)
+                }
+            }
         if (account != null && password != null) {
             client.authManager.addProtocol(SaslPlain(client, account, password))
         }

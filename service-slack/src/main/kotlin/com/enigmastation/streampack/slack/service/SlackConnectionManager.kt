@@ -6,6 +6,7 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.core.service.ProtocolAdapter
+import com.enigmastation.streampack.core.service.SecretRefEnvironment
 import com.enigmastation.streampack.core.service.UserResolutionService
 import com.enigmastation.streampack.slack.config.SlackProperties
 import com.enigmastation.streampack.slack.entity.SlackWorkspace
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.core.env.Environment
 import org.springframework.stereotype.Component
 
 /**
@@ -25,9 +27,11 @@ import org.springframework.stereotype.Component
 @Component
 @ConditionalOnProperty("streampack.slack.enabled", havingValue = "true")
 class SlackConnectionManager(
+    @Suppress("unused") private val secretRefStartupGuard: SlackSecretRefStartupGuard,
     private val eventGateway: EventGateway,
     private val userResolutionService: UserResolutionService,
     private val channelControlService: ChannelControlService,
+    private val springEnvironment: Environment,
     private val slackProperties: SlackProperties,
     private val workspaceRepository: SlackWorkspaceRepository,
     private val channelRepository: SlackChannelRepository,
@@ -73,11 +77,19 @@ class SlackConnectionManager(
         }
 
         val effectiveSignal = workspace.signalCharacter ?: slackProperties.signalCharacter
+        val botToken =
+            SecretRefEnvironment.resolve(workspace.botToken) { key ->
+                System.getenv(key) ?: springEnvironment.getProperty(key)
+            }
+        val appToken =
+            SecretRefEnvironment.resolve(workspace.appToken) { key ->
+                System.getenv(key) ?: springEnvironment.getProperty(key)
+            }
         val adapter =
             SlackAdapter(
                 workspaceName = workspace.name,
-                botToken = workspace.botToken,
-                appToken = workspace.appToken,
+                botToken = botToken,
+                appToken = appToken,
                 signalCharacter = effectiveSignal,
                 eventGateway = eventGateway,
                 userResolutionService = userResolutionService,
