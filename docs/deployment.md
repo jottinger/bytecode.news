@@ -528,6 +528,22 @@ irc connect libera irc.libera.chat nevet myaccount mypassword
 
 Port defaults to 6697, TLS defaults to true.
 
+### Secret Externalization (Required)
+
+On startup, Nevet enforces env-backed secrets for IRC/Slack credentials.
+
+- Any literal credential found in the database is automatically rewritten to `env://...`
+- Startup then fails with explicit `export ...` lines for what to set
+- After setting those environment variables, restart the backend
+
+This is controlled by:
+
+```
+STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS=true
+```
+
+If you must temporarily bypass this during migration, set it to `false` for one startup only.
+
 ### Configuration
 
 All network and channel configuration lives in the database (`irc_networks`, `irc_channels` tables).
@@ -592,6 +608,8 @@ slack autojoin jvm-news #general true
 Invite the bot to channels: `/invite @Nevet` in Slack, or use `slack join`.
 
 See [User Guide](user-guide.md#slack-super-admin) for the full set of admin commands.
+
+Slack tokens follow the same startup externalization process described in [Secret Externalization (Required)](#secret-externalization-required).
 
 ---
 
@@ -810,6 +828,7 @@ Rotate: `find /backups -name "nevet-*.dump" -mtime +30 -delete`.
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:3003` | Comma-separated allowed origins |
 | `CONSOLE_ENABLED` | `false` | Enable stdin console adapter |
 | `IRC_ENABLED` | `false` | Enable IRC connections |
+| `STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS` | `true` | Enforce `env://` secret refs for IRC/Slack credentials at startup |
 | `IRC_IDENTITY` | `Nevet IRC Bridge` | Identity string used for IRC WHOIS/CTCP VERSION responses |
 | `IRC_SIGNAL` | `!` | Global IRC signal character |
 | `SLACK_ENABLED` | `false` | Enable Slack connections |

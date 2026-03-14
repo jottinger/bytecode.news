@@ -43,8 +43,8 @@ class IrcServiceTests {
         val network = networkRepository.findByNameAndDeletedFalse("libera")!!
         assertEquals("irc.other.net", network.host)
         assertEquals("nevet2", network.nick)
-        assertEquals("acct", network.saslAccount)
-        assertEquals("pass", network.saslPassword)
+        assertEquals("acct", network.saslAccount?.asStoredValue())
+        assertEquals("pass", network.saslPassword?.asStoredValue())
     }
 
     @Test

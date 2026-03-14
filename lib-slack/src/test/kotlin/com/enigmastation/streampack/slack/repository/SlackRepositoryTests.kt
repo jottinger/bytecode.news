@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.slack.repository
 
+import com.enigmastation.streampack.core.model.SecretRef
 import com.enigmastation.streampack.slack.entity.SlackChannel
 import com.enigmastation.streampack.slack.entity.SlackWorkspace
 import java.util.UUID
@@ -25,8 +26,8 @@ class SlackRepositoryTests {
         val workspace =
             SlackWorkspace(
                 name = "jvm-news",
-                botToken = "xoxb-test-token",
-                appToken = "xapp-test-token",
+                botToken = SecretRef.literal("xoxb-test-token"),
+                appToken = SecretRef.literal("xapp-test-token"),
             )
         val saved = workspaceRepository.save(workspace)
 
@@ -36,15 +37,19 @@ class SlackRepositoryTests {
         val found = workspaceRepository.findByNameAndDeletedFalse("jvm-news")
         assertNotNull(found)
         assertEquals("jvm-news", found!!.name)
-        assertEquals("xoxb-test-token", found.botToken)
-        assertEquals("xapp-test-token", found.appToken)
+        assertEquals("xoxb-test-token", found.botToken.asStoredValue())
+        assertEquals("xapp-test-token", found.appToken.asStoredValue())
     }
 
     @Test
     fun `save channel with workspace FK`() {
         val workspace =
             workspaceRepository.save(
-                SlackWorkspace(name = "jvm-news-ch", botToken = "xoxb-test", appToken = "xapp-test")
+                SlackWorkspace(
+                    name = "jvm-news-ch",
+                    botToken = SecretRef.literal("xoxb-test"),
+                    appToken = SecretRef.literal("xapp-test"),
+                )
             )
         val channel = channelRepository.save(SlackChannel(workspace = workspace, name = "#java"))
 
@@ -60,8 +65,8 @@ class SlackRepositoryTests {
             workspaceRepository.save(
                 SlackWorkspace(
                     name = "jvm-news-cid",
-                    botToken = "xoxb-test",
-                    appToken = "xapp-test",
+                    botToken = SecretRef.literal("xoxb-test"),
+                    appToken = SecretRef.literal("xapp-test"),
                 )
             )
         val channel =
@@ -79,16 +84,16 @@ class SlackRepositoryTests {
         workspaceRepository.save(
             SlackWorkspace(
                 name = "auto-ws",
-                botToken = "xoxb-test",
-                appToken = "xapp-test",
+                botToken = SecretRef.literal("xoxb-test"),
+                appToken = SecretRef.literal("xapp-test"),
                 autoconnect = true,
             )
         )
         workspaceRepository.save(
             SlackWorkspace(
                 name = "manual-ws",
-                botToken = "xoxb-test2",
-                appToken = "xapp-test2",
+                botToken = SecretRef.literal("xoxb-test2"),
+                appToken = SecretRef.literal("xapp-test2"),
                 autoconnect = false,
             )
         )
@@ -101,13 +106,17 @@ class SlackRepositoryTests {
     @Test
     fun `soft delete excludes workspace from queries`() {
         workspaceRepository.save(
-            SlackWorkspace(name = "active-ws", botToken = "xoxb-test", appToken = "xapp-test")
+            SlackWorkspace(
+                name = "active-ws",
+                botToken = SecretRef.literal("xoxb-test"),
+                appToken = SecretRef.literal("xapp-test"),
+            )
         )
         workspaceRepository.save(
             SlackWorkspace(
                 name = "deleted-ws",
-                botToken = "xoxb-test2",
-                appToken = "xapp-test2",
+                botToken = SecretRef.literal("xoxb-test2"),
+                appToken = SecretRef.literal("xapp-test2"),
                 deleted = true,
             )
         )
@@ -125,8 +134,8 @@ class SlackRepositoryTests {
             workspaceRepository.save(
                 SlackWorkspace(
                     name = "jvm-news-del",
-                    botToken = "xoxb-test",
-                    appToken = "xapp-test",
+                    botToken = SecretRef.literal("xoxb-test"),
+                    appToken = SecretRef.literal("xapp-test"),
                 )
             )
         channelRepository.save(SlackChannel(workspace = workspace, name = "#active-ch"))
@@ -148,8 +157,8 @@ class SlackRepositoryTests {
         val workspace =
             SlackWorkspace(
                 name = "jvm-news",
-                botToken = "xoxb-test",
-                appToken = "xapp-test",
+                botToken = SecretRef.literal("xoxb-test"),
+                appToken = SecretRef.literal("xapp-test"),
                 autoconnect = true,
             )
         assertEquals("jvm-news (autoconnect)", workspace.toSummary())
@@ -160,8 +169,8 @@ class SlackRepositoryTests {
         val workspace =
             SlackWorkspace(
                 name = "jvm-news",
-                botToken = "xoxb-test",
-                appToken = "xapp-test",
+                botToken = SecretRef.literal("xoxb-test"),
+                appToken = SecretRef.literal("xapp-test"),
                 autoconnect = false,
             )
         assertEquals("jvm-news (manual)", workspace.toSummary())
@@ -173,8 +182,8 @@ class SlackRepositoryTests {
             workspaceRepository.save(
                 SlackWorkspace(
                     name = "jvm-news-uri",
-                    botToken = "xoxb-test",
-                    appToken = "xapp-test",
+                    botToken = SecretRef.literal("xoxb-test"),
+                    appToken = SecretRef.literal("xapp-test"),
                 )
             )
         val channel = channelRepository.save(SlackChannel(workspace = workspace, name = "#java"))

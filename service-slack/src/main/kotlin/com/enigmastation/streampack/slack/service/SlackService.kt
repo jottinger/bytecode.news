@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.slack.service
 
+import com.enigmastation.streampack.core.model.SecretRef
 import com.enigmastation.streampack.core.service.ChannelControlService
 import com.enigmastation.streampack.slack.entity.SlackChannel
 import com.enigmastation.streampack.slack.entity.SlackWorkspace
@@ -38,8 +39,8 @@ class SlackService(
                 workspaceRepository
                     .save(
                         existing.copy(
-                            botToken = botToken,
-                            appToken = appToken,
+                            botToken = SecretRef.literal(botToken),
+                            appToken = SecretRef.literal(appToken),
                             updatedAt = Instant.now(),
                         )
                     )
@@ -48,7 +49,13 @@ class SlackService(
                 existing
             } else {
                 workspaceRepository
-                    .save(SlackWorkspace(name = name, botToken = botToken!!, appToken = appToken!!))
+                    .save(
+                        SlackWorkspace(
+                            name = name,
+                            botToken = SecretRef.literal(botToken!!),
+                            appToken = SecretRef.literal(appToken!!),
+                        )
+                    )
                     .also { logger.info("Registered Slack workspace '{}'", name) }
             }
 

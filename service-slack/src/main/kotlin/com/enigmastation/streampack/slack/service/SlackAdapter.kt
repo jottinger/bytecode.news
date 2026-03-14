@@ -195,7 +195,7 @@ class SlackAdapter(
     /** Processes an incoming Slack message event */
     private fun handleMessage(event: MessageEvent) {
         try {
-            logger.debug(
+            logger.trace(
                 "Slack event on '{}': user={}, channel={}, botId={}, subtype={}, text={}",
                 workspaceName,
                 event.user,

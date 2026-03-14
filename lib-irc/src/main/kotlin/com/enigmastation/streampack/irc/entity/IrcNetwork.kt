@@ -1,7 +1,10 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.irc.entity
 
+import com.enigmastation.streampack.core.model.SecretRef
+import com.enigmastation.streampack.core.persistence.SecretRefConverter
 import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
@@ -19,8 +22,10 @@ data class IrcNetwork(
     @Column(nullable = false) val port: Int = 6697,
     @Column(nullable = false) val tls: Boolean = true,
     @Column(nullable = false, length = 50) val nick: String = "",
-    @Column(length = 100) val saslAccount: String? = null,
-    val saslPassword: String? = null,
+    @Convert(converter = SecretRefConverter::class)
+    @Column(length = 100)
+    val saslAccount: SecretRef? = null,
+    @Convert(converter = SecretRefConverter::class) val saslPassword: SecretRef? = null,
     @Column(length = 10) val signalCharacter: String? = null,
     @Column(nullable = false) val autoconnect: Boolean = false,
     @Column(nullable = false) val createdAt: Instant = Instant.now(),

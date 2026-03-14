@@ -66,6 +66,8 @@ streampack:
   slack:
     enabled: ${SLACK_ENABLED:false}
     signal-character: ${SLACK_SIGNAL:!}
+  security:
+    enforce-external-secrets: ${STREAMPACK_SECURITY_ENFORCE_EXTERNAL_SECRETS:true}
   ai:
     enabled: ${AI_ENABLED:false}
     api-key: ${ANTHROPIC_API_KEY:}
@@ -88,3 +90,6 @@ management:
 springdoc:
   api-docs:
     enabled: true
+
+logging:
+  exception-conversion-word: "%wEx{0}"
