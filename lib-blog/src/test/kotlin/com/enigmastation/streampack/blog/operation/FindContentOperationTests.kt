@@ -596,6 +596,31 @@ class FindContentOperationTests {
     }
 
     @Test
+    fun `FindByTag returns posts with matching tag`() {
+        val tag = tagRepository.save(Tag(name = "kotlin", slug = "kotlin"))
+        postTagRepository.save(PostTag(post = publishedPost, tag = tag))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindByTag("kotlin")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(1, response.posts.size)
+        assertEquals("Published Post", response.posts[0].title)
+    }
+
+    @Test
+    fun `FindByTag returns empty for tag with no posts`() {
+        tagRepository.save(Tag(name = "empty-tag", slug = "empty-tag"))
+
+        val result = eventGateway.process(findMessage(FindContentRequest.FindByTag("empty-tag")))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        val response = (result as OperationResult.Success).payload as ContentListResponse
+        assertEquals(0, response.posts.size)
+        assertEquals(0, response.totalCount)
+    }
+
+    @Test
     fun `FindPage returns system page by slug`() {
         val pagesCategory = categoryRepository.findByName("_pages")!!
         val now = Instant.now()

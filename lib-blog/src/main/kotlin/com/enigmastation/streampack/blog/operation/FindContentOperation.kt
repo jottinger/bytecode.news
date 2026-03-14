@@ -48,6 +48,8 @@ class FindContentOperation(
                 searchPublished(payload.query, payload.page, payload.size)
             is FindContentRequest.FindByCategory ->
                 findByCategory(payload.categoryName, payload.page, payload.size)
+            is FindContentRequest.FindByTag ->
+                findByTag(payload.tagName, payload.page, payload.size)
             is FindContentRequest.FindPage -> findPage(payload.slug, user)
         }
     }
@@ -150,6 +152,36 @@ class FindContentOperation(
         val now = Instant.now()
         val pageResult =
             postRepository.findByCategory(categoryName, now, PageRequest.of(page, size))
+
+        val summaries =
+            pageResult.content.map { post ->
+                val canonicalSlug = slugRepository.findCanonical(post.id)
+                ContentSummary(
+                    id = post.id,
+                    title = post.title,
+                    slug = canonicalSlug?.path ?: "",
+                    excerpt = post.excerpt,
+                    authorDisplayName = post.author?.displayName ?: "Anonymous",
+                    publishedAt = post.publishedAt,
+                    commentCount = commentRepository.countActiveByPost(post.id).toInt(),
+                    tags = tagNamesForPost(post.id),
+                    categories = categoryNamesForPost(post.id),
+                )
+            }
+
+        return OperationResult.Success(
+            ContentListResponse(
+                posts = summaries,
+                page = pageResult.number,
+                totalPages = pageResult.totalPages,
+                totalCount = pageResult.totalElements,
+            )
+        )
+    }
+
+    private fun findByTag(tagName: String, page: Int, size: Int): OperationResult {
+        val now = Instant.now()
+        val pageResult = postRepository.findByTag(tagName, now, PageRequest.of(page, size))
 
         val summaries =
             pageResult.content.map { post ->
