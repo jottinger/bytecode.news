@@ -4,12 +4,16 @@ package com.enigmastation.streampack.blog.controller
 import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.entity.Post
 import com.enigmastation.streampack.blog.entity.PostCategory
+import com.enigmastation.streampack.blog.entity.PostTag
 import com.enigmastation.streampack.blog.entity.Slug
+import com.enigmastation.streampack.blog.entity.Tag
 import com.enigmastation.streampack.blog.model.PostStatus
 import com.enigmastation.streampack.blog.repository.CategoryRepository
 import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
+import com.enigmastation.streampack.blog.repository.TagRepository
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.repository.UserRepository
@@ -46,6 +50,8 @@ class PostControllerTests {
     @Autowired lateinit var jwtService: JwtService
     @Autowired lateinit var categoryRepository: CategoryRepository
     @Autowired lateinit var postCategoryRepository: PostCategoryRepository
+    @Autowired lateinit var tagRepository: TagRepository
+    @Autowired lateinit var postTagRepository: PostTagRepository
 
     private lateinit var verifiedUser: User
     private lateinit var verifiedUserToken: String
@@ -375,6 +381,29 @@ class PostControllerTests {
         categoryRepository.save(Category(name = "empty", slug = "empty"))
 
         mockMvc.get("/posts?category=empty").andExpect {
+            status { isOk() }
+            jsonPath("$.posts.length()") { value(0) }
+            jsonPath("$.totalCount") { value(0) }
+        }
+    }
+
+    @Test
+    fun `GET posts with tag filter returns posts with that tag`() {
+        val tag = tagRepository.save(Tag(name = "kotlin", slug = "kotlin"))
+        postTagRepository.save(PostTag(post = publishedPost, tag = tag))
+
+        mockMvc.get("/posts?tag=kotlin").andExpect {
+            status { isOk() }
+            jsonPath("$.posts.length()") { value(1) }
+            jsonPath("$.posts[0].title") { value("Published Post") }
+        }
+    }
+
+    @Test
+    fun `GET posts with empty tag returns empty list`() {
+        tagRepository.save(Tag(name = "empty-tag", slug = "empty-tag"))
+
+        mockMvc.get("/posts?tag=empty-tag").andExpect {
             status { isOk() }
             jsonPath("$.posts.length()") { value(0) }
             jsonPath("$.totalCount") { value(0) }

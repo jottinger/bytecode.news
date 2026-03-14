@@ -2977,6 +2977,15 @@
             "default" : "##default",
             "type" : "string"
           }
+        }, {
+          "description" : "Filter by tag name",
+          "in" : "query",
+          "name" : "tag",
+          "required" : false,
+          "schema" : {
+            "default" : "##default",
+            "type" : "string"
+          }
         } ],
         "responses" : {
           "200" : {

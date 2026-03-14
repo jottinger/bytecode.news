@@ -17,6 +17,10 @@ sealed interface FindContentRequest {
     data class FindByCategory(val categoryName: String, val page: Int = 0, val size: Int = 20) :
         FindContentRequest
 
+    /** Fetch approved posts with a named tag, ordered by publishedAt */
+    data class FindByTag(val tagName: String, val page: Int = 0, val size: Int = 20) :
+        FindContentRequest
+
     /** Fetch a single approved page by slug from the _pages system category */
     data class FindPage(val slug: String) : FindContentRequest
 }

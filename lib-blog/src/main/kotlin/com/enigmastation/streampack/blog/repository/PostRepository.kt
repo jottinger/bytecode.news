@@ -56,6 +56,14 @@ interface PostRepository : JpaRepository<Post, UUID> {
     )
     fun findByCategory(categoryName: String, now: Instant, pageable: Pageable): Page<Post>
 
+    /** Posts with a specific tag, excluding system-category content */
+    @Query(
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\') ORDER BY p.publishedAt DESC",
+        countQuery =
+            "SELECT COUNT(p) FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')",
+    )
+    fun findByTag(tagName: String, now: Instant, pageable: Pageable): Page<Post>
+
     /** Single published post by slug in a specific category */
     @Query(
         "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT s FROM Slug s WHERE s.post = p AND s.path = :slugPath) AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName)"

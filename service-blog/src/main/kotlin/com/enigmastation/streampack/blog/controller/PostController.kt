@@ -81,11 +81,14 @@ class PostController(
         @Parameter(description = "Filter by category name")
         @RequestParam(required = false)
         category: String?,
+        @Parameter(description = "Filter by tag name") @RequestParam(required = false) tag: String?,
         httpRequest: HttpServletRequest,
     ): ResponseEntity<*> {
         val user = resolveUser(httpRequest)
         val payload =
-            if (category != null) {
+            if (tag != null) {
+                FindContentRequest.FindByTag(tag, page, size)
+            } else if (category != null) {
                 FindContentRequest.FindByCategory(category, page, size)
             } else {
                 FindContentRequest.FindPublished(page, size)
