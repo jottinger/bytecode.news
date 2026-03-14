@@ -143,6 +143,26 @@ export default async function RootLayout({
 
                     {/* Right: RSS, theme toggle, auth — pushed to far right */}
                     <div className="flex items-center gap-1 ml-auto">
+                      <form action="/search" method="get" className="hidden lg:flex items-center gap-1 px-2">
+                        <label htmlFor="header-search" className="sr-only">
+                          Search posts
+                        </label>
+                        <input
+                          id="header-search"
+                          name="q"
+                          type="search"
+                          placeholder="Search posts..."
+                          className="h-8 w-40 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-amber"
+                        />
+                        <button
+                          type="submit"
+                          className="section-label text-muted-foreground hover:text-amber transition-colors duration-200"
+                          aria-label="Search"
+                        >
+                          🔍
+                        </button>
+                      </form>
+                      <div className="hidden lg:block h-4 w-px bg-border/40" />
                       <a
                         className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
                         href="/feed.xml"
@@ -170,6 +190,25 @@ export default async function RootLayout({
                     >
                       Tags
                     </Link>
+                    <form action="/search" method="get" className="flex items-center gap-1">
+                      <label htmlFor="mobile-header-search" className="sr-only">
+                        Search posts
+                      </label>
+                      <input
+                        id="mobile-header-search"
+                        name="q"
+                        type="search"
+                        placeholder="Search..."
+                        className="h-8 w-28 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-amber"
+                      />
+                      <button
+                        type="submit"
+                        className="section-label text-muted-foreground hover:text-amber transition-colors whitespace-nowrap"
+                        aria-label="Search"
+                      >
+                        🔍
+                      </button>
+                    </form>
                   </nav>
                 </div>
               </header>

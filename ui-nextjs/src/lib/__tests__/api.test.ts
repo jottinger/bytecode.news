@@ -243,4 +243,20 @@ describe("api client", () => {
       "http://localhost:8080/logs?provenance=irc%3A%2F%2Flibera%2F%2523nevet&day=2026-03-12",
     );
   });
+
+  it("fetches search results with encoded query and no-store cache", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      mockJsonResponse(200, { posts: [], page: 0, totalPages: 0, totalCount: 0 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { listSearchPosts } = await import("@/lib/api");
+    await listSearchPosts("java vm", 2, 15);
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "http://localhost:8080/posts/search?q=java+vm&page=2&size=15",
+    );
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    expect(init.cache).toBe("no-store");
+  });
 });
