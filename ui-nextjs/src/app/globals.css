@@ -63,7 +63,7 @@
   --secondary: oklch(0.92 0.01 75);
   --secondary-foreground: oklch(0.22 0.015 55);
   --muted: oklch(0.92 0.01 75);
-  --muted-foreground: oklch(0.45 0.015 55);
+  --muted-foreground: oklch(0.37 0.014 55);
   --accent: oklch(0.92 0.01 75);
   --accent-foreground: oklch(0.22 0.015 55);
   --destructive: oklch(0.577 0.245 27.325);
@@ -99,7 +99,7 @@
   --secondary: oklch(0.18 0.008 60);
   --secondary-foreground: oklch(0.85 0.01 75);
   --muted: oklch(0.18 0.008 60);
-  --muted-foreground: oklch(0.55 0.01 70);
+  --muted-foreground: oklch(0.69 0.01 70);
   --accent: oklch(0.18 0.01 60);
   --accent-foreground: oklch(0.85 0.01 75);
   --destructive: oklch(0.704 0.191 22.216);
@@ -202,8 +202,8 @@
   .article-excerpt {
     font-family: var(--font-body), Georgia, serif;
     font-size: 0.95rem;
-    line-height: 1.65;
-    color: var(--muted-foreground);
+    line-height: 1.58;
+    color: color-mix(in oklab, var(--foreground), var(--background) 34%);
   }
 
   .newspaper-rule {
@@ -285,12 +285,12 @@
   @apply mt-6;
   font-family: var(--font-body), Georgia, serif;
   font-size: 1.05rem;
-  line-height: 1.8;
+  line-height: 1.72;
   color: var(--foreground);
 }
 
 .post-body p {
-  @apply mb-5;
+  @apply mb-4;
   text-indent: 0;
 }
 
@@ -323,7 +323,7 @@
   font-family: var(--font-display), Georgia, serif;
   line-height: 1.15;
   color: var(--foreground);
-  @apply mt-10 mb-4;
+  @apply mt-8 mb-3;
 }
 
 .post-body h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); letter-spacing: -0.02em; }
@@ -334,7 +334,7 @@
 .post-body h6 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
 
 .post-body h2 {
-  @apply pt-6;
+  @apply pt-4;
   border-top: 1px solid var(--border);
 }
 
@@ -363,7 +363,7 @@
 
 .post-body ul,
 .post-body ol {
-  @apply mb-5 pl-6;
+  @apply mb-4 pl-6;
 }
 
 .post-body ul { list-style-type: disc; }
@@ -380,7 +380,7 @@
 }
 
 .post-body blockquote {
-  @apply my-6 py-1 pl-5;
+  @apply my-5 py-1 pl-5;
   border-left: 3px solid var(--amber);
   color: var(--muted-foreground);
   font-style: italic;
@@ -395,13 +395,13 @@
 }
 
 .post-body hr {
-  @apply my-10 border-0;
+  @apply my-8 border-0;
   height: 1px;
   background: var(--border);
 }
 
 .post-body table {
-  @apply w-full mb-5 border-collapse;
+  @apply w-full mb-4 border-collapse;
 }
 
 .post-body th {
@@ -431,11 +431,11 @@
 }
 
 .post-body img {
-  @apply max-w-full h-auto my-6;
+  @apply max-w-full h-auto my-5;
 }
 
 .post-body figure {
-  @apply my-8;
+  @apply my-6;
 }
 
 .post-body figcaption {
@@ -447,7 +447,7 @@
 }
 
 .post-body pre {
-  @apply overflow-auto p-4 my-6;
+  @apply overflow-auto p-4 my-5;
   background: color-mix(in oklab, var(--card), black 5%);
   border: 1px solid var(--border);
 }
@@ -557,7 +557,7 @@
 }
 
 .auth-form {
-  @apply grid gap-2.5;
+  @apply grid gap-2;
 }
 
 .auth-label {
@@ -640,7 +640,7 @@
 }
 
 .comment-block {
-  @apply mt-6 border-t border-border pt-4;
+  @apply mt-5 border-t border-border pt-3;
 }
 
 .comment-title {
