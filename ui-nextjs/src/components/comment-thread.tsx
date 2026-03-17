@@ -130,7 +130,7 @@ function CommentItem({ node, isAdmin, token }: CommentItemProps) {
           </div>
         </form>
       ) : (
-        <HighlightedHtml className="post-body" html={node.renderedHtml} />
+        <HighlightedHtml className="post-body comment-body" html={node.renderedHtml} />
       )}
 
       {isAdmin && !node.deleted ? (
