@@ -654,6 +654,22 @@
   border-left: 2px solid var(--border);
 }
 
+.comment-body > p:first-child {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.comment-body > p:first-child::first-letter {
+  float: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  padding-right: 0;
+  padding-top: 0;
+  color: inherit;
+  font-weight: inherit;
+}
+
 .comment-children {
   @apply mt-1.5;
 }
