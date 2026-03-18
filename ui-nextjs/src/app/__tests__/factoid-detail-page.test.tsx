@@ -1,14 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
-const notFoundSentinel = new Error("NOT_FOUND");
-
-vi.mock("next/navigation", () => ({
-  notFound: () => {
-    throw notFoundSentinel;
-  },
-}));
-
 vi.mock("@/lib/api", () => {
   class ApiError extends Error {
     readonly status: number;
@@ -33,12 +25,14 @@ import { ApiError, getFactoid } from "@/lib/api";
 const getFactoidMock = vi.mocked(getFactoid);
 
 describe("factoid detail page", () => {
-  it("throws notFound for missing selector", async () => {
+  it("renders missing factoid guidance for 404 selector", async () => {
     getFactoidMock.mockRejectedValueOnce(new ApiError(404, "/factoids/missing"));
 
-    await expect(
-      FactoidDetailPage({ params: Promise.resolve({ selector: "missing" }) }),
-    ).rejects.toBe(notFoundSentinel);
+    const element = await FactoidDetailPage({ params: Promise.resolve({ selector: "missing" }) });
+    const html = renderToStaticMarkup(element);
+    expect(html).toContain("Factoid not found");
+    expect(html).toContain("missing");
+    expect(html).toContain("!missing is");
   });
 
   it("renders detail and strips tags/see also prefixes", async () => {

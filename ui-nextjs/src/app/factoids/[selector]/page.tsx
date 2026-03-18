@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ApiError, getFactoid } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { FactoidAttribute } from "@/lib/types";
@@ -137,7 +136,36 @@ export default async function FactoidDetailPage({
     );
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
-      notFound();
+      return (
+        <section className="py-8 md:py-12">
+          <div className="max-w-3xl mx-auto px-6 md:px-8">
+            <Link
+              href={backHref}
+              className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 inline-flex items-center gap-1.5 mb-6"
+            >
+              <span>&larr;</span> Knowledge Base
+            </Link>
+            <article>
+              <header className="mb-6">
+                <div className="border-t-2 border-amber mb-6" />
+                <h1 className="font-display text-foreground leading-tight mb-3" style={{ fontSize: "clamp(1.6rem, 4vw, 2.2rem)", letterSpacing: "-0.02em" }}>
+                  Factoid not found
+                </h1>
+                <p className="text-muted-foreground leading-relaxed">
+                  <code>{decodedSelector}</code> does not exist yet.
+                </p>
+              </header>
+              <div className="border-t border-border/40 mb-6" />
+              <p className="text-muted-foreground leading-relaxed">
+                You can create this factoid through bot operations (for example, in IRC or other connected adapters).
+              </p>
+              <p className="text-muted-foreground leading-relaxed mt-3">
+                Try: <code>!{decodedSelector} is &lt;value&gt;</code>
+              </p>
+            </article>
+          </div>
+        </section>
+      );
     }
     return (
       <section className="container max-w-screen-xl py-12">
