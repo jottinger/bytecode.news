@@ -149,4 +149,22 @@ class MarkdownRenderingServiceTests {
         assertTrue(result.contains("done"))
         assertTrue(result.contains("todo"))
     }
+
+    @Test
+    fun `factoid wikilink selector form renders to factoid href`() {
+        val result = markdownRenderingService.render("See [[kotauth]] for details.")
+        assertTrue(result.contains("<a href=\"/factoids/kotauth\">kotauth</a>"))
+    }
+
+    @Test
+    fun `factoid wikilink label form renders to factoid href with label`() {
+        val result = markdownRenderingService.render("See [[KotAuth|kotauth]] for details.")
+        assertTrue(result.contains("<a href=\"/factoids/kotauth\">KotAuth</a>"))
+    }
+
+    @Test
+    fun `factoid wikilink selector preserves spaces`() {
+        val result = markdownRenderingService.render("See [[spring boot]] for details.")
+        assertTrue(result.contains("<a href=\"/factoids/spring boot\">spring boot</a>"))
+    }
 }

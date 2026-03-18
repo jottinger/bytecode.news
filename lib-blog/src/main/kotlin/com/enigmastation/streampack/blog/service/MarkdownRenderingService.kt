@@ -1,10 +1,14 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.service
 
+import com.vladsch.flexmark.ext.admonition.AdmonitionExtension
+import com.vladsch.flexmark.ext.aside.AsideExtension
 import com.vladsch.flexmark.ext.autolink.AutolinkExtension
+import com.vladsch.flexmark.ext.footnotes.FootnoteExtension
 import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension
 import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension
 import com.vladsch.flexmark.ext.tables.TablesExtension
+import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
@@ -13,7 +17,6 @@ import org.springframework.stereotype.Service
 /** Converts markdown source to sanitized HTML and generates plain-text excerpts */
 @Service
 class MarkdownRenderingService(private val excerptSummarizerService: ExcerptSummarizerService) {
-
     private val parser: Parser
     private val renderer: HtmlRenderer
 
@@ -26,8 +29,19 @@ class MarkdownRenderingService(private val excerptSummarizerService: ExcerptSumm
                 AutolinkExtension.create(),
                 StrikethroughSubscriptExtension.create(),
                 TaskListExtension.create(),
+                WikiLinkExtension.create(),
+                FootnoteExtension.create(),
+                AsideExtension.create(),
+                AdmonitionExtension.create(),
             ),
         )
+        // Route wiki links to factoid detail pages.
+        options.set(WikiLinkExtension.LINK_FIRST_SYNTAX, false)
+        options.set(WikiLinkExtension.LINK_PREFIX, "/factoids/")
+        options.set(WikiLinkExtension.LINK_FILE_EXTENSION, "")
+        // Keep selectors stable: do not rewrite spaces to '-' in wiki targets.
+        options.set(WikiLinkExtension.LINK_ESCAPE_CHARS, "+/<>")
+        options.set(WikiLinkExtension.LINK_REPLACE_CHARS, "----")
         // Strip raw HTML tags from markdown input
         options.set(HtmlRenderer.ESCAPE_HTML, true)
         parser = Parser.builder(options).build()
