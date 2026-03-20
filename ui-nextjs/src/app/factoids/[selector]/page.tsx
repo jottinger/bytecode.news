@@ -30,7 +30,22 @@ function strippedValue(type: string, rendered: string): string {
   if (normalized === "seealso") {
     return rendered.replace(/^see also:\s*/i, "").trim();
   }
+  if (normalized === "url" || normalized === "urls") {
+    return rendered.replace(/^urls?:\s*/i, "").trim();
+  }
   return rendered;
+}
+
+function toSafeHttpUrl(value: string): string | null {
+  const candidate = value.trim();
+  if (!candidate) return null;
+  try {
+    const url = new URL(candidate);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 export default async function FactoidDetailPage({
@@ -107,13 +122,22 @@ export default async function FactoidDetailPage({
                   const rendered = String(attribute.rendered || "").trim();
                   const value = String(attribute.value || "");
                   const text = strippedValue(type, rendered || value);
+                  const normalizedType = String(type).toLowerCase();
+                  const isUrlType = normalizedType === "url" || normalizedType === "urls";
+                  const linkTarget = isUrlType ? toSafeHttpUrl(text) : null;
                   return (
                     <div key={`${type}-${index}`} className="group">
                       <dt className="section-label text-amber mb-1.5">
                         {prettyType(type)}
                       </dt>
                       <dd className="text-foreground leading-relaxed" style={{ fontFamily: "var(--font-body), Georgia, serif" }}>
-                        {text}
+                        {linkTarget ? (
+                          <a href={linkTarget} target="_blank" rel="noreferrer">
+                            {text}
+                          </a>
+                        ) : (
+                          text
+                        )}
                       </dd>
                     </div>
                   );

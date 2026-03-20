@@ -12,11 +12,21 @@ import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension
 import com.vladsch.flexmark.html.HtmlRenderer
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.util.data.MutableDataSet
+import java.net.URI
 import org.springframework.stereotype.Service
 
 /** Converts markdown source to sanitized HTML and generates plain-text excerpts */
 @Service
-class MarkdownRenderingService(private val excerptSummarizerService: ExcerptSummarizerService) {
+class MarkdownRenderingService(
+    private val excerptSummarizerService: ExcerptSummarizerService,
+    private val factoidWikiLinkResolver: FactoidWikiLinkResolver? = null,
+) {
+    private val factoidAnchorPattern =
+        Regex(
+            """<a\b([^>]*?)href=(['"])/factoids/([^'"#?]+)\2([^>]*)>(.*?)</a>""",
+            setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL),
+        )
+
     private val parser: Parser
     private val renderer: HtmlRenderer
 
@@ -52,7 +62,8 @@ class MarkdownRenderingService(private val excerptSummarizerService: ExcerptSumm
     fun render(markdownSource: String): String {
         if (markdownSource.isBlank()) return ""
         val document = parser.parse(markdownSource)
-        return renderer.render(document).trim()
+        val html = renderer.render(document).trim()
+        return resolveFactoidWikiLinks(html)
     }
 
     /** Generate a plain-text excerpt by stripping markup and truncating at word boundary */
@@ -103,5 +114,65 @@ class MarkdownRenderingService(private val excerptSummarizerService: ExcerptSumm
                 "extend $1<$2>",
             )
             .trim()
+    }
+
+    private fun resolveFactoidWikiLinks(html: String): String {
+        if (factoidWikiLinkResolver == null || !html.contains("/factoids/")) return html
+        return factoidAnchorPattern.replace(html) { match ->
+            val beforeAttrs = match.groupValues[1]
+            val selectorRaw = match.groupValues[3]
+            val afterAttrs = match.groupValues[4]
+            val innerHtml = match.groupValues[5]
+            val selector = decodeSelector(selectorRaw)
+            if (selector.isBlank()) return@replace match.value
+
+            val metadata = factoidWikiLinkResolver.resolve(selector) ?: return@replace match.value
+            val href = normalizeHref(metadata.href) ?: return@replace match.value
+            val title = metadata.title?.trim().orEmpty()
+            buildAnchor(beforeAttrs, afterAttrs, innerHtml, href, title)
+        }
+    }
+
+    private fun decodeSelector(selectorRaw: String): String =
+        try {
+            java.net.URLDecoder.decode(selectorRaw, java.nio.charset.StandardCharsets.UTF_8).trim()
+        } catch (_: Exception) {
+            selectorRaw.trim()
+        }
+
+    private fun normalizeHref(candidate: String?): String? {
+        val raw = candidate?.trim().orEmpty()
+        if (raw.isBlank()) return null
+        return try {
+            val uri = URI(raw)
+            val scheme = uri.scheme?.lowercase().orEmpty()
+            if (scheme != "http" && scheme != "https") null else uri.toString()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun htmlEscape(value: String): String =
+        value
+            .replace("&", "&amp;")
+            .replace("\"", "&quot;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+
+    private fun buildAnchor(
+        beforeAttrs: String,
+        afterAttrs: String,
+        innerHtml: String,
+        href: String,
+        title: String,
+    ): String {
+        val mergedAttrs =
+            "$beforeAttrs$afterAttrs"
+                .replace(Regex("""\s+href=(['"]).*?\1""", RegexOption.IGNORE_CASE), "")
+                .replace(Regex("""\s+title=(['"]).*?\1""", RegexOption.IGNORE_CASE), "")
+                .trim()
+        val attrs = if (mergedAttrs.isBlank()) "" else " $mergedAttrs"
+        val titleAttr = if (title.isBlank()) "" else " title=\"${htmlEscape(title)}\""
+        return "<a href=\"${htmlEscape(href)}\"$titleAttr$attrs>$innerHtml</a>"
     }
 }

@@ -46,6 +46,7 @@ describe("factoid detail page", () => {
       attributes: [
         { type: "tags", value: "java", rendered: "tags: java, build tools" },
         { type: "seealso", value: "maven", rendered: "see also: maven, gradle" },
+        { type: "urls", value: "https://mvnd.apache.org", rendered: "URLs: https://mvnd.apache.org" },
         { type: "tags", value: "duplicate", rendered: "tags: duplicate" },
       ],
     });
@@ -59,6 +60,7 @@ describe("factoid detail page", () => {
     expect(html).toContain("mvnd");
     expect(html).toContain("java, build tools");
     expect(html).toContain("maven, gradle");
+    expect(html).toContain('href="https://mvnd.apache.org"');
     expect(html).not.toContain("tags:");
     expect(html).not.toContain("see also:");
     expect(html).not.toContain("duplicate");

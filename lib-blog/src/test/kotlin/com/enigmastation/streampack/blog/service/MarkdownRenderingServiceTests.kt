@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest
 class MarkdownRenderingServiceTests {
     val logger = LoggerFactory.getLogger(this::class.java)
     @Autowired lateinit var markdownRenderingService: MarkdownRenderingService
+    @Autowired lateinit var excerptSummarizerService: ExcerptSummarizerService
 
     @Test
     fun `headings and paragraphs render correctly`() {
@@ -166,5 +167,51 @@ class MarkdownRenderingServiceTests {
     fun `factoid wikilink selector preserves spaces`() {
         val result = markdownRenderingService.render("See [[spring boot]] for details.")
         assertTrue(result.contains("<a href=\"/factoids/spring boot\">spring boot</a>"))
+    }
+
+    @Test
+    fun `factoid wikilink resolver prefers factoid url and title`() {
+        val rendererWithResolver =
+            MarkdownRenderingService(
+                excerptSummarizerService,
+                object : FactoidWikiLinkResolver {
+                    override fun resolve(selector: String): FactoidWikiLinkMetadata? =
+                        if (selector == "thing") {
+                            FactoidWikiLinkMetadata(
+                                href = "https://thing.com",
+                                title = "thing is a thing, of course, of course",
+                            )
+                        } else {
+                            null
+                        }
+                },
+            )
+
+        val result = rendererWithResolver.render("See [[thing]] now.")
+        assertTrue(
+            result.contains(
+                "<a href=\"https://thing.com\" title=\"thing is a thing, of course, of course\">thing</a>"
+            )
+        )
+    }
+
+    @Test
+    fun `factoid wikilink resolver ignores non-http targets`() {
+        val rendererWithResolver =
+            MarkdownRenderingService(
+                excerptSummarizerService,
+                object : FactoidWikiLinkResolver {
+                    override fun resolve(selector: String): FactoidWikiLinkMetadata? =
+                        if (selector == "thing") {
+                            FactoidWikiLinkMetadata(href = "javascript:alert(1)", title = "unsafe")
+                        } else {
+                            null
+                        }
+                },
+            )
+
+        val result = rendererWithResolver.render("See [[thing]] now.")
+        assertTrue(result.contains("<a href=\"/factoids/thing\">thing</a>"))
+        assertTrue(!result.contains("javascript:"))
     }
 }

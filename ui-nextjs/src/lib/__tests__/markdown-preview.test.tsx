@@ -39,4 +39,22 @@ describe("MarkdownPreview", () => {
     expect(html).toContain("&lt;");
     expect(html).toContain("</code></pre>");
   });
+
+  it("renders factoid wikilink selector syntax", () => {
+    const html = renderToStaticMarkup(<MarkdownPreview source={"See [[kotauth]]"} />);
+    expect(html).toContain('href="/factoids/kotauth"');
+    expect(html).toContain(">kotauth<");
+  });
+
+  it("renders factoid wikilink label syntax", () => {
+    const html = renderToStaticMarkup(<MarkdownPreview source={"See [[KotAuth|kotauth]]"} />);
+    expect(html).toContain('href="/factoids/kotauth"');
+    expect(html).toContain(">KotAuth<");
+  });
+
+  it("renders factoid wikilink with encoded spaces in href", () => {
+    const html = renderToStaticMarkup(<MarkdownPreview source={"See [[comprehension debt]]"} />);
+    expect(html).toContain('href="/factoids/comprehension%20debt"');
+    expect(html).toContain(">comprehension debt<");
+  });
 });
