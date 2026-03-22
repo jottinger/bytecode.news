@@ -15,6 +15,9 @@ describe("docker nginx SSR routing", () => {
     expect(conf).toContain("proxy_ssl_server_name on;");
     expect(conf).toContain("proxy_set_header Host ${BACKEND_HOST};");
     expect(conf).toContain("proxy_set_header X-Forwarded-Host $host;");
+    expect(conf).toContain("proxy_set_header X-Forwarded-Port $server_port;");
+    expect(conf).toContain("proxy_set_header X-Forwarded-Proto $scheme;");
+    expect(conf).toContain("proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;");
     expect(conf).toContain("proxy_pass ${BACKEND_SCHEME}://${BACKEND_HOST}/sitemap.xml;");
     expect(conf).toContain("proxy_pass ${BACKEND_SCHEME}://${BACKEND_HOST}/feed.xml;");
     expect(conf).toContain("location /posts/");
