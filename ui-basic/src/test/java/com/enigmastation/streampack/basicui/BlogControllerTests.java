@@ -5,6 +5,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.http.MediaType.APPLICATION_XML;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -118,12 +119,22 @@ class BlogControllerTests {
     server
         .expect(requestTo("http://backend.test/feed.xml"))
         .andExpect(method(HttpMethod.GET))
+        .andExpect(header("Host", "bytecode.news"))
+        .andExpect(header("X-Forwarded-Host", "bytecode.news"))
+        .andExpect(header("X-Forwarded-Proto", "https"))
+        .andExpect(header("X-Forwarded-Port", "443"))
         .andRespond(
             withSuccess(
                 "<rss><channel><title>ByteCode.News</title></channel></rss>", APPLICATION_XML));
 
     mockMvc
-        .perform(get("/feed.xml"))
+        .perform(
+            get("/feed.xml")
+                .header("Host", "bytecode.news")
+                .header("X-Forwarded-Host", "bytecode.news")
+                .header("X-Forwarded-Proto", "https")
+                .header("X-Forwarded-Port", "443")
+                .secure(true))
         .andExpect(status().isOk())
         .andExpect(content().contentTypeCompatibleWith("application/xml"))
         .andExpect(content().string(org.hamcrest.Matchers.containsString("ByteCode.News")));

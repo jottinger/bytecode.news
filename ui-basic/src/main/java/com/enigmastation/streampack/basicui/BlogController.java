@@ -68,14 +68,52 @@ public class BlogController {
   }
 
   @GetMapping(value = "/feed.xml", produces = MediaType.APPLICATION_XML_VALUE)
-  public ResponseEntity<String> feed() {
+  public ResponseEntity<String> feed(HttpServletRequest request) {
     try {
-      BlogApiClient.FeedResponse feed = blogApiClient.fetchFeedXml();
+      String host = forwardedHost(request);
+      String proto = forwardedProto(request);
+      String port = forwardedPort(request, proto);
+      BlogApiClient.FeedResponse feed = blogApiClient.fetchFeedXml(host, proto, port);
       MediaType contentType =
           feed.contentType() != null ? feed.contentType() : MediaType.APPLICATION_XML;
       return ResponseEntity.status(feed.status()).contentType(contentType).body(feed.body());
     } catch (RestClientException exception) {
       throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Unable to load feed", exception);
     }
+  }
+
+  private String forwardedHost(HttpServletRequest request) {
+    String forwardedHost = request.getHeader("X-Forwarded-Host");
+    if (forwardedHost != null && !forwardedHost.isBlank()) {
+      return forwardedHost.split(",")[0].trim();
+    }
+    String host = request.getHeader("Host");
+    if (host != null && !host.isBlank()) {
+      return host.trim();
+    }
+    return request.getServerName();
+  }
+
+  private String forwardedProto(HttpServletRequest request) {
+    String forwardedProto = request.getHeader("X-Forwarded-Proto");
+    if (forwardedProto != null && !forwardedProto.isBlank()) {
+      String value = forwardedProto.split(",")[0].trim().toLowerCase();
+      if ("http".equals(value) || "https".equals(value)) {
+        return value;
+      }
+    }
+    return request.isSecure() ? "https" : "http";
+  }
+
+  private String forwardedPort(HttpServletRequest request, String proto) {
+    String forwardedPort = request.getHeader("X-Forwarded-Port");
+    if (forwardedPort != null && !forwardedPort.isBlank()) {
+      return forwardedPort.split(",")[0].trim();
+    }
+    int serverPort = request.getServerPort();
+    if (serverPort > 0) {
+      return String.valueOf(serverPort);
+    }
+    return "https".equals(proto) ? "443" : "80";
   }
 }

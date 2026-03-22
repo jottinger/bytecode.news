@@ -60,10 +60,20 @@ public class BlogApiClient {
     return restTemplate.getForObject(url, CommentThreadResponse.class);
   }
 
-  public FeedResponse fetchFeedXml() {
+  public FeedResponse fetchFeedXml(String forwardedHost, String forwardedProto, String forwardedPort) {
     String url = UriComponentsBuilder.fromUriString(baseUrl).path("/feed.xml").toUriString();
     HttpHeaders headers = new HttpHeaders();
     headers.setAccept(List.of(MediaType.APPLICATION_XML));
+    if (forwardedHost != null && !forwardedHost.isBlank()) {
+      headers.set("Host", forwardedHost);
+      headers.set("X-Forwarded-Host", forwardedHost);
+    }
+    if (forwardedProto != null && !forwardedProto.isBlank()) {
+      headers.set("X-Forwarded-Proto", forwardedProto);
+    }
+    if (forwardedPort != null && !forwardedPort.isBlank()) {
+      headers.set("X-Forwarded-Port", forwardedPort);
+    }
     HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
     ResponseEntity<String> response =
         restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
