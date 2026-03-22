@@ -36,6 +36,34 @@ describe("feed.xml route", () => {
     expect(headers.get("X-Forwarded-Port")).toBe("443");
   });
 
+  it("prefers forwarded headers over internal request URL", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response("<rss></rss>", {
+        status: 200,
+        headers: { "content-type": "application/xml" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await GET(
+      new Request("http://0.0.0.0:3000/feed.xml", {
+        headers: {
+          "x-forwarded-host": "bytecode.news",
+          "x-forwarded-proto": "https",
+          "x-forwarded-port": "443",
+        },
+      }),
+    );
+    expect(response.status).toBe(200);
+
+    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const headers = new Headers(init.headers);
+    expect(headers.get("Host")).toBe("bytecode.news");
+    expect(headers.get("X-Forwarded-Host")).toBe("bytecode.news");
+    expect(headers.get("X-Forwarded-Proto")).toBe("https");
+    expect(headers.get("X-Forwarded-Port")).toBe("443");
+  });
+
   it("returns 503 fallback when backend feed fails", async () => {
     const fetchMock = vi.fn().mockRejectedValue(new Error("down"));
     vi.stubGlobal("fetch", fetchMock);

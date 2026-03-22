@@ -3,14 +3,24 @@ import { getBackendBaseUrl } from "@/lib/backend-url";
 export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url);
+    const forwardedHost = firstHeaderValue(request.headers.get("x-forwarded-host"));
+    const host = forwardedHost || firstHeaderValue(request.headers.get("host")) || requestUrl.host;
+    const forwardedProto = firstHeaderValue(request.headers.get("x-forwarded-proto"));
+    const proto =
+      forwardedProto === "http" || forwardedProto === "https"
+        ? forwardedProto
+        : requestUrl.protocol.replace(":", "");
+    const forwardedPort = firstHeaderValue(request.headers.get("x-forwarded-port"));
+    const port = forwardedPort || requestUrl.port || (proto === "https" ? "443" : "80");
+
     const backendUrl = `${getBackendBaseUrl()}/feed.xml`;
     const response = await fetch(backendUrl, {
       headers: {
         Accept: "application/xml,text/xml;q=0.9,*/*;q=0.8",
-        Host: requestUrl.host,
-        "X-Forwarded-Host": requestUrl.host,
-        "X-Forwarded-Proto": requestUrl.protocol.replace(":", ""),
-        "X-Forwarded-Port": requestUrl.port || (requestUrl.protocol === "https:" ? "443" : "80"),
+        Host: host,
+        "X-Forwarded-Host": host,
+        "X-Forwarded-Proto": proto,
+        "X-Forwarded-Port": port,
       },
       next: { revalidate: 30 },
     });
@@ -33,4 +43,11 @@ export async function GET(request: Request) {
       },
     });
   }
+}
+
+function firstHeaderValue(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+  return value.split(",")[0]?.trim() || null;
 }
