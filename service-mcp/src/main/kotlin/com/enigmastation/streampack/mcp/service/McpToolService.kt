@@ -13,7 +13,7 @@ import com.enigmastation.streampack.factoid.service.FactoidService
 import com.enigmastation.streampack.taxonomy.model.FindTaxonomySnapshotRequest
 import com.enigmastation.streampack.taxonomy.model.TaxonomySnapshot
 import java.net.URI
-import java.util.UUID
+import java.util.*
 import org.springframework.data.domain.PageRequest
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Service
@@ -227,6 +227,14 @@ class McpToolService(
                         "Use '.url', '.tags', '.languages', '.type', '.seealso', '.see', or '.maven' to set attributes.",
                         "Comma-delimit list attributes such as tags and urls.",
                         "Selectors are typically normalized to lowercase.",
+                        "Generated output is a draft for human review — omit attributes you are uncertain about rather than guessing.",
+                    ),
+                "agentGuidance" to
+                    listOf(
+                        "Generate lean drafts: text and url at minimum, tags sparingly.",
+                        "Do not populate 'see' unless you are certain of the redirect target.",
+                        "Do not use post URLs in 'seealso' — only factoid selectors belong there.",
+                        "Leave ambiguous attributes for human review.",
                     ),
             )
         )
