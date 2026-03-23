@@ -4,8 +4,10 @@ package com.enigmastation.streampack.mcp.controller
 import com.enigmastation.streampack.core.json.JacksonMappers
 import com.enigmastation.streampack.mcp.service.McpToolService
 import com.enigmastation.streampack.mcp.service.ToolResult
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -38,6 +40,25 @@ class McpController(private val toolService: McpToolService) {
                 else -> error(id, -32601, "Method not found: $method")
             }
         return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/mcp", produces = [MediaType.TEXT_PLAIN_VALUE])
+    fun info(): ResponseEntity<String> {
+        val message =
+            """
+            bytecode.news MCP endpoint
+
+            This endpoint uses JSON-RPC 2.0 over HTTP POST.
+            Send POST /mcp with a JSON body using methods:
+            - initialize
+            - tools/list
+            - tools/call
+
+            Example:
+            {"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}
+            """
+                .trimIndent()
+        return ResponseEntity.status(HttpStatus.OK).body(message)
     }
 
     private fun initializeResult() =

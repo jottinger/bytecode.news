@@ -221,10 +221,17 @@ class McpToolService(
                     ),
                 "attributeKeys" to
                     listOf("text", "url", "tags", "languages", "type", "seealso", "see", "maven"),
+                "attributeSemantics" to
+                    mapOf(
+                        "see" to
+                            "Redirect alias for canonical selector resolution (not a reference list).",
+                        "seealso" to "Cross-reference list of related factoid selectors.",
+                    ),
                 "notes" to
                     listOf(
                         "Use '!selector is <reply>text' for literal text replies.",
                         "Use '.url', '.tags', '.languages', '.type', '.seealso', '.see', or '.maven' to set attributes.",
+                        "Important: '.see' means redirect/alias behavior, not 'related reference'.",
                         "Comma-delimit list attributes such as tags and urls.",
                         "Selectors are typically normalized to lowercase.",
                         "Generated output is a draft for human review — omit attributes you are uncertain about rather than guessing.",
@@ -232,7 +239,7 @@ class McpToolService(
                 "agentGuidance" to
                     listOf(
                         "Generate lean drafts: text and url at minimum, tags sparingly.",
-                        "Do not populate 'see' unless you are certain of the redirect target.",
+                        "Only populate 'see' when you intend a strict redirect alias.",
                         "Do not use post URLs in 'seealso' — only factoid selectors belong there.",
                         "Leave ambiguous attributes for human review.",
                     ),
