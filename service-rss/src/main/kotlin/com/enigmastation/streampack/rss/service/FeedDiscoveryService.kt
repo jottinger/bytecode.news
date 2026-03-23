@@ -52,55 +52,61 @@ class FeedDiscoveryService(private val properties: RssProperties) {
     }
 
     private fun fetchBody(url: String): String? {
-        return try {
-            val client =
-                HttpClient.newBuilder()
-                    .followRedirects(HttpClient.Redirect.NORMAL)
-                    .connectTimeout(Duration.ofSeconds(properties.connectTimeoutSeconds.toLong()))
-                    .build()
-            val request =
-                HttpRequest.newBuilder()
-                    .uri(URI(url))
-                    .timeout(Duration.ofSeconds(properties.readTimeoutSeconds.toLong()))
-                    .header(
-                        "User-Agent",
-                        "Mozilla/5.0 (compatible; Nevet/1.0; +https://bytecode.news)",
-                    )
-                    .header(
-                        "Accept",
-                        "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html, */*;q=0.8",
-                    )
-                    .GET()
-                    .build()
-            val response = client.send(request, HttpResponse.BodyHandlers.ofString())
-            val contentType = response.headers().firstValue("content-type").orElse("(none)")
-            val body = response.body()
-            logger.debug(
-                "HTTP {} from {} (content-type: {}, body: {} bytes)",
-                response.statusCode(),
-                url,
-                contentType,
-                body?.length ?: 0,
-            )
-            if (response.statusCode() in 200..299) {
-                body
-            } else {
-                // Return body on non-2xx if it looks like XML; some servers misconfigure status
-                // codes
-                if (body != null && body.trimStart().startsWith("<?xml", ignoreCase = true)) {
-                    logger.debug(
-                        "Non-2xx response contains XML, attempting parse anyway for {}",
-                        url,
-                    )
-                    body
+        val client =
+            HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(Duration.ofSeconds(properties.connectTimeoutSeconds.toLong()))
+                .build()
+
+        repeat(2) { attempt ->
+            try {
+                val request =
+                    HttpRequest.newBuilder()
+                        .uri(URI(url))
+                        .timeout(Duration.ofSeconds(properties.readTimeoutSeconds.toLong()))
+                        .header(
+                            "User-Agent",
+                            "Mozilla/5.0 (compatible; Nevet/1.0; +https://bytecode.news)",
+                        )
+                        .header(
+                            "Accept",
+                            "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html, */*;q=0.8",
+                        )
+                        .GET()
+                        .build()
+                val response = client.send(request, HttpResponse.BodyHandlers.ofString())
+                val contentType = response.headers().firstValue("content-type").orElse("(none)")
+                val body = response.body()
+                logger.debug(
+                    "HTTP {} from {} (content-type: {}, body: {} bytes)",
+                    response.statusCode(),
+                    url,
+                    contentType,
+                    body?.length ?: 0,
+                )
+                if (response.statusCode() in 200..299) {
+                    return body
                 } else {
-                    null
+                    // Return body on non-2xx if it looks like XML; some servers misconfigure status
+                    // codes
+                    if (body != null && body.trimStart().startsWith("<?xml", ignoreCase = true)) {
+                        logger.debug(
+                            "Non-2xx response contains XML, attempting parse anyway for {}",
+                            url,
+                        )
+                        return body
+                    }
+                    return null
+                }
+            } catch (e: Exception) {
+                logger.debug("Failed to fetch {} on attempt {}: {}", url, attempt + 1, e.message)
+                if (attempt == 0) {
+                    Thread.sleep(100)
                 }
             }
-        } catch (e: Exception) {
-            logger.debug("Failed to fetch {}: {}", url, e.message)
-            null
         }
+
+        return null
     }
 
     private fun tryParseFeed(url: String, body: String): com.rometools.rome.feed.synd.SyndFeed? {
