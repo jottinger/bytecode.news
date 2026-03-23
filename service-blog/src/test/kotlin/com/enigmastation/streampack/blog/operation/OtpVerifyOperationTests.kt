@@ -67,6 +67,11 @@ class OtpVerifyOperationTests {
         val user = userRepository.findByEmail("newuser@example.com")
         assertNotNull(user)
         assertTrue(user!!.emailVerified)
+        assertEquals(
+            null,
+            oneTimeCodeRepository.findByEmailAndCode("newuser@example.com", "123456"),
+            "successful verification should delete the OTP row",
+        )
     }
 
     @Test
@@ -105,6 +110,32 @@ class OtpVerifyOperationTests {
         val result = eventGateway.process(verifyMessage("user@example.com", "123456"))
 
         assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            null,
+            oneTimeCodeRepository.findByEmailAndCode("user@example.com", "123456"),
+            "expired OTP should be opportunistically cleaned",
+        )
+    }
+
+    @Test
+    fun `already-used code is not reusable and gets cleaned`() {
+        oneTimeCodeRepository.saveAndFlush(
+            OneTimeCode(
+                email = "user@example.com",
+                code = "444444",
+                expiresAt = Instant.now().plusSeconds(300),
+                usedAt = Instant.now().minusSeconds(30),
+            )
+        )
+
+        val result = eventGateway.process(verifyMessage("user@example.com", "444444"))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals(
+            null,
+            oneTimeCodeRepository.findByEmailAndCode("user@example.com", "444444"),
+            "already-used OTP should not be reusable and should be cleaned",
+        )
     }
 
     @Test

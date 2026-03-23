@@ -153,6 +153,7 @@ Type `exit` or `quit` to stop.
 | [Architecture](docs/architecture.md) | Backend contributors | Messaging pipeline, operation system, module design |
 | [Deployment](docs/deployment.md) | Ops / self-hosters | Local setup, production deployment, adapter configuration |
 | [Authentication](docs/authentication.md) | All | OTP, OIDC, JWT, account lifecycle |
+| [MCP Guide](docs/mcp.md) | AI/tool integrators | MCP endpoint connection, tool discovery, and JSON-RPC usage |
 
 ## License
 

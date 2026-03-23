@@ -28,4 +28,24 @@ interface OneTimeCodeRepository : JpaRepository<OneTimeCode, UUID> {
     @Modifying
     @Query("DELETE FROM OneTimeCode c WHERE c.expiresAt < :cutoff")
     fun deleteExpired(cutoff: Instant)
+
+    /** Removes used and expired codes in one pass */
+    @Modifying
+    @Query("DELETE FROM OneTimeCode c WHERE c.expiresAt < :cutoff OR c.usedAt IS NOT NULL")
+    fun deleteStale(cutoff: Instant): Int
+
+    /** Removes used and expired codes for a specific email */
+    @Modifying
+    @Query(
+        "DELETE FROM OneTimeCode c WHERE c.email = :email AND (c.expiresAt < :cutoff OR c.usedAt IS NOT NULL)"
+    )
+    fun deleteStaleByEmail(email: String, cutoff: Instant): Int
+
+    /** Atomically consumes a valid code by deleting it */
+    @Modifying
+    @Query(
+        "DELETE FROM OneTimeCode c WHERE c.email = :email AND c.code = :code " +
+            "AND c.usedAt IS NULL AND c.expiresAt > :now"
+    )
+    fun consumeValidCode(email: String, code: String, now: Instant): Int
 }
