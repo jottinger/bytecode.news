@@ -5,6 +5,19 @@ import { createEditor } from "../editor.js";
 import { renderError } from "../components/error-display.js";
 import { navigate } from "../router.js";
 
+function enableAutoGrow(textarea, minRows = 3) {
+  if (!textarea) return;
+  textarea.rows = minRows;
+  const lineHeight = 22;
+  const minHeight = lineHeight * minRows;
+  const resize = () => {
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.max(textarea.scrollHeight, minHeight)}px`;
+  };
+  textarea.addEventListener("input", resize);
+  resize();
+}
+
 function normalizeTags(payload) {
   const raw = payload && typeof payload === "object" && "tags" in payload ? payload.tags : payload;
   if (Array.isArray(raw)) {
@@ -45,7 +58,7 @@ export async function render(container) {
 
       ${isAuthenticated ? `
       <label for="summary">Summary (optional)</label>
-      <textarea id="summary" name="summary" rows="4" placeholder="Optional manual summary for feed/front page excerpts."></textarea>
+      <textarea id="summary" name="summary" rows="3" placeholder="Optional manual summary for feed/front page excerpts."></textarea>
       ` : ""}
 
       <label for="tags">Tags (comma-separated)</label>
@@ -72,6 +85,7 @@ export async function render(container) {
   const tagsInput = document.getElementById("tags");
   const status = document.getElementById("submit-status");
   const summaryInput = document.getElementById("summary");
+  enableAutoGrow(summaryInput, 3);
 
   if (isAuthenticated) {
     document.getElementById("derive-summary-btn").addEventListener("click", async () => {

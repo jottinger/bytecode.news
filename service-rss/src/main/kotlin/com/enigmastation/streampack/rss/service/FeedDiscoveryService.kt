@@ -11,6 +11,7 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
+import java.util.LinkedHashSet
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -123,24 +124,73 @@ class FeedDiscoveryService(private val properties: RssProperties) {
     /** Parse HTML for alternate feed links and try each one until a valid feed is found */
     private fun discoverFromHtml(baseUrl: String, html: String): DiscoveryResult? {
         val document = Jsoup.parse(html, baseUrl)
-        val feedLinks =
-            document.select(
-                "link[rel=alternate][type=application/rss+xml], " +
-                    "link[rel=alternate][type=application/atom+xml]"
-            )
+        // Standard feed discovery: rel=alternate links with feed-ish MIME types.
+        val alternateFeedHrefs =
+            document
+                .select(
+                    "link[rel~=alternate][type*=rss+xml], " +
+                        "link[rel~=alternate][type*=atom+xml], " +
+                        "link[rel~=alternate][type*=application/xml], " +
+                        "link[rel~=alternate][type*=text/xml]"
+                )
+                .map { it.absUrl("href") }
+                .filter { it.isNotBlank() }
 
-        for (link in feedLinks) {
-            val href = link.absUrl("href")
-            if (href.isBlank()) continue
+        discoverFromCandidates(baseUrl, alternateFeedHrefs)?.let {
+            return it
+        }
 
+        // Pragmatic fallback: many sites link feed URLs as plain anchors in nav/footer.
+        val hintedHrefs =
+            document
+                .select("a[href], link[href]")
+                .map { it.absUrl("href") }
+                .filter { it.isNotBlank() && FEED_HINT_REGEX.containsMatchIn(it) }
+        discoverFromCandidates(baseUrl, hintedHrefs)?.let {
+            return it
+        }
+
+        // Last resort for root/domain URLs: try common feed paths.
+        discoverFromCandidates(baseUrl, commonFeedCandidates(baseUrl))?.let {
+            return it
+        }
+
+        logger.debug("No feed discovered from HTML/candidates for {}", baseUrl)
+        return null
+    }
+
+    private fun discoverFromCandidates(
+        baseUrl: String,
+        candidates: List<String>,
+    ): DiscoveryResult? {
+        val ordered = LinkedHashSet(candidates)
+        for (href in ordered) {
             val feedBody = fetchBody(href) ?: continue
             val feed = tryParseFeed(href, feedBody)
             if (feed != null) {
+                logger.debug("Discovered feed candidate {} from {}", href, baseUrl)
                 return DiscoveryResult(feedUrl = href, feed = feed)
             }
         }
-
-        logger.debug("No feed links discovered in HTML from {}", baseUrl)
         return null
+    }
+
+    private fun commonFeedCandidates(baseUrl: String): List<String> {
+        val uri = runCatching { URI(baseUrl) }.getOrNull() ?: return emptyList()
+        val authority = uri.authority ?: return emptyList()
+        val root = "${uri.scheme}://$authority"
+        return listOf(
+            "$root/feed.xml",
+            "$root/rss.xml",
+            "$root/atom.xml",
+            "$root/index.xml",
+            "$root/feed",
+            "$root/rss",
+            "$root/atom",
+        )
+    }
+
+    companion object {
+        private val FEED_HINT_REGEX = Regex("(?i)(/|\\b)(feed|rss|atom)(\\.xml)?([/?#].*)?$")
     }
 }

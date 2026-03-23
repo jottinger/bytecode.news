@@ -113,6 +113,64 @@ class FeedDiscoveryServiceTests {
     }
 
     @Test
+    fun `HTML page with anchor feed link discovers and parses the feed`() {
+        httpServer.createContext("/") { exchange ->
+            val html =
+                """
+                <!DOCTYPE html>
+                <html>
+                <head><title>Site</title></head>
+                <body><a href="/feed.xml">RSS</a></body>
+                </html>
+                """
+                    .trimIndent()
+            exchange.responseHeaders.add("Content-Type", "text/html")
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+        httpServer.createContext("/feed.xml") { exchange ->
+            val rss = sampleRss("Anchor Feed", 2)
+            exchange.responseHeaders.add("Content-Type", "application/rss+xml")
+            exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+
+        val result = service.discover(baseUrl)
+        assertNotNull(result)
+        assertEquals("$baseUrl/feed.xml", result!!.feedUrl)
+        assertEquals("Anchor Feed", result.feed.title)
+    }
+
+    @Test
+    fun `HTML page with no feed hints falls back to common feed path`() {
+        httpServer.createContext("/") { exchange ->
+            val html =
+                """
+                <!DOCTYPE html>
+                <html>
+                <head><title>Site</title></head>
+                <body><p>No feed hints here.</p></body>
+                </html>
+                """
+                    .trimIndent()
+            exchange.responseHeaders.add("Content-Type", "text/html")
+            exchange.sendResponseHeaders(200, html.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(html.toByteArray()) }
+        }
+        httpServer.createContext("/feed.xml") { exchange ->
+            val rss = sampleRss("Fallback Feed", 1)
+            exchange.responseHeaders.add("Content-Type", "application/rss+xml")
+            exchange.sendResponseHeaders(200, rss.toByteArray().size.toLong())
+            exchange.responseBody.use { it.write(rss.toByteArray()) }
+        }
+
+        val result = service.discover(baseUrl)
+        assertNotNull(result)
+        assertEquals("$baseUrl/feed.xml", result!!.feedUrl)
+        assertEquals("Fallback Feed", result.feed.title)
+    }
+
+    @Test
     fun `invalid URL returns null`() {
         val result = service.discover("http://localhost:1/nonexistent")
         assertNull(result)

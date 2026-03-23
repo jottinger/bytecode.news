@@ -5,6 +5,19 @@ import { renderError } from "../components/error-display.js";
 import { getPrincipal } from "../auth.js";
 import { hasRole } from "../roles.js";
 
+function enableAutoGrow(textarea, minRows = 3) {
+  if (!textarea) return;
+  textarea.rows = minRows;
+  const lineHeight = 22;
+  const minHeight = lineHeight * minRows;
+  const resize = () => {
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.max(textarea.scrollHeight, minHeight)}px`;
+  };
+  textarea.addEventListener("input", resize);
+  resize();
+}
+
 function normalizeTags(payload) {
   const raw = payload && typeof payload === "object" && "tags" in payload ? payload.tags : payload;
   if (Array.isArray(raw)) {
@@ -62,7 +75,7 @@ export async function render(container, params) {
         <textarea id="markdownSource" name="markdownSource"></textarea>
 
         <label for="summary">Summary (optional)</label>
-        <textarea id="summary" name="summary" rows="4">${escapeHtml(postDetail.excerpt || "")}</textarea>
+        <textarea id="summary" name="summary" rows="3">${escapeHtml(postDetail.excerpt || "")}</textarea>
 
         <label for="tags">Tags (comma-separated)</label>
         <input type="text" id="tags" name="tags" value="${escapeAttr(currentTags)}" />
@@ -124,6 +137,7 @@ export async function render(container, params) {
 
     const form = document.getElementById("edit-form");
     const summaryInput = document.getElementById("summary");
+    enableAutoGrow(summaryInput, 3);
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       await savePost(form);
