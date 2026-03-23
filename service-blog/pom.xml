@@ -45,7 +45,7 @@
         </dependency>
         <dependency>
             <groupId>com.enigmastation</groupId>
-            <artifactId>operation-factoid</artifactId>
+            <artifactId>lib-factoid</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -73,6 +73,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.enigmastation</groupId>
+            <artifactId>operation-factoid</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -22,18 +22,20 @@ function prettyType(type: string): string {
   return normalized === "seealso" ? "See Also" : normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
-function strippedValue(type: string, rendered: string): string {
+function splitValues(value: string): string[] {
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+}
+
+function attributeValues(type: string, value: string, rendered: string): string[] {
   const normalized = type.toLowerCase();
-  if (normalized === "tags") {
-    return rendered.replace(/^tags?:\s*/i, "").trim();
+  if (normalized === "tags" || normalized === "seealso" || normalized === "url" || normalized === "urls") {
+    return splitValues(value);
   }
-  if (normalized === "seealso") {
-    return rendered.replace(/^see also:\s*/i, "").trim();
-  }
-  if (normalized === "url" || normalized === "urls") {
-    return rendered.replace(/^urls?:\s*/i, "").trim();
-  }
-  return rendered;
+  const text = rendered.trim() || value.trim();
+  return text ? [text] : [];
 }
 
 function toSafeHttpUrl(value: string): string | null {
@@ -121,22 +123,48 @@ export default async function FactoidDetailPage({
                   const type = String(attribute.type || "");
                   const rendered = String(attribute.rendered || "").trim();
                   const value = String(attribute.value || "");
-                  const text = strippedValue(type, rendered || value);
                   const normalizedType = String(type).toLowerCase();
+                  const values = attributeValues(type, value, rendered);
                   const isUrlType = normalizedType === "url" || normalizedType === "urls";
-                  const linkTarget = isUrlType ? toSafeHttpUrl(text) : null;
+                  const isSeeAlsoType = normalizedType === "seealso";
                   return (
                     <div key={`${type}-${index}`} className="group">
                       <dt className="section-label text-amber mb-1.5">
                         {prettyType(type)}
                       </dt>
                       <dd className="text-foreground leading-relaxed" style={{ fontFamily: "var(--font-body), Georgia, serif" }}>
-                        {linkTarget ? (
-                          <a href={linkTarget} target="_blank" rel="noreferrer">
-                            {text}
-                          </a>
+                        {values.length === 0 ? (
+                          <span className="text-muted-foreground">None</span>
+                        ) : isUrlType ? (
+                          <>
+                            {values.map((entry, valueIndex) => {
+                              const linkTarget = toSafeHttpUrl(entry);
+                              const key = `${type}-url-${valueIndex}`;
+                              return (
+                                <span key={key}>
+                                  {valueIndex > 0 ? ", " : ""}
+                                  {linkTarget ? (
+                                    <a href={linkTarget} target="_blank" rel="noreferrer">
+                                      {entry}
+                                    </a>
+                                  ) : (
+                                    entry
+                                  )}
+                                </span>
+                              );
+                            })}
+                          </>
+                        ) : isSeeAlsoType ? (
+                          <>
+                            {values.map((entry, valueIndex) => (
+                              <span key={`${type}-seealso-${valueIndex}`}>
+                                {valueIndex > 0 ? ", " : ""}
+                                <Link href={`/factoids/${encodeURIComponent(entry)}`}>{entry}</Link>
+                              </span>
+                            ))}
+                          </>
                         ) : (
-                          text
+                          values.join(", ")
                         )}
                       </dd>
                     </div>
