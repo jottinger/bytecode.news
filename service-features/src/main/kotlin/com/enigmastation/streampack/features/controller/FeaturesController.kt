@@ -55,7 +55,14 @@ class FeaturesController(
         val version = buildVersionInfo()
         val authentication = buildAuthenticationFeatures()
         val operationGroups = operations.mapNotNull { it.operationGroup }.distinct().sorted()
-        val adapters = protocolAdapters.map { it.protocol.name.lowercase() }.distinct().sorted()
+        val adapters =
+            buildList {
+                    addAll(protocolAdapters.map { it.protocol.name.lowercase() })
+                    // MCP is an HTTP JSON-RPC adapter, not a ProtocolAdapter implementation.
+                    if (applicationContext.containsBean("mcpController")) add("mcp")
+                }
+                .distinct()
+                .sorted()
         val ai = applicationContext.containsBean("aiService")
 
         return FeaturesResponse(
