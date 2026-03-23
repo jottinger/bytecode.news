@@ -47,6 +47,37 @@ See [Authentication](authentication.md) for details on the OTP and OIDC flows.
 }
 ```
 
+## Implemented Endpoints: MCP
+
+---
+
+### POST /mcp
+
+Read-only MCP-compatible JSON-RPC endpoint.
+
+- **Auth**: None
+- **Content type**: `application/json`
+- **Protocol**: JSON-RPC 2.0
+- **Purpose**: LLM/tool access to public posts, factoids, and taxonomy
+
+Supported methods:
+
+1. `initialize`
+2. `tools/list`
+3. `tools/call`
+
+Supported tools (via `tools/call`):
+
+1. `search_posts`
+2. `get_post`
+3. `list_factoids`
+4. `get_factoid`
+5. `search_factoids`
+6. `list_taxonomy`
+7. `factoid_write_reference`
+
+See [MCP Guide](mcp.md) for full request/response examples and connection details.
+
 ## Implemented Endpoints: Authentication
 
 ---

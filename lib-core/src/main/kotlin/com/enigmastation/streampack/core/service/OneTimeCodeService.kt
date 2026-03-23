@@ -25,7 +25,9 @@ class OneTimeCodeService(
     @Transactional
     fun generateCode(email: String): OneTimeCode {
         val normalizedEmail = email.lowercase()
-        val activeCount = oneTimeCodeRepository.countActiveByEmail(normalizedEmail, Instant.now())
+        val now = Instant.now()
+        cleanupStaleCodes(now)
+        val activeCount = oneTimeCodeRepository.countActiveByEmail(normalizedEmail, now)
         if (activeCount >= maxActiveCodes) {
             throw IllegalStateException("Too many active codes for this email")
         }
@@ -34,7 +36,7 @@ class OneTimeCodeService(
             OneTimeCode(
                 email = normalizedEmail,
                 code = code,
-                expiresAt = Instant.now().plusSeconds(expirationMinutes * 60L),
+                expiresAt = now.plusSeconds(expirationMinutes * 60L),
             )
         logger.debug("Generated OTP code for email {}", normalizedEmail)
         return oneTimeCodeRepository.saveAndFlush(otc)
@@ -44,9 +46,22 @@ class OneTimeCodeService(
     @Transactional
     fun consumeCode(email: String, code: String): Boolean {
         val normalizedEmail = email.lowercase()
-        val otc = oneTimeCodeRepository.findByEmailAndCode(normalizedEmail, code) ?: return false
-        if (!otc.isValid()) return false
-        oneTimeCodeRepository.saveAndFlush(otc.copy(usedAt = Instant.now()))
-        return true
+        val now = Instant.now()
+        oneTimeCodeRepository.deleteStaleByEmail(normalizedEmail, now)
+        val consumed = oneTimeCodeRepository.consumeValidCode(normalizedEmail, code, now) > 0
+        if (!consumed) {
+            oneTimeCodeRepository.deleteStaleByEmail(normalizedEmail, now)
+        }
+        return consumed
+    }
+
+    /** Opportunistic cleanup for used and expired rows to reduce retention. */
+    @Transactional
+    fun cleanupStaleCodes(now: Instant = Instant.now()): Int {
+        val deleted = oneTimeCodeRepository.deleteStale(now)
+        if (deleted > 0) {
+            logger.debug("Deleted {} stale OTP rows", deleted)
+        }
+        return deleted
     }
 }

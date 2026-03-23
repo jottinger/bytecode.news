@@ -82,6 +82,7 @@
         <module>service-irc</module>
         <module>service-github</module>
         <module>service-features</module>
+        <module>service-mcp</module>
         <module>app</module>
         <module>coverage-report</module>
     </modules>
