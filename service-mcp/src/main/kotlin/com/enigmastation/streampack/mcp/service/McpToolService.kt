@@ -206,7 +206,7 @@ class McpToolService(
                     "Factoids are created via command operations, not MCP mutations in v1.",
                 "examples" to
                     listOf(
-                        "!webmention is A web standard for cross-site mentions.",
+                        "!webmention is a web standard for cross-site mentions.",
                         "!webmention.url=https://www.w3.org/TR/webmention/",
                         "!webmention.tags=web,standards,social",
                         "!webmention.seealso=activitypub,indieweb",
