@@ -2935,6 +2935,22 @@
       }
     },
     "/mcp" : {
+      "get" : {
+        "operationId" : "info",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/plain" : {
+                "schema" : {
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "mcp-controller" ]
+      },
       "post" : {
         "operationId" : "handle",
         "requestBody" : {

@@ -32,6 +32,11 @@ export const metadata: Metadata = {
     template: "%s | bytecode.news",
   },
   description: "ByteCode.News: articles, knowledge, and community context.",
+  alternates: {
+    types: {
+      "application/rss+xml": "/feed.xml",
+    },
+  },
   openGraph: {
     title: "bytecode.news",
     description: "ByteCode.News: articles, knowledge, and community context.",
