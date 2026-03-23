@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import tools.jackson.databind.exc.MismatchedInputException
 
 /** Minimal JSON-RPC MCP endpoint for read-only bytecode.news tools. */
 @RestController
@@ -127,27 +128,46 @@ class McpController(private val toolService: McpToolService) {
         val result =
             when (toolCall.name) {
                 "search_posts" -> {
-                    val args = convertArgs<SearchPostsArgs>(toolCall.arguments)
-                    toolService.searchPosts(query = args.query, page = args.page, size = args.size)
+                    val args =
+                        convertArgs<SearchPostsArgs>(toolCall.arguments) {
+                            return error(id, -32602, "Invalid search_posts arguments")
+                        }
+                    toolService.searchPosts(
+                        query = args.query,
+                        page = args.page ?: 0,
+                        size = args.size ?: 20,
+                    )
                 }
                 "get_post" -> {
-                    val args = convertArgs<GetPostArgs>(toolCall.arguments)
+                    val args =
+                        convertArgs<GetPostArgs>(toolCall.arguments) {
+                            return error(id, -32602, "Invalid get_post arguments")
+                        }
                     toolService.getPost(args.postRef)
                 }
                 "list_factoids" -> {
-                    val args = convertArgs<ListFactoidsArgs>(toolCall.arguments)
-                    toolService.listFactoids(page = args.page, size = args.size)
+                    val args =
+                        convertArgs<ListFactoidsArgs>(toolCall.arguments) {
+                            return error(id, -32602, "Invalid list_factoids arguments")
+                        }
+                    toolService.listFactoids(page = args.page ?: 0, size = args.size ?: 20)
                 }
                 "get_factoid" -> {
-                    val args = convertArgs<GetFactoidArgs>(toolCall.arguments)
+                    val args =
+                        convertArgs<GetFactoidArgs>(toolCall.arguments) {
+                            return error(id, -32602, "Invalid get_factoid arguments")
+                        }
                     toolService.getFactoid(args.selector)
                 }
                 "search_factoids" -> {
-                    val args = convertArgs<SearchFactoidsArgs>(toolCall.arguments)
+                    val args =
+                        convertArgs<SearchFactoidsArgs>(toolCall.arguments) {
+                            return error(id, -32602, "Invalid search_factoids arguments")
+                        }
                     toolService.searchFactoids(
                         query = args.query,
-                        page = args.page,
-                        size = args.size,
+                        page = args.page ?: 0,
+                        size = args.size ?: 20,
                     )
                 }
                 "list_taxonomy" -> toolService.listTaxonomy()
@@ -158,8 +178,17 @@ class McpController(private val toolService: McpToolService) {
         return success(id, encodeToolResult(result))
     }
 
-    private inline fun <reified T> convertArgs(arguments: Map<String, Any?>): T {
-        return mapper.convertValue(arguments, T::class.java)
+    private inline fun <reified T> convertArgs(
+        arguments: Map<String, Any?>,
+        onError: (Exception) -> Nothing,
+    ): T {
+        return try {
+            mapper.convertValue(arguments, T::class.java)
+        } catch (ex: MismatchedInputException) {
+            onError(ex)
+        } catch (ex: IllegalArgumentException) {
+            onError(ex)
+        }
     }
 
     private fun encodeToolResult(result: ToolResult): ToolCallResult {

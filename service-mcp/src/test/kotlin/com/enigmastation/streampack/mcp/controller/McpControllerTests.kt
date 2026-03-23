@@ -162,6 +162,32 @@ class McpControllerTests {
     }
 
     @Test
+    fun `search posts accepts null page and size`() {
+        mockMvc
+            .post("/mcp") {
+                contentType = MediaType.APPLICATION_JSON
+                content =
+                    """
+                    {
+                      "jsonrpc":"2.0",
+                      "id":31,
+                      "method":"tools/call",
+                      "params":{
+                        "name":"search_posts",
+                        "arguments":{"query":"visible","page":null,"size":null}
+                      }
+                    }
+                    """
+                        .trimIndent()
+            }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.result.isError") { value(false) }
+                jsonPath("$.result.structuredContent.totalCount") { value(1) }
+            }
+    }
+
+    @Test
     fun `get post returns approved content by slug url`() {
         mockMvc
             .post("/mcp") {

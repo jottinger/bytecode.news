@@ -65,12 +65,12 @@ data class ToolCallResult(
 data class ToolCallContent(val type: String = "text", val text: String)
 
 /** Typed argument models for individual MCP tools. */
-data class SearchPostsArgs(val query: String = "", val page: Int = 0, val size: Int = 20)
+data class SearchPostsArgs(val query: String = "", val page: Int? = null, val size: Int? = null)
 
 data class GetPostArgs(val postRef: String = "")
 
-data class ListFactoidsArgs(val page: Int = 0, val size: Int = 20)
+data class ListFactoidsArgs(val page: Int? = null, val size: Int? = null)
 
 data class GetFactoidArgs(val selector: String = "")
 
-data class SearchFactoidsArgs(val query: String = "", val page: Int = 0, val size: Int = 20)
+data class SearchFactoidsArgs(val query: String = "", val page: Int? = null, val size: Int? = null)
