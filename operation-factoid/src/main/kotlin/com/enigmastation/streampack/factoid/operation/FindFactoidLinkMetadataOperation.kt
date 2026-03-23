@@ -4,6 +4,7 @@ package com.enigmastation.streampack.factoid.operation
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.service.TypedOperation
+import com.enigmastation.streampack.factoid.entity.FactoidAttribute
 import com.enigmastation.streampack.factoid.model.FactoidAttributeType
 import com.enigmastation.streampack.factoid.model.FactoidLinkMetadataResponse
 import com.enigmastation.streampack.factoid.model.FindFactoidLinkMetadataRequest
@@ -26,30 +27,38 @@ class FindFactoidLinkMetadataOperation(
             return OperationResult.Success(FactoidLinkMetadataResponse(selector = ""))
         }
 
-        val text =
-            factoidAttributeRepository
-                .findByFactoidSelectorIgnoreCaseAndAttributeType(
-                    selector,
-                    FactoidAttributeType.TEXT,
-                )
-                ?.attributeValue
-                ?.trim()
-                .orEmpty()
-                .ifBlank { null }
-
-        val urls =
-            factoidAttributeRepository
-                .findByFactoidSelectorIgnoreCaseAndAttributeType(
-                    selector,
-                    FactoidAttributeType.URLS,
-                )
-                ?.attributeValue
-                ?.trim()
-                .orEmpty()
-                .ifBlank { null }
+        val byType =
+            factoidAttributeRepository.findByFactoidSelectorIgnoreCase(selector).associateBy {
+                it.attributeType
+            }
 
         return OperationResult.Success(
-            FactoidLinkMetadataResponse(selector = selector, text = text, urls = urls)
+            FactoidLinkMetadataResponse(
+                selector = selector,
+                text = byType.attributeValue(FactoidAttributeType.TEXT),
+                urls = byType.attributeValues(FactoidAttributeType.URLS),
+                tags = byType.attributeValues(FactoidAttributeType.TAGS),
+                seeAlso = byType.attributeValues(FactoidAttributeType.SEEALSO),
+            )
         )
     }
+
+    private fun Map<FactoidAttributeType, FactoidAttribute>.attributeValue(
+        type: FactoidAttributeType
+    ): String? {
+        val value = this[type]?.attributeValue?.trim().orEmpty()
+        return value.ifBlank { null }
+    }
+
+    private fun Map<FactoidAttributeType, FactoidAttribute>.attributeValues(
+        type: FactoidAttributeType
+    ): List<String> =
+        this[type]
+            ?.attributeValue
+            .orEmpty()
+            .split(",")
+            .asSequence()
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
+            .toList()
 }

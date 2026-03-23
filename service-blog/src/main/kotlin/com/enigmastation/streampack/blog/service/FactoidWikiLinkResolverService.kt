@@ -17,10 +17,10 @@ class FactoidWikiLinkResolverService(private val eventGateway: EventGateway) :
     override fun resolve(selector: String): FactoidWikiLinkMetadata? {
         if (selector.isBlank()) return null
         val metadata = lookup(selector.trim())
-        val url = metadata?.urls.orEmpty()
+        val urls = metadata?.urls.orEmpty()
         val text = metadata?.text.orEmpty()
 
-        val safeUrl = firstHttpUrl(url)
+        val safeUrl = firstHttpUrl(urls)
         if (safeUrl == null && text.isBlank()) return null
         return FactoidWikiLinkMetadata(href = safeUrl, title = text.ifBlank { null })
     }
@@ -38,13 +38,9 @@ class FactoidWikiLinkResolverService(private val eventGateway: EventGateway) :
         }
     }
 
-    private fun firstHttpUrl(urls: String): String? {
-        if (urls.isBlank()) return null
-        return urls
-            .split(",")
-            .asSequence()
-            .map { it.trim() }
-            .firstNotNullOfOrNull { sanitizeHttpUrl(it) }
+    private fun firstHttpUrl(urls: List<String>): String? {
+        if (urls.isEmpty()) return null
+        return urls.asSequence().map { it.trim() }.firstNotNullOfOrNull { sanitizeHttpUrl(it) }
     }
 
     private fun sanitizeHttpUrl(url: String): String? =

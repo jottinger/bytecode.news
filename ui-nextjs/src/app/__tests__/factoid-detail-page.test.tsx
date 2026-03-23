@@ -35,7 +35,7 @@ describe("factoid detail page", () => {
     expect(html).toContain("!missing is");
   });
 
-  it("renders detail and strips tags/see also prefixes", async () => {
+  it("renders detail with structured values for tags, see also, and urls", async () => {
     getFactoidMock.mockResolvedValueOnce({
       selector: "mvnd",
       locked: false,
@@ -44,8 +44,8 @@ describe("factoid detail page", () => {
       lastAccessedAt: null,
       accessCount: 4,
       attributes: [
-        { type: "tags", value: "java", rendered: "tags: java, build tools" },
-        { type: "seealso", value: "maven", rendered: "see also: maven, gradle" },
+        { type: "tags", value: "java, build tools", rendered: "tags: java, build tools" },
+        { type: "seealso", value: "maven, gradle", rendered: "see also: maven, gradle" },
         { type: "urls", value: "https://mvnd.apache.org", rendered: "URLs: https://mvnd.apache.org" },
         { type: "tags", value: "duplicate", rendered: "tags: duplicate" },
       ],
@@ -59,10 +59,11 @@ describe("factoid detail page", () => {
 
     expect(html).toContain("mvnd");
     expect(html).toContain("java, build tools");
-    expect(html).toContain("maven, gradle");
-    expect(html).toContain('href="https://mvnd.apache.org"');
-    expect(html).not.toContain("tags:");
-    expect(html).not.toContain("see also:");
+    expect(html).toContain(">maven<");
+    expect(html).toContain(">gradle<");
+    expect(html).toContain('href="/factoids/maven"');
+    expect(html).toContain('href="/factoids/gradle"');
+    expect(html).toContain('href="https://mvnd.apache.org/"');
     expect(html).not.toContain("duplicate");
     expect(html).toContain("/factoids?page=2&amp;q=java");
   });

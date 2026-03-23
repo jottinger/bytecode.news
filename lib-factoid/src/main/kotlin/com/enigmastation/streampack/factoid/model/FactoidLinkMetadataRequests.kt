@@ -8,5 +8,7 @@ data class FindFactoidLinkMetadataRequest(val selector: String)
 data class FactoidLinkMetadataResponse(
     val selector: String,
     val text: String? = null,
-    val urls: String? = null,
+    val urls: List<String> = emptyList(),
+    val tags: List<String> = emptyList(),
+    val seeAlso: List<String> = emptyList(),
 )

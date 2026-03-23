@@ -49,6 +49,22 @@ class FindFactoidLinkMetadataOperationTests {
                 updatedBy = "test",
             )
         )
+        factoidAttributeRepository.save(
+            FactoidAttribute(
+                factoid = factoid,
+                attributeType = FactoidAttributeType.TAGS,
+                attributeValue = "docs, indieweb",
+                updatedBy = "test",
+            )
+        )
+        factoidAttributeRepository.save(
+            FactoidAttribute(
+                factoid = factoid,
+                attributeType = FactoidAttributeType.SEEALSO,
+                attributeValue = "webmention,indieweb",
+                updatedBy = "test",
+            )
+        )
 
         val message = MessageBuilder.withPayload(FindFactoidLinkMetadataRequest("thing")).build()
         val result = eventGateway.process(message)
@@ -57,7 +73,9 @@ class FindFactoidLinkMetadataOperationTests {
         val payload = assertInstanceOf(FactoidLinkMetadataResponse::class.java, success.payload)
         assertEquals("thing", payload.selector)
         assertEquals("thing is a thing", payload.text)
-        assertEquals("https://thing.com", payload.urls)
+        assertEquals(listOf("https://thing.com"), payload.urls)
+        assertEquals(listOf("docs", "indieweb"), payload.tags)
+        assertEquals(listOf("webmention", "indieweb"), payload.seeAlso)
     }
 
     @Test
@@ -69,6 +87,8 @@ class FindFactoidLinkMetadataOperationTests {
         val payload = assertInstanceOf(FactoidLinkMetadataResponse::class.java, success.payload)
         assertEquals("missing", payload.selector)
         assertEquals(null, payload.text)
-        assertEquals(null, payload.urls)
+        assertEquals(emptyList<String>(), payload.urls)
+        assertEquals(emptyList<String>(), payload.tags)
+        assertEquals(emptyList<String>(), payload.seeAlso)
     }
 }
