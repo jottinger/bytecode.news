@@ -54,6 +54,7 @@ class McpToolService(
                     )
                 }
             }
+
             is OperationResult.Error -> ToolResult.error(result.message)
             OperationResult.NotHandled -> ToolResult.error("search_posts was not handled")
         }
@@ -88,6 +89,7 @@ class McpToolService(
                     )
                 }
             }
+
             is OperationResult.Error -> ToolResult.error(result.message)
             OperationResult.NotHandled -> ToolResult.error("get_post was not handled")
         }
@@ -194,6 +196,7 @@ class McpToolService(
                     )
                 }
             }
+
             is OperationResult.Error -> ToolResult.error(result.message)
             OperationResult.NotHandled -> ToolResult.error("list_taxonomy was not handled")
         }
@@ -203,19 +206,25 @@ class McpToolService(
         return ToolResult.ok(
             mapOf(
                 "description" to
-                    "Factoids are created via command operations, not MCP mutations in v1.",
+                    """
+                    Factoids are created via bot command operations, not via MCP mutations.
+                    MCP is read-only and provides this reference so agents can generate
+                    valid command syntax for human review or execution.
+                    """
+                        .trimIndent(),
                 "examples" to
                     listOf(
                         "!webmention is a web standard for cross-site mentions.",
                         "!webmention.url=https://www.w3.org/TR/webmention/",
-                        "!webmention.tags=web,standards,social",
-                        "!webmention.seealso=activitypub,indieweb",
+                        "!webmention.tags=web, standards, social-media",
+                        "!webmention.seealso=activitypub, indieweb",
                     ),
                 "attributeKeys" to
                     listOf("text", "url", "tags", "languages", "type", "seealso", "see", "maven"),
                 "notes" to
                     listOf(
                         "Use '!selector is <reply>text' for literal text replies.",
+                        "Use '.url', '.tags', '.languages', '.type', '.seealso', '.see', or '.maven' to set attributes.",
                         "Comma-delimit list attributes such as tags and urls.",
                         "Selectors are typically normalized to lowercase.",
                     ),
