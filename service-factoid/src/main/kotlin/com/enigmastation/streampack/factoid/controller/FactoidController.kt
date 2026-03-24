@@ -34,8 +34,9 @@ class FactoidController(private val factoidService: FactoidService) {
             } else {
                 factoidService.searchPaginated(q, pageable)
             }
+        val summaries = factoidService.summarizeFor(results.content)
         return FactoidListResponse(
-            factoids = results.content.map { it.toSummary() },
+            factoids = results.content.map { it.toSummary(summaries) },
             page = results.number,
             totalPages = results.totalPages,
             totalCount = results.totalElements,
@@ -79,7 +80,13 @@ class FactoidController(private val factoidService: FactoidService) {
         )
     }
 
-    private fun Factoid.toSummary() =
+    private fun Factoid.toSummary(
+        summaries:
+            Map<
+                String,
+                com.enigmastation.streampack.factoid.service.FactoidService.FactoidListSummary,
+            >
+    ) =
         FactoidSummaryResponse(
             selector = selector,
             locked = locked,
@@ -87,5 +94,7 @@ class FactoidController(private val factoidService: FactoidService) {
             updatedAt = updatedAt,
             lastAccessedAt = lastAccessedAt,
             accessCount = accessCount,
+            text = summaries[selector]?.text,
+            tags = summaries[selector]?.tags ?: emptyList(),
         )
 }

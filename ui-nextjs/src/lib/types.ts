@@ -98,6 +98,8 @@ export interface FactoidSummary {
   updatedAt: string;
   lastAccessedAt?: string | null;
   accessCount: number;
+  text?: string | null;
+  tags?: string[];
 }
 
 export interface FactoidListResponse {

@@ -30,6 +30,7 @@ class FactoidControllerTests {
     @BeforeEach
     fun setUp() {
         factoidService.save("spring", FactoidAttributeType.TEXT, "A Java framework", "testuser")
+        factoidService.save("spring", FactoidAttributeType.TAGS, "java, framework", "testuser")
         factoidService.save("spring", FactoidAttributeType.URLS, "https://spring.io", "testuser")
         factoidService.save("kotlin", FactoidAttributeType.TEXT, "A JVM language", "testuser")
         factoidService.save(
@@ -49,6 +50,9 @@ class FactoidControllerTests {
             jsonPath("$.factoids[0].selector") { value("java") }
             jsonPath("$.factoids[1].selector") { value("kotlin") }
             jsonPath("$.factoids[2].selector") { value("spring") }
+            jsonPath("$.factoids[2].text") { value("A Java framework") }
+            jsonPath("$.factoids[2].tags[0]") { value("java") }
+            jsonPath("$.factoids[2].tags[1]") { value("framework") }
             jsonPath("$.totalCount") { value(3) }
         }
     }
@@ -88,7 +92,7 @@ class FactoidControllerTests {
             jsonPath("$.selector") { value("spring") }
             jsonPath("$.locked") { value(false) }
             jsonPath("$.updatedBy") { value("testuser") }
-            jsonPath("$.attributes.length()") { value(2) }
+            jsonPath("$.attributes.length()") { value(3) }
         }
     }
 
@@ -160,6 +164,18 @@ class FactoidControllerTests {
             status { isOk() }
             jsonPath("$.factoids[0].accessCount") { value(0) }
             jsonPath("$.factoids[0].lastAccessedAt") { doesNotExist() }
+            jsonPath("$.factoids[0].text") { isNotEmpty() }
+            jsonPath("$.factoids[0].tags") { isArray() }
+        }
+    }
+
+    @Test
+    fun `GET factoid listing normalizes reply prefix in preview`() {
+        factoidService.save("reply-test", FactoidAttributeType.TEXT, "<reply>just text", "testuser")
+
+        mockMvc.get("/factoids?q=reply-test").andExpect {
+            status { isOk() }
+            jsonPath("$.factoids[0].text") { value("just text") }
         }
     }
 }

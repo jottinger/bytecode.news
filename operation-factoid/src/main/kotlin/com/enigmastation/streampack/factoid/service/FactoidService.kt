@@ -187,6 +187,40 @@ class FactoidService(
         return factoidRepository.searchBySelector("%${term.lowercase()}%", pageable)
     }
 
+    /** Bulk summary metadata for list rendering (preview + tags) keyed by selector */
+    @Transactional(readOnly = true)
+    fun summarizeFor(factoids: List<Factoid>): Map<String, FactoidListSummary> {
+        if (factoids.isEmpty()) return emptyMap()
+        val bySelector = mutableMapOf<String, FactoidListSummary>()
+        val attributes = factoidAttributeRepository.findByFactoidIdIn(factoids.map { it.id })
+        for (attribute in attributes) {
+            val selector = attribute.factoid.selector
+            val existing = bySelector[selector] ?: FactoidListSummary()
+            val updated =
+                when (attribute.attributeType) {
+                    FactoidAttributeType.TEXT -> {
+                        val text = normalizePreview(attribute.attributeValue)
+                        if (existing.text == null && !text.isNullOrBlank()) {
+                            existing.copy(text = text)
+                        } else {
+                            existing
+                        }
+                    }
+                    FactoidAttributeType.TAGS -> {
+                        val tags = parseTags(attribute.attributeValue)
+                        if (tags.isNotEmpty()) {
+                            existing.copy(tags = (existing.tags + tags).distinct())
+                        } else {
+                            existing
+                        }
+                    }
+                    else -> existing
+                }
+            bySelector[selector] = updated
+        }
+        return bySelector
+    }
+
     /** Atomically records a single access for a factoid selector */
     @Transactional
     fun recordAccess(selector: String) {
@@ -213,5 +247,22 @@ class FactoidService(
         data object NotFound : DeleteResult
 
         data class Locked(val selector: String) : DeleteResult
+    }
+
+    data class FactoidListSummary(val text: String? = null, val tags: List<String> = emptyList())
+
+    private fun normalizePreview(value: String?): String? {
+        if (value == null) return null
+        val stripped = value.removePrefix("<reply>").trim()
+        if (stripped.isBlank()) return null
+        return stripped.replace(Regex("\\s+"), " ").take(220)
+    }
+
+    private fun parseTags(value: String?): List<String> {
+        if (value.isNullOrBlank()) return emptyList()
+        return value
+            .split(",")
+            .map { it.trim().lowercase() }
+            .filter { it.isNotBlank() && !it.startsWith("_") }
     }
 }

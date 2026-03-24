@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param
 interface FactoidAttributeRepository : JpaRepository<FactoidAttribute, UUID> {
     fun findByFactoidSelectorIgnoreCase(selector: String): List<FactoidAttribute>
 
+    fun findByFactoidIdIn(factoidIds: Collection<UUID>): List<FactoidAttribute>
+
     fun findByFactoidSelectorIgnoreCaseAndAttributeType(
         selector: String,
         attributeType: FactoidAttributeType,
