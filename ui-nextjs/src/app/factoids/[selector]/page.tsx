@@ -29,8 +29,24 @@ function splitValues(value: string): string[] {
     .filter((part) => part.length > 0);
 }
 
-function attributeValues(type: string, value: string, rendered: string): string[] {
+function normalizeTextAttribute(selector: string, value: string, rendered: string): string[] {
+  const candidate = value.trim() || rendered.trim();
+  if (!candidate) return [];
+
+  const replyMatch = candidate.match(/^<reply>\s*(.*)$/i);
+  if (replyMatch) {
+    const replyText = (replyMatch[1] || "").trim();
+    return replyText ? [replyText] : [];
+  }
+
+  return [`${selector} is ${candidate}`];
+}
+
+function attributeValues(selector: string, type: string, value: string, rendered: string): string[] {
   const normalized = type.toLowerCase();
+  if (normalized === "text") {
+    return normalizeTextAttribute(selector, value, rendered);
+  }
   if (normalized === "tags" || normalized === "seealso" || normalized === "url" || normalized === "urls") {
     return splitValues(value);
   }
@@ -124,7 +140,7 @@ export default async function FactoidDetailPage({
                   const rendered = String(attribute.rendered || "").trim();
                   const value = String(attribute.value || "");
                   const normalizedType = String(type).toLowerCase();
-                  const values = attributeValues(type, value, rendered);
+                  const values = attributeValues(detail.selector, type, value, rendered);
                   const isUrlType = normalizedType === "url" || normalizedType === "urls";
                   const isSeeAlsoType = normalizedType === "seealso";
                   return (
