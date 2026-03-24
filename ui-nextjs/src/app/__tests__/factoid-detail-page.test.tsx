@@ -67,4 +67,44 @@ describe("factoid detail page", () => {
     expect(html).not.toContain("duplicate");
     expect(html).toContain("/factoids?page=2&amp;q=java");
   });
+
+  it("applies <reply> semantics for text attributes", async () => {
+    getFactoidMock.mockResolvedValueOnce({
+      selector: "foo",
+      locked: false,
+      updatedBy: "dreamreal",
+      updatedAt: "2026-03-24T10:00:00Z",
+      lastAccessedAt: null,
+      accessCount: 2,
+      attributes: [
+        { type: "text", value: "<reply>a bar", rendered: "foo is <reply>a bar" },
+      ],
+    });
+
+    const element = await FactoidDetailPage({ params: Promise.resolve({ selector: "foo" }) });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain(">a bar<");
+    expect(html).not.toContain("&lt;reply&gt;");
+    expect(html).not.toContain("foo is");
+  });
+
+  it("prefixes selector for normal text attributes", async () => {
+    getFactoidMock.mockResolvedValueOnce({
+      selector: "foo",
+      locked: false,
+      updatedBy: "dreamreal",
+      updatedAt: "2026-03-24T10:00:00Z",
+      lastAccessedAt: null,
+      accessCount: 2,
+      attributes: [
+        { type: "text", value: "a bar", rendered: "foo is a bar" },
+      ],
+    });
+
+    const element = await FactoidDetailPage({ params: Promise.resolve({ selector: "foo" }) });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain(">foo is a bar<");
+  });
 });
