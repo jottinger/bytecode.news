@@ -30,6 +30,8 @@ describe("factoids page", () => {
           updatedAt: "2026-03-12T10:00:00Z",
           lastAccessedAt: null,
           accessCount: 7,
+          text: "Maven daemon for faster local builds.",
+          tags: ["java", "build"],
         },
       ],
       page: 0,
@@ -45,6 +47,9 @@ describe("factoids page", () => {
     expect(html).toContain("dreamreal");
     expect(html).toContain("7 hits");
     expect(html).toContain("/factoids/mvnd?page=0");
+    expect(html).toContain("Maven daemon for faster local builds.");
+    expect(html).toContain('/tags/java');
+    expect(html).toContain('/tags/build');
   });
 
   it("preserves query and page in factoid detail links", async () => {
@@ -57,6 +62,8 @@ describe("factoids page", () => {
           updatedAt: "2026-03-12T10:00:00Z",
           lastAccessedAt: null,
           accessCount: 7,
+          text: "Maven daemon for faster local builds.",
+          tags: ["java"],
         },
       ],
       page: 2,

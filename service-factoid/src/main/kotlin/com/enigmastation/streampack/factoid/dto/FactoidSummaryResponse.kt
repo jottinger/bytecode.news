@@ -11,4 +11,6 @@ data class FactoidSummaryResponse(
     val updatedAt: Instant,
     val lastAccessedAt: Instant?,
     val accessCount: Long,
+    val text: String?,
+    val tags: List<String>,
 )

@@ -49,7 +49,7 @@ export default async function FactoidsPage({
 
   return (
     <section className="py-8 md:py-12">
-      <div className="max-w-3xl mx-auto px-6 md:px-8">
+      <div className="max-w-5xl mx-auto px-6 md:px-8">
         {/* Page header */}
         <header className="mb-10">
           <div className="border-t-2 border-amber animate-rule-draw" />
@@ -112,37 +112,56 @@ export default async function FactoidsPage({
         ) : (
           <div className="animate-fade-in">
             {list.factoids.map((factoid, i) => (
-              <Link
-                key={factoid.selector}
-                href={detailHref(factoid.selector, safePage, query)}
-                className="group block"
-              >
-                <div className={`py-5 ${i > 0 ? "border-t border-border/30" : ""}`}>
-                  <div className="flex items-baseline justify-between gap-4">
-                    <h2 className="headline-brief text-foreground group-hover:text-amber transition-colors duration-200 min-w-0 truncate">
+              <article key={factoid.selector} className={`py-3.5 ${i > 0 ? "border-t border-border/30" : ""}`}>
+                <div className="flex items-baseline justify-between gap-4">
+                  <h2 className="headline-brief text-foreground min-w-0 truncate" title={factoid.selector}>
+                    <Link
+                      href={detailHref(factoid.selector, safePage, query)}
+                      className="hover:text-amber transition-colors duration-200"
+                    >
                       {factoid.selector}
-                    </h2>
-                    <span className="byline text-muted-foreground/40 shrink-0">
-                      {factoid.accessCount || 0} hits
-                    </span>
-                  </div>
-                  <div className="byline text-muted-foreground/50 mt-1.5 flex items-center gap-1.5 flex-wrap">
-                    {factoid.updatedBy && (
-                      <>
-                        <span>{factoid.updatedBy}</span>
-                        <span className="text-border/40 mx-0.5">|</span>
-                      </>
-                    )}
-                    <time>{formatDate(factoid.updatedAt)}</time>
-                    {factoid.locked && (
-                      <>
-                        <span className="text-border/40 mx-0.5">|</span>
-                        <span className="text-amber-dim">Locked</span>
-                      </>
-                    )}
-                  </div>
+                    </Link>
+                  </h2>
+                  <span className="byline text-muted-foreground/40 shrink-0">
+                    {factoid.accessCount || 0} hits
+                  </span>
                 </div>
-              </Link>
+
+                {factoid.text && (
+                  <p
+                    className="text-sm text-muted-foreground/80 mt-1 leading-relaxed"
+                    title={factoid.text}
+                  >
+                    {factoid.text}
+                  </p>
+                )}
+
+                {factoid.tags && factoid.tags.length > 0 && (
+                  <div className="tags mt-2">
+                    {factoid.tags.map((tag) => (
+                      <Link className="tag" key={`${factoid.selector}-${tag}`} href={`/tags/${encodeURIComponent(tag)}`}>
+                        {tag}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+                <div className="byline text-muted-foreground/50 mt-1.5 flex items-center gap-1.5 flex-wrap">
+                  {factoid.updatedBy && (
+                    <>
+                      <span>{factoid.updatedBy}</span>
+                      <span className="text-border/40 mx-0.5">|</span>
+                    </>
+                  )}
+                  <time>{formatDate(factoid.updatedAt)}</time>
+                  {factoid.locked && (
+                    <>
+                      <span className="text-border/40 mx-0.5">|</span>
+                      <span className="text-amber-dim">Locked</span>
+                    </>
+                  )}
+                </div>
+              </article>
             ))}
           </div>
         )}
