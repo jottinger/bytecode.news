@@ -9,4 +9,10 @@ data class IrcProperties(
     val enabled: Boolean = false,
     val signalCharacter: String = "!",
     val identity: String = "Nevet IRC Bridge",
+    val adaptiveSendDelayEnabled: Boolean = true,
+    val minSendDelayMs: Int = 120,
+    val maxSendDelayMs: Int = 1000,
+    val sendDelayRampUpFactor: Double = 1.1,
+    val sendDelayRampDownFactor: Double = 0.9,
+    val sendDelayMs: Int = 1200,
 )
