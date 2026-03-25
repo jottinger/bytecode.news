@@ -121,6 +121,26 @@ describe("auth api routes", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/export");
   });
 
+  it("proxies session validation to backend", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response('{"username":"u"}', {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { GET } = await import("@/app/api/auth/session/route");
+    const request = new Request("http://localhost:3000/api/auth/session", {
+      method: "GET",
+      headers: { Authorization: "Bearer abc" },
+    });
+
+    const response = await GET(request);
+    expect(response.status).toBe(200);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/session");
+  });
+
   it("proxies account delete to backend", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response('{"ok":true}', {
