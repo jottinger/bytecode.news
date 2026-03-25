@@ -265,7 +265,37 @@ sudo ln -s /etc/nginx/sites-available/bytecode.news /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### 6.1 Abuse Trapping + Durable IP Bans (Recommended)
+### 6.1 Header Fingerprint Hardening
+
+At minimum, configure nginx to suppress upstream fingerprint headers and hide nginx version details.
+
+In each relevant `server {}` block:
+
+```nginx
+server_tokens off;
+proxy_hide_header Server;
+proxy_hide_header X-Powered-By;
+```
+
+If your nginx build includes `headers-more` (package: `nginx-extras` on Debian/Ubuntu), you can fully
+clear outgoing headers at the edge:
+
+```nginx
+more_clear_headers Server;
+more_clear_headers X-Powered-By;
+```
+
+Then reload:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Application-side settings still matter:
+- `ui-nextjs`: `poweredByHeader: false`
+- Spring Boot services (`app`, `ui-basic`): `server.server-header=` (empty)
+
+### 6.2 Abuse Trapping + Durable IP Bans (Recommended)
 
 This setup blocks obvious hostile traffic (multipart submissions to unsupported routes,
 common WordPress/CMS probe paths) and applies durable host-level bans via fail2ban.

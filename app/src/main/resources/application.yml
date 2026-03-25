@@ -99,3 +99,6 @@ springdoc:
 
 logging:
   exception-conversion-word: "%wEx{0}"
+
+server:
+  server-header: ""
