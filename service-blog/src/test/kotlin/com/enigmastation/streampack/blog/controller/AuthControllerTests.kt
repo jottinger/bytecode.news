@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
+import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.put
 import org.springframework.transaction.annotation.Transactional
@@ -269,5 +270,24 @@ class AuthControllerTests {
                 status { isUnauthorized() }
                 jsonPath("$.detail") { value("Not authenticated") }
             }
+    }
+
+    @Test
+    fun `session endpoint returns principal for authenticated user`() {
+        mockMvc
+            .get("/auth/session") { header("Authorization", "Bearer $testUserToken") }
+            .andExpect {
+                status { isOk() }
+                jsonPath("$.username") { value("testuser") }
+                jsonPath("$.displayName") { value("Test User") }
+            }
+    }
+
+    @Test
+    fun `session endpoint without auth returns 401`() {
+        mockMvc.get("/auth/session").andExpect {
+            status { isUnauthorized() }
+            jsonPath("$.detail") { value("Not authenticated") }
+        }
     }
 }

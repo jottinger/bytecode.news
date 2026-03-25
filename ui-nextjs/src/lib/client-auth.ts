@@ -19,6 +19,8 @@ interface AuthState {
   principal: UserPrincipal | null;
 }
 
+type SessionValidationResult = "no-token" | "valid" | "expired" | "network-error";
+
 const TOKEN_KEY = "ui_nextjs_token";
 const PRINCIPAL_KEY = "ui_nextjs_principal";
 const AUTH_EVENT = "ui-nextjs-auth-change";
@@ -88,4 +90,27 @@ export function onAuthChange(handler: () => void): () => void {
     window.removeEventListener(AUTH_EVENT, handler);
     window.removeEventListener("storage", handler);
   };
+}
+
+export async function validateAuthSession(
+  fetcher: typeof fetch = fetch,
+): Promise<SessionValidationResult> {
+  const { token } = getAuthState();
+  if (!token) {
+    return "no-token";
+  }
+
+  try {
+    const response = await fetcher("/api/auth/session", {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (response.status === 401 || response.status === 403) {
+      clearAuth();
+      return "expired";
+    }
+    return "valid";
+  } catch {
+    return "network-error";
+  }
 }

@@ -55,6 +55,58 @@ describe("home page", () => {
     expect(listPostsMock).toHaveBeenCalledWith(0, 9);
   });
 
+  it("links masthead to home and shows comment counts beyond lead card", async () => {
+    listPostsMock.mockResolvedValueOnce({
+      posts: [
+        {
+          id: "01",
+          title: "Lead",
+          slug: "2026/03/lead",
+          excerpt: "Lead summary",
+          authorDisplayName: "dreamreal",
+          publishedAt: "2026-03-10T12:00:00Z",
+          commentCount: 1,
+          categories: [],
+          tags: [],
+        },
+        {
+          id: "02",
+          title: "Secondary",
+          slug: "2026/03/secondary",
+          excerpt: "Secondary summary",
+          authorDisplayName: "dreamreal",
+          publishedAt: "2026-03-10T13:00:00Z",
+          commentCount: 2,
+          categories: [],
+          tags: [],
+        },
+        {
+          id: "03",
+          title: "Brief",
+          slug: "2026/03/brief",
+          excerpt: "Brief summary",
+          authorDisplayName: "dreamreal",
+          publishedAt: "2026-03-10T14:00:00Z",
+          commentCount: 3,
+          categories: [],
+          tags: [],
+        },
+      ],
+      page: 0,
+      totalPages: 1,
+      totalCount: 3,
+    });
+
+    const element = await Home({ searchParams: Promise.resolve({ page: "0" }) });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain('aria-label="Go to front page"');
+    expect(html).toContain('href="/"');
+    expect(html).toContain("1 comment");
+    expect(html).toContain("2 comments");
+    expect(html).toContain("3 comments");
+  });
+
   it("shows next link when additional pages exist", async () => {
     listPostsMock.mockResolvedValueOnce({
       posts: [

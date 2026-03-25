@@ -132,6 +132,24 @@ class AuthController(
         }
     }
 
+    @Operation(summary = "Validate the current session token")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponse(
+        responseCode = "200",
+        description = "Authenticated user principal",
+        content = [Content(schema = Schema(implementation = UserPrincipal::class))],
+    )
+    @ApiResponse(
+        responseCode = "401",
+        description = "Not authenticated",
+        content = [Content(schema = Schema(implementation = ProblemDetail::class))],
+    )
+    @GetMapping("/session", produces = ["application/json"])
+    fun session(httpRequest: HttpServletRequest): ResponseEntity<*> {
+        val user = resolveUser(httpRequest) ?: return unauthorized("Not authenticated")
+        return ResponseEntity.ok(user)
+    }
+
     @Operation(summary = "Update the authenticated user's profile")
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponse(

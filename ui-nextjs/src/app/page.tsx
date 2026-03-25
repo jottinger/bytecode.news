@@ -80,7 +80,9 @@ export default async function Home({
               className="masthead-name text-foreground animate-press-in"
               style={{ animationDelay: "200ms" }}
             >
-              bytecode<span className="text-amber">.</span>news
+              <Link href="/" aria-label="Go to front page">
+                bytecode<span className="text-amber">.</span>news
+              </Link>
             </h1>
 
             <div
@@ -255,6 +257,12 @@ function SecondaryCard({ post }: { post: ContentSummary }) {
     <article className="group">
       <div className="byline text-muted-foreground/70 mb-2.5 flex items-center gap-2">
         <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+        {post.commentCount > 0 && (
+          <>
+            <span className="text-border">|</span>
+            <span>{post.commentCount} comment{post.commentCount === 1 ? "" : "s"}</span>
+          </>
+        )}
       </div>
 
       <h3 className="headline-secondary text-foreground group-hover:text-amber transition-colors duration-200">
@@ -292,6 +300,12 @@ function BriefCard({ post }: { post: ContentSummary }) {
         <span>{post.authorDisplayName}</span>
         <span className="text-border/40">|</span>
         <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
+        {post.commentCount > 0 && (
+          <>
+            <span className="text-border/40">|</span>
+            <span>{post.commentCount} comment{post.commentCount === 1 ? "" : "s"}</span>
+          </>
+        )}
       </div>
     </article>
   );
