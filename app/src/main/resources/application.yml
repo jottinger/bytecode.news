@@ -48,6 +48,12 @@ streampack:
   irc:
     enabled: ${IRC_ENABLED:false}
     identity: ${IRC_IDENTITY:Nevet IRC Bridge}
+    adaptive-send-delay-enabled: ${IRC_ADAPTIVE_SEND_DELAY_ENABLED:true}
+    min-send-delay-ms: ${IRC_MIN_SEND_DELAY_MS:120}
+    max-send-delay-ms: ${IRC_MAX_SEND_DELAY_MS:1000}
+    send-delay-ramp-up-factor: ${IRC_SEND_DELAY_RAMP_UP_FACTOR:1.1}
+    send-delay-ramp-down-factor: ${IRC_SEND_DELAY_RAMP_DOWN_FACTOR:0.9}
+    send-delay-ms: ${IRC_SEND_DELAY_MS:900}
   blog:
     anonymous-submission: ${ANONYMOUS_SUBMISSION:false}
     site-name: ${BLOG_SITE_NAME:Nevet}

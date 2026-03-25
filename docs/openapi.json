@@ -608,6 +608,15 @@
           "selector" : {
             "type" : "string"
           },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "text" : {
+            "type" : "string"
+          },
           "updatedAt" : {
             "format" : "date-time",
             "type" : "string"
@@ -616,7 +625,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessCount", "locked", "selector", "updatedAt" ],
+        "required" : [ "accessCount", "locked", "selector", "tags", "updatedAt" ],
         "type" : "object"
       },
       "FeaturesResponse" : {

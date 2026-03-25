@@ -16,6 +16,7 @@ import com.enigmastation.streampack.irc.repository.IrcNetworkRepository
 import java.util.concurrent.ConcurrentHashMap
 import org.kitteh.irc.client.library.Client
 import org.kitteh.irc.client.library.feature.auth.SaslPlain
+import org.kitteh.irc.client.library.feature.sending.SingleDelaySender
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.InitializingBean
@@ -90,6 +91,32 @@ class IrcConnectionManager(
                 .port(network.port, securityType)
                 .then()
                 .build()
+        if (ircProperties.adaptiveSendDelayEnabled) {
+            val minDelayMs = ircProperties.minSendDelayMs.coerceAtLeast(120)
+            val maxDelayMs = ircProperties.maxSendDelayMs.coerceAtLeast(minDelayMs)
+            val rampUp = ircProperties.sendDelayRampUpFactor.coerceAtLeast(1.0)
+            val rampDown =
+                ircProperties.sendDelayRampDownFactor.coerceAtMost(1.0).coerceAtLeast(0.1)
+            client.setMessageSendingQueueSupplier(
+                AdaptiveDelaySender.getSupplier(minDelayMs, maxDelayMs, rampUp, rampDown)
+            )
+            logger.info(
+                "Configured adaptive IRC send delay for '{}' (min={}ms, max={}ms, up={}, down={})",
+                network.name,
+                minDelayMs,
+                maxDelayMs,
+                rampUp,
+                rampDown,
+            )
+        } else {
+            val sendDelayMs = ircProperties.sendDelayMs.coerceAtLeast(250)
+            client.setMessageSendingQueueSupplier(SingleDelaySender.getSupplier(sendDelayMs))
+            logger.info(
+                "Configured fixed IRC send delay for '{}' at {}ms",
+                network.name,
+                sendDelayMs,
+            )
+        }
 
         val account =
             network.saslAccount?.let { secret ->
