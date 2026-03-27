@@ -145,7 +145,7 @@ export default async function PostPage({
             ) : thread.comments.length === 0 ? (
               <p className="text-muted-foreground">No comments yet.</p>
             ) : (
-              <CommentThread comments={thread.comments} />
+              <CommentThread comments={thread.comments} year={year} month={month} slug={shortSlug} />
             )}
           </section>
         )}

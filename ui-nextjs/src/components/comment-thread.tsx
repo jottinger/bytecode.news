@@ -5,16 +5,31 @@ import { useRouter } from "next/navigation";
 import { getAuthState } from "@/lib/client-auth";
 import { formatDate } from "@/lib/format";
 import { CommentNode } from "@/lib/types";
+import { Ellipsis, CornerUpLeft } from "lucide-react";
 import { HighlightedHtml } from "@/components/highlighted-html";
+import { CommentCreateForm } from "@/components/comment-create-form";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface CommentThreadProps {
   comments: CommentNode[];
+  year: string;
+  month: string;
+  slug: string;
 }
 
 interface CommentItemProps {
   node: CommentNode;
   isAdmin: boolean;
   token: string | null;
+  userId: string | null;
+  year: string;
+  month: string;
+  slug: string;
 }
 
 function htmlToText(html: string): string {
@@ -26,13 +41,15 @@ function htmlToText(html: string): string {
   return node.textContent?.trim() || "";
 }
 
-function CommentItem({ node, isAdmin, token }: CommentItemProps) {
+function CommentItem({ node, isAdmin, token, userId, year, month, slug }: CommentItemProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [replying, setReplying] = useState(false);
   const [markdownSource, setMarkdownSource] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isOwnComment = userId != null && node.authorId === userId;
 
   async function onSaveEdit(event: FormEvent) {
     event.preventDefault();
@@ -73,6 +90,10 @@ function CommentItem({ node, isAdmin, token }: CommentItemProps) {
       return;
     }
 
+    if (!window.confirm("Are you sure you want to remove this comment? This cannot be undone.")) {
+      return;
+    }
+
     setBusy(true);
     setStatus(null);
     setError(null);
@@ -105,52 +126,90 @@ function CommentItem({ node, isAdmin, token }: CommentItemProps) {
         <p>[deleted]</p>
       ) : editing ? (
         <form className="auth-form" onSubmit={onSaveEdit}>
-          <textarea
-            className="auth-input submit-textarea"
-            value={markdownSource}
-            onChange={(event) => setMarkdownSource(event.target.value)}
-            required
-          />
-          <div className="auth-actions">
-            <button type="submit" className="auth-button" disabled={busy}>
-              {busy ? "Saving..." : "Save comment"}
-            </button>
-            <button
-              type="button"
-              className="auth-button secondary"
-              onClick={() => {
-                setEditing(false);
-                setError(null);
-                setStatus(null);
-              }}
-              disabled={busy}
-            >
-              Cancel
-            </button>
+          <div className="comment-input-wrapper">
+            <textarea
+              className="auth-input submit-textarea comment-textarea"
+              value={markdownSource}
+              onChange={(event) => setMarkdownSource(event.target.value)}
+              required
+            />
+            <div className="comment-input-actions">
+              <button
+                type="button"
+                className="auth-button secondary"
+                onClick={() => {
+                  setEditing(false);
+                  setError(null);
+                  setStatus(null);
+                }}
+                disabled={busy}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="auth-button" disabled={busy}>
+                {busy ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
         </form>
       ) : (
         <HighlightedHtml className="post-body comment-body" html={node.renderedHtml} />
       )}
 
-      {isAdmin && !node.deleted ? (
-        <div className="auth-actions">
+      {token && !node.deleted && !replying && !editing ? (
+        <div className="comment-actions-row">
           <button
             type="button"
-            className="auth-button secondary"
-            disabled={busy}
-            onClick={() => {
-              setMarkdownSource(node.markdownSource || htmlToText(node.renderedHtml));
-              setEditing(true);
-              setError(null);
-              setStatus(null);
-            }}
+            className="comment-action-link"
+            onClick={() => setReplying(true)}
           >
-            Edit comment
+            <CornerUpLeft size={14} /> Reply
           </button>
-          <button type="button" className="auth-button secondary" disabled={busy} onClick={onDelete}>
-            Remove comment
-          </button>
+          {(node.editable || isOwnComment || isAdmin) ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className="comment-action-link" aria-label="Comment actions">
+                  <Ellipsis size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {node.editable || isOwnComment ? (
+                  <DropdownMenuItem
+                    disabled={busy}
+                    onClick={() => {
+                      setMarkdownSource(node.markdownSource || htmlToText(node.renderedHtml));
+                      setEditing(true);
+                      setError(null);
+                      setStatus(null);
+                    }}
+                  >
+                    Edit comment
+                  </DropdownMenuItem>
+                ) : null}
+                {isAdmin ? (
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    disabled={busy}
+                    onClick={onDelete}
+                  >
+                    Remove comment
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        </div>
+      ) : null}
+
+      {replying ? (
+        <div className="comment-reply-form">
+          <CommentCreateForm
+            year={year}
+            month={month}
+            slug={slug}
+            parentCommentId={node.id}
+            onCancel={() => setReplying(false)}
+          />
         </div>
       ) : null}
 
@@ -160,7 +219,7 @@ function CommentItem({ node, isAdmin, token }: CommentItemProps) {
       {node.children.length > 0 ? (
         <div className="comment-children">
           {node.children.map((child) => (
-            <CommentItem key={child.id} node={child} isAdmin={isAdmin} token={token} />
+            <CommentItem key={child.id} node={child} isAdmin={isAdmin} token={token} userId={userId} year={year} month={month} slug={slug} />
           ))}
         </div>
       ) : null}
@@ -168,13 +227,13 @@ function CommentItem({ node, isAdmin, token }: CommentItemProps) {
   );
 }
 
-export function CommentThread({ comments }: CommentThreadProps) {
+export function CommentThread({ comments, year, month, slug }: CommentThreadProps) {
   const auth = getAuthState();
   const isAdmin = auth.principal?.role === "ADMIN" || auth.principal?.role === "SUPER_ADMIN";
   return (
     <>
       {comments.map((comment) => (
-        <CommentItem key={comment.id} node={comment} isAdmin={isAdmin} token={auth.token} />
+        <CommentItem key={comment.id} node={comment} isAdmin={isAdmin} token={auth.token} userId={auth.principal?.id ?? null} year={year} month={month} slug={slug} />
       ))}
     </>
   );

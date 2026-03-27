@@ -558,6 +558,7 @@
 
 .auth-form {
   @apply grid gap-2;
+  width: 100%;
 }
 
 .auth-label {
@@ -671,7 +672,60 @@
 }
 
 .comment-children {
-  @apply mt-1.5;
+  @apply mt-1.5 ml-4;
+}
+
+.comment-actions-row {
+  @apply flex items-center gap-3 mt-1;
+}
+
+.comment-actions-row .auth-button {
+  @apply flex items-center gap-1.5;
+}
+
+.comment-action-link {
+  @apply cursor-pointer p-1 rounded flex items-center gap-1;
+  background: none;
+  border: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.comment-action-link:hover {
+  color: var(--foreground);
+  background: var(--accent);
+}
+
+.comment-input-wrapper {
+  position: relative;
+  display: block;
+}
+
+.comment-input-wrapper .comment-textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 3rem;
+}
+
+.comment-input-actions {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 1;
+}
+
+.comment-input-actions .auth-button {
+  @apply text-xs py-1 px-3;
+}
+
+.comment-reply-form {
+  @apply mt-2 mb-2;
 }
 
 .comment-form {
