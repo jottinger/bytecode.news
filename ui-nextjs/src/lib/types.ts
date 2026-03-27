@@ -75,6 +75,7 @@ export interface ContentDetail {
 
 export interface CommentNode {
   id: string;
+  authorId: string;
   authorDisplayName: string;
   renderedHtml: string;
   markdownSource?: string | null;

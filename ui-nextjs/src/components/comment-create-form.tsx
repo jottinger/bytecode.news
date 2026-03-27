@@ -4,15 +4,16 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getAuthState } from "@/lib/client-auth";
-import { MarkdownPreview } from "@/components/markdown-preview";
 
 interface CommentCreateFormProps {
   year: string;
   month: string;
   slug: string;
+  parentCommentId?: string;
+  onCancel?: () => void;
 }
 
-export function CommentCreateForm({ year, month, slug }: CommentCreateFormProps) {
+export function CommentCreateForm({ year, month, slug, parentCommentId, onCancel }: CommentCreateFormProps) {
   const router = useRouter();
   const [markdownSource, setMarkdownSource] = useState("");
   const [busy, setBusy] = useState(false);
@@ -39,7 +40,7 @@ export function CommentCreateForm({ year, month, slug }: CommentCreateFormProps)
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify({ markdownSource }),
+        body: JSON.stringify({ markdownSource, parentCommentId: parentCommentId || undefined }),
       });
 
       if (!response.ok) {
@@ -48,6 +49,7 @@ export function CommentCreateForm({ year, month, slug }: CommentCreateFormProps)
 
       setMarkdownSource("");
       setStatus("Comment posted.");
+      if (onCancel) onCancel();
       router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Could not post comment.");
@@ -68,28 +70,27 @@ export function CommentCreateForm({ year, month, slug }: CommentCreateFormProps)
 
   return (
     <form className="auth-form comment-form" onSubmit={onSubmit}>
-      <label className="auth-label" htmlFor="comment-markdown">
-        Add comment
+      <label className="auth-label" htmlFor={parentCommentId ? `reply-${parentCommentId}` : "comment-markdown"}>
+        {parentCommentId ? "Reply" : "Add comment"}
       </label>
-      <textarea
-        id="comment-markdown"
-        className="auth-input submit-textarea"
-        value={markdownSource}
-        onChange={(event) => setMarkdownSource(event.target.value)}
-        required
-      />
-      <div className="markdown-preview" aria-live="polite">
-        <p className="auth-label">Preview</p>
-        {markdownSource.trim().length === 0 ? (
-          <p className="auth-note">Preview appears here as you type markdown.</p>
-        ) : (
-          <MarkdownPreview source={markdownSource} className="post-body" />
-        )}
-      </div>
-      <div className="auth-actions">
-        <button type="submit" className="auth-button" disabled={busy}>
-          {busy ? "Posting..." : "Post comment"}
-        </button>
+      <div className="comment-input-wrapper">
+        <textarea
+          id={parentCommentId ? `reply-${parentCommentId}` : "comment-markdown"}
+          className="auth-input submit-textarea comment-textarea"
+          value={markdownSource}
+          onChange={(event) => setMarkdownSource(event.target.value)}
+          required
+        />
+        <div className="comment-input-actions">
+          {onCancel ? (
+            <button type="button" className="auth-button secondary" onClick={onCancel} disabled={busy}>
+              Cancel
+            </button>
+          ) : null}
+          <button type="submit" className="auth-button" disabled={busy}>
+            {busy ? "Posting..." : parentCommentId ? "Reply" : "Post"}
+          </button>
+        </div>
       </div>
       {status ? <p className="auth-status">{status}</p> : null}
       {error ? <p className="auth-error">{error}</p> : null}
