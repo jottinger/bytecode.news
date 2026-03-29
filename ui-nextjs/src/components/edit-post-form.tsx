@@ -11,6 +11,18 @@ type TagsResponse = { tags?: unknown };
 type SummaryResponse = { summary?: string };
 type CategorySummary = { id: string; name?: string };
 
+function toLocalDateTimeInput(value?: string): string {
+  if (!value) {
+    return "";
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+  const offsetMs = parsed.getTimezoneOffset() * 60_000;
+  return new Date(parsed.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
 function splitTags(value: string): string[] {
   return value
     .split(",")
@@ -54,6 +66,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   const [summary, setSummary] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [categoriesInput, setCategoriesInput] = useState("");
+  const [publishedAtInput, setPublishedAtInput] = useState("");
+  const [sortOrderInput, setSortOrderInput] = useState("0");
   const [categoryOptions, setCategoryOptions] = useState<CategorySummary[]>([]);
   const [postStatus, setPostStatus] = useState<string>("DRAFT");
   const [savedSlug, setSavedSlug] = useState<string>("");
@@ -109,6 +123,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         setSummary(post.excerpt || "");
         setTagsInput((post.tags || []).join(", "));
         setCategoriesInput((post.categories || []).join(", "));
+        setPublishedAtInput(toLocalDateTimeInput(post.publishedAt));
+        setSortOrderInput(String(post.sortOrder ?? 0));
         setPostStatus(post.status || "DRAFT");
         setSavedSlug(post.slug || "");
       } catch (loadError) {
@@ -177,6 +193,12 @@ export function EditPostForm({ postId }: EditPostFormProps) {
           summary,
           tags: splitTags(tagsInput),
           categoryIds,
+          ...(isAdmin
+            ? {
+                publishedAt: publishedAtInput ? new Date(publishedAtInput).toISOString() : null,
+                sortOrder: Number.parseInt(sortOrderInput || "0", 10) || 0,
+              }
+            : {}),
         }),
       });
       const payload = (await response.json()) as unknown;
@@ -186,6 +208,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
       const post = payload as ContentDetail;
       setPostStatus(post.status || postStatus);
       setSavedSlug(post.slug || savedSlug);
+      setPublishedAtInput(toLocalDateTimeInput(post.publishedAt));
+      setSortOrderInput(String(post.sortOrder ?? 0));
       setStatus("Saved.");
       return true;
     } catch (saveError) {
@@ -296,7 +320,9 @@ export function EditPostForm({ postId }: EditPostFormProps) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify({ publishedAt: new Date().toISOString() }),
+        body: JSON.stringify({
+          publishedAt: publishedAtInput ? new Date(publishedAtInput).toISOString() : new Date().toISOString(),
+        }),
       });
       const payload = (await response.json()) as unknown;
       if (!response.ok) {
@@ -305,6 +331,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
       const post = payload as ContentDetail;
       setPostStatus(post.status || "APPROVED");
       setSavedSlug(post.slug || savedSlug);
+      setPublishedAtInput(toLocalDateTimeInput(post.publishedAt));
+      setSortOrderInput(String(post.sortOrder ?? 0));
       setStatus("Published.");
     } catch (publishError) {
       setError(publishError instanceof Error ? publishError.message : "Could not publish post.");
@@ -388,7 +416,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         </label>
         <textarea
           id="edit-markdown"
-          className="auth-input submit-textarea"
+          className="auth-input submit-textarea markdown-textarea"
           value={markdownSource}
           onChange={(event) => setMarkdownSource(event.target.value)}
           required
@@ -441,6 +469,34 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         </datalist>
         {!isAdmin ? (
           <p className="auth-note">Categories starting with "_" are restricted to admins.</p>
+        ) : null}
+        {isAdmin ? (
+          <>
+            <label className="auth-label" htmlFor="edit-published-at">
+              Publish Date/Time
+            </label>
+            <input
+              id="edit-published-at"
+              type="datetime-local"
+              className="auth-input"
+              value={publishedAtInput}
+              onChange={(event) => setPublishedAtInput(event.target.value)}
+            />
+
+            <label className="auth-label" htmlFor="edit-sort-order">
+              Sort Order
+            </label>
+            <input
+              id="edit-sort-order"
+              type="number"
+              className="auth-input"
+              value={sortOrderInput}
+              onChange={(event) => setSortOrderInput(event.target.value)}
+            />
+            <p className="auth-note">
+              Lower sort order appears first within the same published day.
+            </p>
+          </>
         ) : null}
 
         <div className="auth-actions">

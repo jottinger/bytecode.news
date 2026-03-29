@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.model
 
+import java.time.Instant
 import java.util.UUID
 
 /** HTTP request body for editing a post (id resolved from path) */
@@ -11,4 +12,6 @@ data class EditContentHttpRequest(
     val categoryIds: List<UUID>? = emptyList(),
     /** Optional UI-facing summary value. Persisted internally as excerpt. */
     val summary: String? = null,
+    val publishedAt: Instant? = null,
+    val sortOrder: Int? = null,
 )

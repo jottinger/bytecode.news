@@ -153,6 +153,8 @@ class AdminPostController(
                 tags = request.tags,
                 categoryIds = request.categoryIds,
                 summary = request.summary,
+                publishedAt = request.publishedAt,
+                sortOrder = request.sortOrder,
             )
         return dispatch(payload, "admin/posts/edit", user) { result -> mapError(result) }
     }

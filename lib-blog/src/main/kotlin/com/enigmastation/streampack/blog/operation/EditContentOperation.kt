@@ -76,6 +76,7 @@ class EditContentOperation(
                 authorDisplayName = updated.author?.displayName ?: "Anonymous",
                 status = updated.status,
                 publishedAt = updated.publishedAt,
+                sortOrder = updated.sortOrder,
                 createdAt = updated.createdAt,
                 updatedAt = updated.updatedAt,
                 commentCount = commentRepository.countActiveByPost(updated.id).toInt(),

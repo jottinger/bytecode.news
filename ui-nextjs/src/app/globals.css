@@ -640,6 +640,11 @@
   resize: vertical;
 }
 
+.markdown-textarea {
+  font-family: var(--font-mono), monospace;
+  line-height: 1.6;
+}
+
 .comment-block {
   @apply mt-5 border-t border-border pt-3;
 }

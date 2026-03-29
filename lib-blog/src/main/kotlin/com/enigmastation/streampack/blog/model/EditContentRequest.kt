@@ -15,6 +15,8 @@ data class EditContentRequest(
     val categoryIds: List<UUID>? = emptyList(),
     /** Optional UI-facing summary value, persisted internally as excerpt. */
     val summary: String? = null,
+    val publishedAt: Instant? = null,
+    val sortOrder: Int? = null,
 ) {
     fun applyTo(post: Post, markdownRenderingService: MarkdownRenderingService): Post {
         val resolvedTitle = title ?: post.title
@@ -31,6 +33,8 @@ data class EditContentRequest(
             markdownSource = resolvedMarkdown,
             renderedHtml = markdownRenderingService.render(resolvedMarkdown),
             excerpt = excerpt,
+            publishedAt = publishedAt ?: post.publishedAt,
+            sortOrder = sortOrder ?: post.sortOrder,
             updatedAt = Instant.now(),
         )
     }

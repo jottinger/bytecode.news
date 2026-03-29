@@ -51,6 +51,7 @@ class RssFeedServiceTests {
         publishedAt: Instant? = null,
         deleted: Boolean = false,
         excerpt: String? = null,
+        sortOrder: Int = 0,
     ): Post {
         val post =
             postRepository.save(
@@ -63,6 +64,7 @@ class RssFeedServiceTests {
                     publishedAt = publishedAt,
                     author = author,
                     deleted = deleted,
+                    sortOrder = sortOrder,
                 )
             )
         slugRepository.save(Slug(path = slug, post = post, canonical = true))
@@ -109,27 +111,29 @@ class RssFeedServiceTests {
     }
 
     @Test
-    fun `feed items are ordered by publishedAt descending`() {
+    fun `feed items honor same-day sortOrder before publishedAt`() {
         val now = Instant.now()
 
         createPost(
-            "Older Post",
-            "2026/02/older-post",
+            "Pinned Post",
+            "2026/02/pinned-post",
             PostStatus.APPROVED,
             publishedAt = now.minus(3, ChronoUnit.HOURS),
+            sortOrder = 0,
         )
         createPost(
-            "Newer Post",
-            "2026/02/newer-post",
+            "Later Post",
+            "2026/02/later-post",
             PostStatus.APPROVED,
             publishedAt = now.minus(1, ChronoUnit.HOURS),
+            sortOrder = 5,
         )
 
         val feed = rssFeedService.buildFeed()
 
         assertEquals(2, feed.entries.size)
-        assertEquals("Newer Post", feed.entries[0].title)
-        assertEquals("Older Post", feed.entries[1].title)
+        assertEquals("Pinned Post", feed.entries[0].title)
+        assertEquals("Later Post", feed.entries[1].title)
     }
 
     @Test

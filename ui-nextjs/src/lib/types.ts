@@ -44,6 +44,7 @@ export interface ContentSummary {
   excerpt?: string;
   authorDisplayName: string;
   publishedAt?: string;
+  sortOrder?: number;
   commentCount: number;
   categories: string[];
   tags: string[];
@@ -65,6 +66,7 @@ export interface ContentDetail {
   authorDisplayName: string;
   status?: string;
   publishedAt?: string;
+  sortOrder?: number;
   createdAt: string;
   updatedAt: string;
   commentCount: number;

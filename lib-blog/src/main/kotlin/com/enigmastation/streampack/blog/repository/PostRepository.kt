@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 /** Queries for blog post retrieval by visibility state */
 interface PostRepository : JpaRepository<Post, UUID> {
     @Query(
-        "SELECT p FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY p.publishedAt DESC"
+        "SELECT p FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC"
     )
     fun findPublished(now: Instant): List<Post>
 
@@ -36,13 +36,13 @@ interface PostRepository : JpaRepository<Post, UUID> {
 
     /** Published posts with eagerly loaded authors for RSS feed generation */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY p.publishedAt DESC"
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC"
     )
     fun findRecentPublishedWithAuthor(now: Instant, pageable: Pageable): List<Post>
 
     /** Paginated published posts for listing pages, excluding system categories */
     @Query(
-        "SELECT p FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\') ORDER BY p.publishedAt DESC",
+        "SELECT p FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\') ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
         countQuery =
             "SELECT COUNT(p) FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')",
     )
@@ -50,7 +50,7 @@ interface PostRepository : JpaRepository<Post, UUID> {
 
     /** Posts in a specific category, ordered by sortOrder then publishedAt */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName) ORDER BY p.sortOrder ASC, p.publishedAt DESC",
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName) ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
         countQuery =
             "SELECT COUNT(p) FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name = :categoryName)",
     )
@@ -58,7 +58,7 @@ interface PostRepository : JpaRepository<Post, UUID> {
 
     /** Posts with a specific tag, excluding system-category content */
     @Query(
-        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\') ORDER BY p.publishedAt DESC",
+        "SELECT p FROM Post p LEFT JOIN FETCH p.author WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\') ORDER BY FUNCTION('date_trunc', 'day', p.publishedAt) DESC, p.sortOrder ASC, p.publishedAt DESC",
         countQuery =
             "SELECT COUNT(p) FROM Post p WHERE p.status = com.enigmastation.streampack.blog.model.PostStatus.APPROVED AND p.deleted = false AND p.publishedAt <= :now AND EXISTS (SELECT pt FROM PostTag pt WHERE pt.post = p AND LOWER(pt.tag.name) = LOWER(:tagName)) AND NOT EXISTS (SELECT pc FROM PostCategory pc WHERE pc.post = p AND pc.category.name LIKE '\\_%' ESCAPE '\\')",
     )
