@@ -308,6 +308,8 @@ class PostController(
                 tags = request.tags,
                 categoryIds = request.categoryIds,
                 summary = request.summary,
+                publishedAt = request.publishedAt,
+                sortOrder = request.sortOrder,
             )
         return dispatch(payload, "posts/edit", user) { result -> mapError(result) }
     }

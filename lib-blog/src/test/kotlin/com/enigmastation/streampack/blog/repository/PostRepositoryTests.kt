@@ -127,6 +127,68 @@ class PostRepositoryTests {
     }
 
     @Test
+    fun `findPublished prefers lower sortOrder within the same day`() {
+        val now = Instant.now().truncatedTo(ChronoUnit.DAYS).plus(12, ChronoUnit.HOURS)
+        postRepository.save(
+            Post(
+                title = "Later Same Day",
+                markdownSource = "later",
+                renderedHtml = "<p>later</p>",
+                status = PostStatus.APPROVED,
+                publishedAt = now.plus(2, ChronoUnit.HOURS),
+                sortOrder = 10,
+                author = testUser,
+            )
+        )
+        postRepository.save(
+            Post(
+                title = "Pinned Same Day",
+                markdownSource = "pinned",
+                renderedHtml = "<p>pinned</p>",
+                status = PostStatus.APPROVED,
+                publishedAt = now.minus(2, ChronoUnit.HOURS),
+                sortOrder = 0,
+                author = testUser,
+            )
+        )
+
+        val results = postRepository.findPublished(now.plus(3, ChronoUnit.HOURS))
+
+        assertEquals(listOf("Pinned Same Day", "Later Same Day"), results.map { it.title })
+    }
+
+    @Test
+    fun `findPublished keeps newer days ahead of older days regardless of sortOrder`() {
+        val now = Instant.now().truncatedTo(ChronoUnit.DAYS).plus(12, ChronoUnit.HOURS)
+        postRepository.save(
+            Post(
+                title = "Older Pinned",
+                markdownSource = "older",
+                renderedHtml = "<p>older</p>",
+                status = PostStatus.APPROVED,
+                publishedAt = now.minus(1, ChronoUnit.DAYS),
+                sortOrder = -100,
+                author = testUser,
+            )
+        )
+        postRepository.save(
+            Post(
+                title = "Today Default",
+                markdownSource = "today",
+                renderedHtml = "<p>today</p>",
+                status = PostStatus.APPROVED,
+                publishedAt = now,
+                sortOrder = 0,
+                author = testUser,
+            )
+        )
+
+        val results = postRepository.findPublished(now.plus(1, ChronoUnit.HOURS))
+
+        assertEquals(listOf("Today Default", "Older Pinned"), results.map { it.title })
+    }
+
+    @Test
     fun `findDrafts returns drafts only`() {
         postRepository.save(
             Post(

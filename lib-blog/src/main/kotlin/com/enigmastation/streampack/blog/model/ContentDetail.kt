@@ -15,6 +15,7 @@ data class ContentDetail(
     val authorDisplayName: String,
     val status: PostStatus,
     val publishedAt: Instant?,
+    val sortOrder: Int = 0,
     val createdAt: Instant,
     val updatedAt: Instant,
     val commentCount: Int = 0,

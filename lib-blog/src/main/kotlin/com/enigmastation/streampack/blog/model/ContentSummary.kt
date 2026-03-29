@@ -12,6 +12,7 @@ data class ContentSummary(
     val excerpt: String?,
     val authorDisplayName: String,
     val publishedAt: Instant?,
+    val sortOrder: Int = 0,
     val commentCount: Int = 0,
     val tags: List<String> = emptyList(),
     val categories: List<String> = emptyList(),

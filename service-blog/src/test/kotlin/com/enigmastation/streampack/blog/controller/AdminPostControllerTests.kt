@@ -11,6 +11,7 @@ import com.enigmastation.streampack.core.service.JwtService
 import com.enigmastation.streampack.test.TestChannelConfiguration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -198,16 +199,23 @@ class AdminPostControllerTests {
 
     @Test
     fun `PUT admin edit updates post`() {
+        val publishedAt = Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS)
         mockMvc
             .put("/admin/posts/${draftPost.id}") {
                 contentType = MediaType.APPLICATION_JSON
                 header("Authorization", "Bearer $adminToken")
-                content = """{"title":"Admin Edited","markdownSource":"Admin edited content."}"""
+                content =
+                    """{"title":"Admin Edited","markdownSource":"Admin edited content.","publishedAt":"$publishedAt","sortOrder":-5}"""
             }
             .andExpect {
                 status { isOk() }
                 jsonPath("$.title") { value("Admin Edited") }
+                jsonPath("$.sortOrder") { value(-5) }
             }
+
+        val updated = postRepository.findById(draftPost.id).orElseThrow()
+        assertEquals(publishedAt, updated.publishedAt)
+        assertEquals(-5, updated.sortOrder)
     }
 
     @Test

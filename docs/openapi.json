@@ -175,6 +175,10 @@
           "slug" : {
             "type" : "string"
           },
+          "sortOrder" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
           "status" : {
             "enum" : [ "DRAFT", "APPROVED" ],
             "type" : "string"
@@ -193,7 +197,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "commentCount", "createdAt", "id", "renderedHtml", "slug", "status", "tags", "title", "updatedAt" ],
+        "required" : [ "authorDisplayName", "categories", "commentCount", "createdAt", "id", "renderedHtml", "slug", "sortOrder", "status", "tags", "title", "updatedAt" ],
         "type" : "object"
       },
       "ContentListResponse" : {
@@ -262,6 +266,10 @@
           "slug" : {
             "type" : "string"
           },
+          "sortOrder" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
           "tags" : {
             "items" : {
               "type" : "string"
@@ -272,7 +280,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authorDisplayName", "categories", "commentCount", "id", "slug", "tags", "title" ],
+        "required" : [ "authorDisplayName", "categories", "commentCount", "id", "slug", "sortOrder", "tags", "title" ],
         "type" : "object"
       },
       "CreateCategoryRequest" : {
@@ -493,6 +501,14 @@
           },
           "markdownSource" : {
             "type" : "string"
+          },
+          "publishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "sortOrder" : {
+            "format" : "int32",
+            "type" : "integer"
           },
           "summary" : {
             "type" : "string"

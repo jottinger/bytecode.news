@@ -309,7 +309,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
         </label>
         <textarea
           id="post-markdown"
-          className="auth-input submit-textarea"
+          className="auth-input submit-textarea markdown-textarea"
           rows={18}
           value={markdownSource}
           onChange={(event) => setMarkdownSource(event.target.value)}
