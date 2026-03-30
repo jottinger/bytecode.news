@@ -11,9 +11,10 @@ export const metadata: Metadata = {
     title: "bytecode.news",
     description: "ByteCode.News: articles, knowledge, and community context.",
     type: "website",
+    siteName: "bytecode.news",
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "bytecode.news",
     description: "ByteCode.News: articles, knowledge, and community context.",
   },
