@@ -24,9 +24,14 @@ export function ProfileForm() {
 
   if (!auth.token || !auth.principal) {
     return (
-      <section className="notice">
-        <h2>Profile</h2>
-        <p>Sign in to view your profile.</p>
+      <section className="py-8 md:py-12">
+        <div className="max-w-2xl mx-auto px-6 md:px-8">
+          <div className="py-12 text-center">
+            <p className="section-label text-muted-foreground">
+              Sign in to view your profile.
+            </p>
+          </div>
+        </div>
       </section>
     );
   }
@@ -126,43 +131,115 @@ export function ProfileForm() {
   }
 
   return (
-    <section className="auth-shell submit-shell">
-      <h2 className="auth-title">Profile</h2>
-      <p className="auth-note">
-        <strong>Username:</strong> {auth.principal.username}
-      </p>
-      <p className="auth-note">
-        <strong>Role:</strong> {auth.principal.role}
-      </p>
+    <section className="py-8 md:py-12">
+      <div className="max-w-2xl mx-auto px-6 md:px-8">
+        {/* Header */}
+        <header className="mb-10">
+          <div className="border-t-2 border-amber animate-rule-draw" />
+          <div className="pt-6 pb-8 border-b border-border/40">
+            <p className="section-label text-amber mb-3">Account</p>
+            <h1
+              className="font-display text-foreground leading-tight"
+              style={{
+                fontSize: "clamp(2rem, 5vw, 3rem)",
+                letterSpacing: "-0.025em",
+              }}
+            >
+              {auth.principal.displayName}
+            </h1>
+          </div>
+        </header>
 
-      <form className="auth-form" onSubmit={onSave}>
-        <label className="auth-label" htmlFor="display-name">
-          Display Name
-        </label>
-        <input
-          id="display-name"
-          className="auth-input"
-          value={displayName}
-          onChange={(event) => setDisplayName(event.target.value)}
-          required
-          maxLength={100}
-        />
-
-        <div className="auth-actions">
-          <button type="submit" className="auth-button" disabled={busy}>
-            {busy ? "Saving..." : "Update Profile"}
-          </button>
-          <button type="button" className="auth-button secondary" disabled={busy} onClick={onExport}>
-            Export My Data
-          </button>
-          <button type="button" className="auth-button secondary" disabled={busy} onClick={onDelete}>
-            Delete Account
-          </button>
+        {/* Account details */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mb-10">
+          <div>
+            <p className="byline text-muted-foreground/50 mb-1">Username</p>
+            <p className="text-foreground">{auth.principal.username}</p>
+          </div>
+          <div>
+            <p className="byline text-muted-foreground/50 mb-1">Role</p>
+            <p className="text-foreground">{auth.principal.role}</p>
+          </div>
         </div>
-      </form>
 
-      {status ? <p className="auth-status">{status}</p> : null}
-      {error ? <p className="auth-error">{error}</p> : null}
+        {/* Status / error messages */}
+        {status && (
+          <div className="mb-6 px-4 py-3 border border-amber/30 bg-amber/5">
+            <p className="section-label text-amber">{status}</p>
+          </div>
+        )}
+        {error && (
+          <div className="mb-6 px-4 py-3 border border-destructive/30 bg-destructive/5">
+            <p className="section-label text-destructive">{error}</p>
+          </div>
+        )}
+
+        {/* Edit display name */}
+        <div className="border-t border-border/40 pt-8 mb-8">
+          <h2 className="section-label text-amber mb-5">Display Name</h2>
+          <form className="flex gap-3 items-end" onSubmit={onSave}>
+            <div className="flex-1">
+              <label className="byline text-muted-foreground/50 block mb-1.5" htmlFor="display-name">
+                Shown on your posts and comments
+              </label>
+              <input
+                id="display-name"
+                className="w-full border border-border bg-background text-foreground p-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber"
+                style={{ fontFamily: "var(--font-body), Georgia, serif" }}
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                required
+                maxLength={100}
+              />
+            </div>
+            <button type="submit" className="auth-button shrink-0" disabled={busy}>
+              {busy ? "Saving..." : "Save"}
+            </button>
+          </form>
+        </div>
+
+        {/* Data & account actions */}
+        <div className="border-t border-border/40 pt-8">
+          <h2 className="section-label text-amber mb-5">Data & Account</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm text-foreground">Export your data</p>
+                <p className="text-muted-foreground/50 text-xs mt-0.5">
+                  Download all your account data as JSON
+                </p>
+              </div>
+              <button
+                type="button"
+                className="section-label px-3 py-2 text-amber border border-amber/40 hover:bg-amber/10 transition-colors disabled:opacity-50"
+                disabled={busy}
+                onClick={onExport}
+              >
+                Export
+              </button>
+            </div>
+
+            <div className="border-t border-border/20" />
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm text-foreground">Delete account</p>
+                <p className="text-muted-foreground/50 text-xs mt-0.5">
+                  Permanently remove your account and all associated data
+                </p>
+              </div>
+              <button
+                type="button"
+                className="section-label px-3 py-2 text-muted-foreground border border-border/40 hover:text-destructive hover:border-destructive/40 transition-colors disabled:opacity-50"
+                disabled={busy}
+                onClick={onDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
