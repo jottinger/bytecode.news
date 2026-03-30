@@ -118,26 +118,12 @@ export function AuthNav({ allowAnonymousSubmission = false }: AuthNavProps) {
         {auth.principal.displayName}
       </Link>
       {isAdmin && (
-        <>
-          <Link
-            className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
-            href="/admin/pending"
-          >
-            Pending
-          </Link>
-          <Link
-            className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
-            href="/admin/users"
-          >
-            Users
-          </Link>
-          <Link
-            className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
-            href="/admin/categories"
-          >
-            Categories
-          </Link>
-        </>
+        <Link
+          className="section-label text-muted-foreground hover:text-amber transition-colors duration-200 px-2"
+          href="/admin"
+        >
+          Admin
+        </Link>
       )}
       <a
         href="/logout"
