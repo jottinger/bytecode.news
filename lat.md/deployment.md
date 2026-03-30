@@ -27,6 +27,7 @@ The documented setups support host-based and Docker-based combinations for the b
 OIDC activation is opt-in and requires both Spring profile configuration and provider-specific credentials.
 
 Operators enable the `oidc` profile, configure callback URLs, and provide Google or GitHub client credentials. Split-domain setups are supported so the API host can authenticate users for a separate frontend origin.
+Reverse-proxy deployments should also enable Spring forwarded-header handling so provider callback URLs are generated from the public HTTPS host instead of the internal app address.
 
 The authentication behavior behind this setup is described in [[authentication#Authentication and Identity#OIDC Authentication]].
 

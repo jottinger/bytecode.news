@@ -426,6 +426,7 @@ java -jar app/target/app-1.0.jar --spring.profiles.active=oidc,someotherprofile
 
 ```bash
 export SPRING_PROFILES_ACTIVE=oidc
+export SERVER_FORWARD_HEADERS_STRATEGY=framework
 java -jar app/target/app-1.0.jar
 ```
 
@@ -433,6 +434,7 @@ java -jar app/target/app-1.0.jar
 
 ```
 SPRING_PROFILES_ACTIVE=oidc
+SERVER_FORWARD_HEADERS_STRATEGY=framework
 ```
 
 **In a systemd unit** (production):
@@ -440,8 +442,11 @@ SPRING_PROFILES_ACTIVE=oidc
 ```ini
 [Service]
 Environment=SPRING_PROFILES_ACTIVE=oidc
+Environment=SERVER_FORWARD_HEADERS_STRATEGY=framework
 ExecStart=/opt/java/jdk-25/bin/java -jar app/target/app-1.0.jar
 ```
+
+`SERVER_FORWARD_HEADERS_STRATEGY=framework` is recommended behind nginx or another reverse proxy so Spring reconstructs OAuth callback URLs from the public HTTPS host instead of the internal app address.
 
 ### Provider Setup
 
@@ -508,6 +513,9 @@ streampack:
 ```
 
 If `frontendUrl` is not set, it defaults to `baseUrl`.
+
+When multiple frontend origins are allowed, the login flow prefers the validated `origin` that initiated `/oauth2/authorization/{provider}` and falls back to `frontendUrl` only when that origin is absent or not allowlisted.
+The initiating origin must be present in `CORS_ORIGINS`, and it is revalidated before the JWT redirect so the OAuth flow does not become an open redirect.
 
 ### How OIDC Works
 

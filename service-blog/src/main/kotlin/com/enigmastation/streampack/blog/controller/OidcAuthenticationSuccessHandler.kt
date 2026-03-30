@@ -1,8 +1,8 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.controller
 
+import com.enigmastation.streampack.blog.config.OidcRedirectOriginSupport
 import com.enigmastation.streampack.blog.service.UserConvergenceService
-import com.enigmastation.streampack.core.config.StreampackProperties
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
@@ -19,10 +19,9 @@ import org.springframework.stereotype.Component
 @Component
 class OidcAuthenticationSuccessHandler(
     private val userConvergenceService: UserConvergenceService,
-    properties: StreampackProperties,
+    private val redirectOriginSupport: OidcRedirectOriginSupport,
 ) : AuthenticationSuccessHandler {
     private val logger = LoggerFactory.getLogger(OidcAuthenticationSuccessHandler::class.java)
-    private val frontendUrl = properties.frontendUrl.ifEmpty { properties.baseUrl }
 
     override fun onAuthenticationSuccess(
         request: HttpServletRequest,
@@ -33,9 +32,11 @@ class OidcAuthenticationSuccessHandler(
 
         logger.info("OIDC authentication succeeded for {}", email)
         val loginResponse = userConvergenceService.converge(email, displayName)
+        val redirectBase = redirectOriginSupport.resolveRedirectBase(request)
+        redirectOriginSupport.clearOriginCookie(request, response)
 
         /* Deliver JWT via URL fragment so it is not sent to the server in subsequent requests */
-        response.sendRedirect("$frontendUrl/auth/callback#token=${loginResponse.token}")
+        response.sendRedirect("$redirectBase/auth/callback#token=${loginResponse.token}")
     }
 
     /** Extracts email and display name from either an OIDC or plain OAuth2 principal */

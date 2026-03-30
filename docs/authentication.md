@@ -65,7 +65,7 @@ See [Deployment Guide](deployment.md#oidc-setup) for activation instructions and
 2. Spring Security handles the OAuth2 Authorization Code flow
 3. On successful authentication, `OidcAuthenticationSuccessHandler` extracts the email and display name from the identity provider
 4. The same `UserConvergenceService.converge()` runs as with OTP
-5. The handler redirects to `${streampack.frontendUrl}/auth/callback#token=<jwt>` (falls back to `baseUrl` if not set)
+5. The handler redirects to `{origin}/auth/callback#token=<jwt>` when the initiating frontend origin is present and allowlisted; otherwise it falls back to `${streampack.frontendUrl}/auth/callback#token=<jwt>` and then `baseUrl`
 6. The frontend extracts the JWT from the URL fragment
 
 ### Provider differences

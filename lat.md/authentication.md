@@ -25,6 +25,7 @@ Each code is zero-padded to six digits, expires after a configurable window, and
 OIDC is an optional profile-gated authentication path for Google and GitHub identities.
 
 When the `oidc` profile is active, Spring Security handles the provider flow and the success handler extracts identity data before delegating to the same convergence logic used by OTP. The frontend then receives the resulting JWT through a callback redirect.
+When the login starts from an allowlisted frontend origin, that origin is carried through the OAuth flow and used as the post-login redirect target; otherwise the configured frontend URL remains the safe fallback.
 
 ### Provider Differences
 

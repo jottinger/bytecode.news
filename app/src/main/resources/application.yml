@@ -102,3 +102,4 @@ logging:
 
 server:
   server-header: ""
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:none}
