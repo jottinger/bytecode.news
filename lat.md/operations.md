@@ -42,6 +42,28 @@ Tell commands, channel bridging, and related workflows rely on the routing and p
 
 Comment composition uses plain-text markdown entry, and UI surfaces present that input in monospace so authored markup stays visually scannable while typing.
 
+## Blog Notifications
+
+Blog creation and discussion workflows emit immediate email notifications as best-effort side effects instead of part of the success contract.
+
+### Submission Emails
+
+New post drafts notify the active administrative audience so human review happens even when the author is anonymous or not an admin.
+
+Draft creation sends one plain-text email per distinct active admin address, including both `ADMIN` and `SUPER_ADMIN` roles while excluding suspended accounts. Admin-authored submissions do not notify admins about their own work.
+
+### Reply Emails
+
+Comment notifications follow the authored object being replied to instead of a fixed moderation list.
+
+Top-level comments notify the post author, while nested replies notify the parent comment author. Self-replies, replies to deleted comments, and recipients without an active real account or usable email do not generate mail.
+
+### Delivery Semantics
+
+Notification mail is routed through the shared egress pipeline so blog operations stay decoupled from SMTP delivery details.
+
+The body is plain text and currently includes canonical `BLOG_BASE_URL` links plus the raw markdown that was submitted. Delivery failures are logged and dropped so post and comment creation still succeed.
+
 ## Games and Feeds
 
 The bot includes interactive game features and inbound content feed integrations to keep channels active.

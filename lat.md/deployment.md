@@ -52,6 +52,8 @@ Mail and AI integrations are optional subsystems with operational impact beyond 
 
 Mail configuration supports OTP and transactional delivery, while AI configuration enables language-model-backed features. Both require explicit deployment-time configuration because they depend on external providers.
 
+Transactional mail is published through the shared mailto egress path, so operators need working mail settings not only for OTP login but also for moderation and reply notifications described in [[operations#User-Facing Operations#Blog Notifications]].
+
 ## Process Management and Backup
 
 Production guidance includes process supervision, frontend service startup, and PostgreSQL backup procedures.

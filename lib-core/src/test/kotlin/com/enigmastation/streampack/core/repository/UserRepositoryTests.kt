@@ -97,6 +97,47 @@ class UserRepositoryTests {
     }
 
     @Test
+    fun `find distinct active admin email addresses dedupes and excludes suspended admins`() {
+        userRepository.save(
+            User(
+                username = "admin1",
+                email = "admins@test.com",
+                displayName = "Admin One",
+                role = Role.ADMIN,
+            )
+        )
+        userRepository.save(
+            User(
+                username = "super1",
+                email = "admins@test.com",
+                displayName = "Super One",
+                role = Role.SUPER_ADMIN,
+            )
+        )
+        userRepository.save(
+            User(
+                username = "suspendedadmin",
+                email = "suspended@test.com",
+                displayName = "Suspended Admin",
+                role = Role.ADMIN,
+                status = UserStatus.SUSPENDED,
+            )
+        )
+        userRepository.save(
+            User(
+                username = "regularuser",
+                email = "user@test.com",
+                displayName = "Regular User",
+                role = Role.USER,
+            )
+        )
+
+        val emails = userRepository.findDistinctActiveAdminEmailAddresses()
+
+        assertEquals(listOf("admins@test.com"), emails)
+    }
+
+    @Test
     fun `toUserPrincipal conversion`() {
         val saved =
             userRepository.save(

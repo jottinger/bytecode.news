@@ -7,6 +7,7 @@ import com.enigmastation.streampack.blog.model.CreateCommentRequest
 import com.enigmastation.streampack.blog.repository.CommentRepository
 import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.service.BlogNotificationService
 import com.enigmastation.streampack.blog.service.MarkdownRenderingService
 import com.enigmastation.streampack.core.model.OperationOutcome
 import com.enigmastation.streampack.core.model.OperationResult
@@ -25,6 +26,7 @@ class CreateCommentOperation(
     private val postCategoryRepository: PostCategoryRepository,
     private val userRepository: UserRepository,
     private val markdownRenderingService: MarkdownRenderingService,
+    private val blogNotificationService: BlogNotificationService,
 ) : TypedOperation<CreateCommentRequest>(CreateCommentRequest::class) {
 
     override val priority = 50
@@ -61,6 +63,9 @@ class CreateCommentOperation(
                 val parent =
                     commentRepository.findById(payload.parentCommentId).orElse(null)
                         ?: return OperationResult.Error("Parent comment not found")
+                if (parent.deleted) {
+                    return OperationResult.Error("Cannot reply to a deleted comment")
+                }
                 if (parent.post.id != post.id) {
                     return OperationResult.Error("Parent comment belongs to a different post")
                 }
@@ -84,6 +89,8 @@ class CreateCommentOperation(
                     updatedAt = now,
                 )
             )
+
+        blogNotificationService.notifyComment(post, parentComment, comment)
 
         logger.info("Comment created: {} on post {}", comment.id, post.id)
 

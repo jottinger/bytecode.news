@@ -16,6 +16,7 @@ import com.enigmastation.streampack.blog.repository.PostRepository
 import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.blog.repository.TagRepository
+import com.enigmastation.streampack.blog.service.BlogNotificationService
 import com.enigmastation.streampack.blog.service.MarkdownRenderingService
 import com.enigmastation.streampack.blog.service.SlugGenerationService
 import com.enigmastation.streampack.core.model.OperationOutcome
@@ -38,6 +39,7 @@ class CreateContentOperation(
     private val postTagRepository: PostTagRepository,
     private val categoryRepository: CategoryRepository,
     private val postCategoryRepository: PostCategoryRepository,
+    private val blogNotificationService: BlogNotificationService,
 ) : TypedOperation<CreateContentRequest>(CreateContentRequest::class) {
 
     override fun handle(payload: CreateContentRequest, message: Message<*>): OperationOutcome {
@@ -106,6 +108,8 @@ class CreateContentOperation(
                 slugGenerationService.generateSlug(payload.title, now)
             }
         slugRepository.save(Slug(path = slugPath, post = post, canonical = true))
+
+        blogNotificationService.notifyPostSubmission(post, slugPath, user)
 
         logger.info("Post created: {} with slug {}", post.id, slugPath)
 

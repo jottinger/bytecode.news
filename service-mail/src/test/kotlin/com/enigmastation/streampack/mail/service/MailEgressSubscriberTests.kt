@@ -18,10 +18,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.messaging.Message
+import org.springframework.messaging.MessageChannel
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
 
@@ -87,6 +89,7 @@ class MailEgressSubscriberTests {
     }
 
     @Autowired lateinit var eventGateway: EventGateway
+    @Autowired @Qualifier("egressChannel") lateinit var egressChannel: MessageChannel
 
     @Autowired lateinit var consoleSubscriber: CapturingConsoleSubscriber
 
@@ -149,5 +152,28 @@ class MailEgressSubscriberTests {
         assertEquals(0, messages.size)
         // Verify the console subscriber DID get the message
         assertEquals(1, consoleSubscriber.received.size)
+    }
+
+    @Test
+    fun `subject header overrides default subject`() {
+        val message =
+            MessageBuilder.withPayload(OperationResult.Success("custom body"))
+                .setHeader(
+                    Provenance.HEADER,
+                    Provenance(
+                        protocol = Protocol.MAILTO,
+                        serviceId = "",
+                        replyTo = "user@example.com",
+                    ),
+                )
+                .setHeader("streampack.mail.subject", "Custom Subject")
+                .build()
+
+        egressChannel.send(message)
+
+        val messages = greenMail.receivedMessages
+        assertEquals(1, messages.size)
+        assertEquals("Custom Subject", messages[0].subject)
+        assertTrue(messages[0].content.toString().trim().contains("custom body"))
     }
 }
