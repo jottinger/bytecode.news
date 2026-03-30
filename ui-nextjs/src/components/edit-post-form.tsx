@@ -447,7 +447,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         </label>
         <input
           id="edit-tags"
-          className="auth-input"
+          className="auth-input auth-input-mono"
           value={tagsInput}
           onChange={(event) => setTagsInput(event.target.value)}
         />
@@ -457,7 +457,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         </label>
         <input
           id="edit-categories"
-          className="auth-input"
+          className="auth-input auth-input-mono"
           value={categoriesInput}
           onChange={(event) => setCategoriesInput(event.target.value)}
           list="edit-category-options"
@@ -478,7 +478,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
             <input
               id="edit-published-at"
               type="datetime-local"
-              className="auth-input"
+              className="auth-input auth-input-mono"
               value={publishedAtInput}
               onChange={(event) => setPublishedAtInput(event.target.value)}
             />

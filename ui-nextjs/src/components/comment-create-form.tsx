@@ -76,7 +76,7 @@ export function CommentCreateForm({ year, month, slug, parentCommentId, onCancel
       <div className="comment-input-wrapper">
         <textarea
           id={parentCommentId ? `reply-${parentCommentId}` : "comment-markdown"}
-          className="auth-input submit-textarea comment-textarea"
+          className="auth-input auth-input-mono submit-textarea comment-textarea"
           value={markdownSource}
           onChange={(event) => setMarkdownSource(event.target.value)}
           required
