@@ -1,21 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTaxonomySnapshot } from "@/lib/api";
+import { buildPublicMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicMetadata({
   title: "Tags",
   description: "Browse articles by tag on bytecode.news",
-  openGraph: {
-    title: "Tags",
-    description: "Browse articles by tag on bytecode.news",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Tags",
-    description: "Browse articles by tag on bytecode.news",
-  },
-};
+  path: "/tags",
+});
 
 export default async function TagsPage() {
   let tags: Record<string, number> = {};

@@ -44,6 +44,8 @@ describe("factoid detail page", () => {
     expect(metadata.title).toBe("mvnd");
     expect(metadata.openGraph?.title).toBe("mvnd");
     expect(metadata.twitter?.title).toBe("mvnd");
+    expect(metadata.alternates?.canonical).toBe("https://bytecode.news/factoids/mvnd");
+    expect(metadata.openGraph?.url).toBe("https://bytecode.news/factoids/mvnd");
   });
 
   it("renders missing factoid guidance for 404 selector", async () => {

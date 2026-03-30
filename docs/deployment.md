@@ -397,7 +397,7 @@ curl -s https://bytecode.news/feed.xml | rg 'https://bytecode.news/posts/'      
 
 Frontend-hosted feeds should supply `X-Forwarded-Host`, while direct API-host feed requests fall back to the configured canonical `BLOG_BASE_URL`.
 
-The Next.js frontend also uses `BLOG_BASE_URL` as its metadata base for canonical Open Graph, Twitter, and alternate-link URL resolution. Public pages such as search, taxonomy, factoids, karma, and article detail should therefore emit share metadata against the same canonical site URL.
+The Next.js frontend also uses `BLOG_BASE_URL` as its metadata base for canonical Open Graph, Twitter, and alternate-link URL resolution. Public pages such as search, taxonomy, factoids, karma, and article detail should therefore emit canonical URLs, `og:url`, and share-image metadata against the same canonical site URL.
 
 ---
 
