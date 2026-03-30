@@ -392,7 +392,10 @@ Same nginx activation steps as Option 1.
 ```bash
 curl -s -o /dev/null -w "%{http_code}" https://bytecode.news           # 200
 curl -s -o /dev/null -w "%{http_code}" https://bytecode.news/api/v3/api-docs   # 200
+curl -s https://bytecode.news/feed.xml | rg 'https://bytecode.news/posts/'      # public feed stays canonical
 ```
+
+Frontend-hosted feeds should supply `X-Forwarded-Host`, while direct API-host feed requests fall back to the configured canonical `BLOG_BASE_URL`.
 
 ---
 

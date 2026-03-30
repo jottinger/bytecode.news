@@ -17,7 +17,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
 
-/** Generates an RSS or Atom feed of published blog posts based on request URL */
+/** Generates an RSS or Atom feed of published blog posts using the public frontend host. */
 @RestController
 class BlogFeedController(
     private val postRepository: PostRepository,
@@ -74,16 +74,15 @@ class BlogFeedController(
     private fun resolveBaseUrl(request: HttpServletRequest): String {
         val forwardedProto = request.getHeader("X-Forwarded-Proto")?.substringBefore(',')?.trim()
         val forwardedHost = request.getHeader("X-Forwarded-Host")?.substringBefore(',')?.trim()
-        val host = forwardedHost ?: request.getHeader("Host")?.trim()
         val scheme =
             if (forwardedProto == "http" || forwardedProto == "https") forwardedProto
             else request.scheme
 
-        if (host.isNullOrBlank()) {
+        if (forwardedHost.isNullOrBlank()) {
             return blogProperties.baseUrl.trimEnd('/')
         }
 
-        return "$scheme://$host".trimEnd('/')
+        return "$scheme://$forwardedHost".trimEnd('/')
     }
 
     companion object {

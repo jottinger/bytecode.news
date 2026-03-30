@@ -46,6 +46,12 @@ The API includes a read-only JSON-RPC MCP endpoint for LLM and tool clients.
 
 `POST /mcp` exposes public search and retrieval tools for posts, factoids, and taxonomy without exposing admin or mutating actions. The integration contract is described in [[integrations#Integrations#MCP Access]].
 
+## Feed Canonicalization
+
+Frontend-hosted feeds must preserve the public site origin even when they fetch feed data from the API host.
+
+The backend uses `X-Forwarded-Host` when a frontend proxy provides it and otherwise falls back to the configured canonical blog base URL. This prevents RSS readers from seeing API-host links when the public feed was requested from a frontend domain.
+
 ## API Version Signaling
 
 Header-based version signaling exists in advisory mode so clients can prepare for future explicit contract routing.
