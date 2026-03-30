@@ -8,6 +8,16 @@ import { TagLink } from "@/components/tag-link";
 export const metadata: Metadata = {
   title: "Search",
   description: "Search published posts on bytecode.news",
+  openGraph: {
+    title: "Search",
+    description: "Search published posts on bytecode.news",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Search",
+    description: "Search published posts on bytecode.news",
+  },
 };
 
 function buildPostHref(post: ContentSummary): string {

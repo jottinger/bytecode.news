@@ -18,6 +18,14 @@ import { getKarmaLeaderboard } from "@/lib/api";
 const getKarmaLeaderboardMock = vi.mocked(getKarmaLeaderboard);
 
 describe("karma page", () => {
+  it("exports social metadata", async () => {
+    const module = await import("@/app/karma/page");
+
+    expect(module.metadata?.title).toBe("Karma");
+    expect(module.metadata?.openGraph?.title).toBe("Karma");
+    expect(module.metadata?.twitter?.title).toBe("Karma");
+  });
+
   it("renders unavailable notice when karma API fails", async () => {
     getKarmaLeaderboardMock.mockRejectedValueOnce(new Error("down"));
 

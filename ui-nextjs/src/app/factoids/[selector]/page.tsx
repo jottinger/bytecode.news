@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ApiError, getFactoid } from "@/lib/api";
 import { formatDate } from "@/lib/format";
@@ -63,6 +64,50 @@ function toSafeHttpUrl(value: string): string | null {
     return url.toString();
   } catch {
     return null;
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ selector: string }>;
+}): Promise<Metadata> {
+  const { selector } = await params;
+  const decodedSelector = decodeURIComponent(selector);
+
+  try {
+    const detail = await getFactoid(decodedSelector);
+    const description = `Factoid lookup for ${detail.selector} on bytecode.news`;
+
+    return {
+      title: detail.selector,
+      description,
+      openGraph: {
+        title: detail.selector,
+        description,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: detail.selector,
+        description,
+      },
+    };
+  } catch {
+    return {
+      title: decodedSelector,
+      description: `Factoid lookup for ${decodedSelector} on bytecode.news`,
+      openGraph: {
+        title: decodedSelector,
+        description: `Factoid lookup for ${decodedSelector} on bytecode.news`,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: decodedSelector,
+        description: `Factoid lookup for ${decodedSelector} on bytecode.news`,
+      },
+    };
   }
 }
 

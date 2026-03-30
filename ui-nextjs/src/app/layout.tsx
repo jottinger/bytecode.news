@@ -28,7 +28,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.SITE_URL || "https://bytecode.news",
+    process.env.BLOG_BASE_URL || process.env.SITE_URL || "https://bytecode.news",
   ),
   title: {
     default: "bytecode.news",

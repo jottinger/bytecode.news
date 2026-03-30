@@ -1,6 +1,22 @@
+import type { Metadata } from "next";
 import { getKarmaLeaderboard } from "@/lib/api";
 import { KarmaLeaderboardResponse } from "@/lib/types";
 import { KarmaBoard } from "@/components/karma-board";
+
+export const metadata: Metadata = {
+  title: "Karma",
+  description: "View the public karma leaderboard across bytecode.news integrations.",
+  openGraph: {
+    title: "Karma",
+    description: "View the public karma leaderboard across bytecode.news integrations.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Karma",
+    description: "View the public karma leaderboard across bytecode.news integrations.",
+  },
+};
 
 export default async function KarmaPage({
   searchParams,

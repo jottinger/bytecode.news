@@ -5,6 +5,16 @@ import { getTaxonomySnapshot } from "@/lib/api";
 export const metadata: Metadata = {
   title: "Tags",
   description: "Browse articles by tag on bytecode.news",
+  openGraph: {
+    title: "Tags",
+    description: "Browse articles by tag on bytecode.news",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tags",
+    description: "Browse articles by tag on bytecode.news",
+  },
 };
 
 export default async function TagsPage() {

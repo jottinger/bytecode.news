@@ -13,6 +13,8 @@ const listSearchPostsMock = vi.mocked(listSearchPosts);
 describe("search page", () => {
   it("exposes search metadata", () => {
     expect(metadata.title).toBe("Search");
+    expect(metadata.openGraph?.title).toBe("Search");
+    expect(metadata.twitter?.title).toBe("Search");
   });
 
   it("renders prompt state for empty query", async () => {
