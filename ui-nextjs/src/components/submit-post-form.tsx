@@ -56,6 +56,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [createdPostId, setCreatedPostId] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const loadedAt = useMemo(() => Date.now(), []);
 
   const auth = getAuthState();
@@ -232,7 +233,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
       const unknown = categories.filter((name) => !categoryLookup.has(name.toLowerCase()));
       setBusy(false);
       setError(
-        `Unknown categories: ${unknown.join(", ")}. Use existing categories or ask an admin to create them. If your topic is new, submit without categories and an admin can classify it.`,
+        `Unknown categories: ${unknown.join(", ")}. Use existing categories or ask an admin to create them.`,
       );
       return;
     }
@@ -259,13 +260,14 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
       }
 
       const created = (await response.json()) as { id?: string; title: string; status: string };
-      setStatus(`Draft saved: \"${created.title}\" (${created.status}).`);
+      setStatus(`Draft saved: "${created.title}" (${created.status}).`);
       setCreatedPostId(created.id || null);
       setTitle("");
       setMarkdownSource("");
       setSummary("");
       setTagsInput("");
       setCategoriesInput("");
+      setShowPreview(false);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Could not submit post draft.");
     } finally {
@@ -275,148 +277,237 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
 
   if (!canSubmit) {
     return (
-      <section className="notice">
-        <h2>Submit</h2>
-        <p>Sign in to submit a post draft.</p>
-        <p>
-          <Link className="pagelink" href="/login?return=/submit">
-            Go to login
-          </Link>
-        </p>
+      <section className="py-8 md:py-12">
+        <div className="max-w-3xl mx-auto px-6 md:px-8">
+          <header className="mb-10">
+            <div className="border-t-2 border-amber animate-rule-draw" />
+            <div className="pt-6 pb-8 border-b border-border/40">
+              <p className="section-label text-amber mb-3">Contribute</p>
+              <h1
+                className="font-display text-foreground leading-tight"
+                style={{ fontSize: "clamp(2rem, 5vw, 3rem)", letterSpacing: "-0.025em" }}
+              >
+                Submit a Draft
+              </h1>
+            </div>
+          </header>
+          <div className="py-12 text-center">
+            <p className="section-label text-muted-foreground/50 mb-4">
+              Sign in to submit a post draft.
+            </p>
+            <Link
+              className="section-label px-4 py-2.5 text-amber border border-amber/40 hover:bg-amber/10 transition-colors"
+              href="/login?return=/submit"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="auth-shell submit-shell">
-      <h2 className="auth-title">Submit a Draft</h2>
-      <p className="auth-note">Submissions create drafts for admin review.</p>
+    <section className="py-8 md:py-12">
+      <div className="max-w-3xl mx-auto px-6 md:px-8">
+        {/* Header */}
+        <header className="mb-10">
+          <div className="border-t-2 border-amber animate-rule-draw" />
+          <div className="pt-6 pb-8 border-b border-border/40">
+            <p className="section-label text-amber mb-3">Contribute</p>
+            <h1
+              className="font-display text-foreground leading-tight"
+              style={{ fontSize: "clamp(2rem, 5vw, 3rem)", letterSpacing: "-0.025em" }}
+            >
+              Submit a Draft
+            </h1>
+            <p className="text-muted-foreground/60 text-sm mt-2">
+              Submissions create drafts for admin review before publishing.
+            </p>
+          </div>
+        </header>
 
-      <form className="auth-form" onSubmit={onSubmit}>
-        <label className="auth-label" htmlFor="post-title">
-          Title
-        </label>
-        <input
-          id="post-title"
-          className="auth-input"
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          required
-        />
+        {/* Status / error messages */}
+        {status && (
+          <div className="mb-6 px-4 py-3 border border-amber/30 bg-amber/5">
+            <p className="section-label text-amber">
+              {status}{" "}
+              {createdPostId && isAdmin ? (
+                <Link className="underline hover:no-underline" href={`/edit/${createdPostId}`}>
+                  Edit draft
+                </Link>
+              ) : null}
+            </p>
+          </div>
+        )}
+        {error && (
+          <div className="mb-6 px-4 py-3 border border-destructive/30 bg-destructive/5">
+            <p className="section-label text-destructive">{error}</p>
+          </div>
+        )}
 
-        <label className="auth-label" htmlFor="post-markdown">
-          Content (Markdown)
-        </label>
-        <textarea
-          id="post-markdown"
-          className="auth-input submit-textarea markdown-textarea"
-          rows={18}
-          value={markdownSource}
-          onChange={(event) => setMarkdownSource(event.target.value)}
-          required
-        />
-        <div className="markdown-preview" aria-live="polite">
-          <p className="auth-label">Preview</p>
-          {markdownSource.trim().length === 0 ? (
-            <p className="auth-note">Preview appears here as you type markdown.</p>
-          ) : (
-            <MarkdownPreview source={markdownSource} className="post-body" />
-          )}
-        </div>
-
-        {auth.token ? (
-          <>
-            <label className="auth-label" htmlFor="post-summary">
-              Summary (optional)
+        <form onSubmit={onSubmit}>
+          {/* Title */}
+          <div className="mb-6">
+            <label className="byline text-muted-foreground/50 block mb-1.5" htmlFor="post-title">
+              Title
             </label>
-            <textarea
-              id="post-summary"
-              className="auth-input"
-              rows={4}
-              value={summary}
-              onChange={(event) => setSummary(event.target.value)}
-              placeholder="Optional manual summary for feed/front page excerpts."
+            <input
+              id="post-title"
+              className="w-full border border-border bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-amber"
+              style={{
+                fontFamily: "var(--font-display), Georgia, serif",
+                fontSize: "clamp(1.2rem, 3vw, 1.5rem)",
+                letterSpacing: "-0.01em",
+              }}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              required
+              placeholder="Your article title"
             />
-          </>
-        ) : null}
+          </div>
 
-        <label className="auth-label" htmlFor="post-tags">
-          Tags (comma-separated)
-        </label>
-        <input
-          id="post-tags"
-          className="auth-input"
-          value={tagsInput}
-          onChange={(event) => setTagsInput(event.target.value)}
-          placeholder="java, spring"
-        />
+          {/* Content */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="byline text-muted-foreground/50" htmlFor="post-markdown">
+                Content (Markdown)
+              </label>
+              {markdownSource.trim().length > 0 && (
+                <button
+                  type="button"
+                  className="section-label text-muted-foreground hover:text-amber transition-colors"
+                  onClick={() => setShowPreview(!showPreview)}
+                >
+                  {showPreview ? "Hide Preview" : "Show Preview"}
+                </button>
+              )}
+            </div>
+            <textarea
+              id="post-markdown"
+              className="w-full border border-border bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-amber resize-y"
+              style={{
+                fontFamily: "var(--font-mono), monospace",
+                fontSize: "0.9rem",
+                lineHeight: "1.6",
+                minHeight: "18rem",
+              }}
+              value={markdownSource}
+              onChange={(event) => setMarkdownSource(event.target.value)}
+              required
+            />
+            {showPreview && markdownSource.trim().length > 0 && (
+              <div className="mt-4 p-5 border border-border/40 bg-card/50">
+                <p className="section-label text-amber mb-4">Preview</p>
+                <MarkdownPreview source={markdownSource} className="post-body" />
+              </div>
+            )}
+          </div>
 
-        <label className="auth-label" htmlFor="post-categories">
-          Categories (comma-separated)
-        </label>
-        <input
-          id="post-categories"
-          className="auth-input"
-          value={categoriesInput}
-          onChange={(event) => setCategoriesInput(event.target.value)}
-          list="post-category-options"
-          placeholder="architecture, documentation"
-        />
-        <datalist id="post-category-options">
-          {categoryOptions.map((category) => (
-            <option key={category.id} value={String(category.name || "")} />
-          ))}
-        </datalist>
-        {!isAdmin ? (
-          <p className="auth-note">Categories starting with "_" are restricted to admins.</p>
-        ) : null}
+          {/* Summary (authenticated users only) */}
+          {auth.token && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="byline text-muted-foreground/50" htmlFor="post-summary">
+                  Summary (optional)
+                </label>
+                {canDeriveSummary && (
+                  <button
+                    type="button"
+                    className="section-label text-muted-foreground hover:text-amber transition-colors disabled:opacity-50"
+                    disabled={!canDeriveSummary}
+                    onClick={applyDerivedSummary}
+                  >
+                    Generate Summary
+                  </button>
+                )}
+              </div>
+              <textarea
+                id="post-summary"
+                className="w-full border border-border bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-amber resize-y"
+                style={{ fontFamily: "var(--font-body), Georgia, serif", fontSize: "0.95rem" }}
+                rows={3}
+                value={summary}
+                onChange={(event) => setSummary(event.target.value)}
+                placeholder="Brief summary for the front page and feed excerpts."
+              />
+            </div>
+          )}
 
-        <div className="auth-actions">
-          {auth.token ? (
-            <button
-              type="button"
-              className="auth-button secondary"
-              disabled={!canDeriveSummary}
-              onClick={applyDerivedSummary}
-            >
-              Generate Summary
+          {/* Tags and Categories side by side */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="byline text-muted-foreground/50" htmlFor="post-tags">
+                  Tags
+                </label>
+                <div className="flex gap-2">
+                  {canSuggestTags && (
+                    <button
+                      type="button"
+                      className="section-label text-muted-foreground hover:text-amber transition-colors disabled:opacity-50"
+                      disabled={!canSuggestTags}
+                      onClick={() => applySuggestedTags("/api/posts/derive-tags", "heuristic")}
+                    >
+                      Suggest
+                    </button>
+                  )}
+                  {canDeriveAiTags && canSuggestTags && (
+                    <button
+                      type="button"
+                      className="section-label text-muted-foreground hover:text-amber transition-colors disabled:opacity-50"
+                      disabled={!canSuggestTags}
+                      onClick={() => applySuggestedTags("/api/admin/posts/derive-tags", "ai")}
+                    >
+                      AI Tags
+                    </button>
+                  )}
+                </div>
+              </div>
+              <input
+                id="post-tags"
+                className="w-full border border-border bg-background text-foreground p-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber"
+                style={{ fontFamily: "var(--font-body), Georgia, serif" }}
+                value={tagsInput}
+                onChange={(event) => setTagsInput(event.target.value)}
+                placeholder="java, spring, architecture"
+              />
+            </div>
+
+            <div>
+              <label className="byline text-muted-foreground/50 block mb-1.5" htmlFor="post-categories">
+                Categories
+              </label>
+              <input
+                id="post-categories"
+                className="w-full border border-border bg-background text-foreground p-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber"
+                style={{ fontFamily: "var(--font-body), Georgia, serif" }}
+                value={categoriesInput}
+                onChange={(event) => setCategoriesInput(event.target.value)}
+                list="post-category-options"
+                placeholder="guides, tutorials"
+              />
+              <datalist id="post-category-options">
+                {categoryOptions.map((category) => (
+                  <option key={category.id} value={String(category.name || "")} />
+                ))}
+              </datalist>
+              {!isAdmin && (
+                <p className="text-muted-foreground/40 text-xs mt-1">
+                  Categories starting with "_" are restricted to admins.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="border-t border-border/40 pt-6">
+            <button type="submit" className="auth-button" disabled={busy}>
+              {busy ? "Submitting..." : "Submit Draft"}
             </button>
-          ) : null}
-          <button
-            type="button"
-            className="auth-button secondary"
-            disabled={!canSuggestTags}
-            onClick={() => applySuggestedTags("/api/posts/derive-tags", "heuristic")}
-          >
-            Suggest Tags
-          </button>
-          {canDeriveAiTags ? (
-            <button
-              type="button"
-              className="auth-button secondary"
-              disabled={!canSuggestTags}
-              onClick={() => applySuggestedTags("/api/admin/posts/derive-tags", "ai")}
-            >
-              Derive AI Tags
-            </button>
-          ) : null}
-          <button type="submit" className="auth-button" disabled={busy}>
-            {busy ? "Submitting..." : "Submit draft"}
-          </button>
-        </div>
-      </form>
-
-      {status ? (
-        <p className="auth-status">
-          {status}{" "}
-          {createdPostId && isAdmin ? (
-            <Link className="pagelink" href={`/edit/${createdPostId}`}>
-              Edit draft
-            </Link>
-          ) : null}
-        </p>
-      ) : null}
-      {error ? <p className="auth-error">{error}</p> : null}
+          </div>
+        </form>
+      </div>
     </section>
   );
 }

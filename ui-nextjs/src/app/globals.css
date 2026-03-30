@@ -575,6 +575,10 @@
   font-family: var(--font-body), Georgia, serif;
 }
 
+.auth-input-mono {
+  font-family: var(--font-mono), monospace;
+}
+
 .auth-button {
   @apply px-3 py-2 text-white cursor-pointer;
   border: 1px solid var(--amber);

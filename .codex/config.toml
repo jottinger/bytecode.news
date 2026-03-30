@@ -1,0 +1,9 @@
+[mcp_servers.lat]
+command = "lat"
+args = ["mcp"]
+
+[mcp_servers.lat.tools.lat_search]
+approval_mode = "approve"
+
+[mcp_servers.lat.tools.lat_expand]
+approval_mode = "approve"
