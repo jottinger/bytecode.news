@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { ApiError, getCommentsBySlug, getPageBySlug, getPostBySlug } from "@/lib/api";
 import { formatDate, formatUpdatedTime } from "@/lib/format";
+import { buildPublicMetadata } from "@/lib/metadata";
 import { CommentThreadResponse, ContentDetail } from "@/lib/types";
 import { CommentCreateForm } from "@/components/comment-create-form";
 import { CommentThread } from "@/components/comment-thread";
@@ -35,20 +36,12 @@ export async function generateMetadata({
     const post = await getResolvedPost(slugPath, isDatedPostPath);
     const description = post.excerpt?.trim() || SUMMARY_FALLBACK;
 
-    return {
+    return buildPublicMetadata({
       title: post.title,
       description,
-      openGraph: {
-        title: post.title,
-        description,
-        type: "article",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: post.title,
-        description,
-      },
-    };
+      path: `/posts/${slugPath}`,
+      type: "article",
+    });
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return {

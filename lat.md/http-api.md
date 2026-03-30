@@ -56,7 +56,7 @@ The backend uses `X-Forwarded-Host` when a frontend proxy provides it and otherw
 
 Public frontend routes should emit complete share metadata so previews stay consistent outside the site itself.
 
-The Next.js app uses the canonical `BLOG_BASE_URL` as its metadata base and supplies `openGraph` plus `twitter` metadata for public content surfaces including article detail, search, taxonomy indexes, taxonomy detail pages, factoid pages, and karma views.
+The Next.js app uses the canonical `BLOG_BASE_URL` as its metadata base and supplies `openGraph` plus `twitter` metadata for public content surfaces including article detail, search, taxonomy indexes, taxonomy detail pages, factoid pages, and karma views. These routes emit canonical URLs, `og:url`, and share-image references from that same base so link previews do not drift across mirrors or internal hosts.
 
 ## API Version Signaling
 

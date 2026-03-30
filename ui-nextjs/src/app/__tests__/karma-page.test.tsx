@@ -24,6 +24,8 @@ describe("karma page", () => {
     expect(module.metadata?.title).toBe("Karma");
     expect(module.metadata?.openGraph?.title).toBe("Karma");
     expect(module.metadata?.twitter?.title).toBe("Karma");
+    expect(module.metadata?.alternates?.canonical).toBe("https://bytecode.news/karma");
+    expect(module.metadata?.openGraph?.url).toBe("https://bytecode.news/karma");
   });
 
   it("renders unavailable notice when karma API fails", async () => {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ApiError, getFactoid } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { buildPublicMetadata } from "@/lib/metadata";
 import { FactoidAttribute } from "@/lib/types";
 
 function uniqueAttributes(attributes: FactoidAttribute[]): FactoidAttribute[] {
@@ -79,35 +80,17 @@ export async function generateMetadata({
     const detail = await getFactoid(decodedSelector);
     const description = `Factoid lookup for ${detail.selector} on bytecode.news`;
 
-    return {
+    return buildPublicMetadata({
       title: detail.selector,
       description,
-      openGraph: {
-        title: detail.selector,
-        description,
-        type: "website",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: detail.selector,
-        description,
-      },
-    };
+      path: `/factoids/${encodeURIComponent(detail.selector)}`,
+    });
   } catch {
-    return {
+    return buildPublicMetadata({
       title: decodedSelector,
       description: `Factoid lookup for ${decodedSelector} on bytecode.news`,
-      openGraph: {
-        title: decodedSelector,
-        description: `Factoid lookup for ${decodedSelector} on bytecode.news`,
-        type: "website",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: decodedSelector,
-        description: `Factoid lookup for ${decodedSelector} on bytecode.news`,
-      },
-    };
+      path: `/factoids/${encodeURIComponent(decodedSelector)}`,
+    });
   }
 }
 
