@@ -11,6 +11,14 @@ import { listFactoids } from "@/lib/api";
 const listFactoidsMock = vi.mocked(listFactoids);
 
 describe("factoids page", () => {
+  it("exports social metadata for the factoids index", async () => {
+    const module = await import("@/app/factoids/page");
+
+    expect(module.metadata?.title).toBe("Knowledge Base");
+    expect(module.metadata?.openGraph?.title).toBe("Knowledge Base");
+    expect(module.metadata?.twitter?.title).toBe("Knowledge Base");
+  });
+
   it("renders unavailable notice when factoid API fails", async () => {
     listFactoidsMock.mockRejectedValueOnce(new Error("down"));
 

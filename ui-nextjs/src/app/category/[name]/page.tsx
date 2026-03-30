@@ -15,6 +15,16 @@ export async function generateMetadata({
   return {
     title: display,
     description: `Articles in ${display} on bytecode.news`,
+    openGraph: {
+      title: display,
+      description: `Articles in ${display} on bytecode.news`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: display,
+      description: `Articles in ${display} on bytecode.news`,
+    },
   };
 }
 

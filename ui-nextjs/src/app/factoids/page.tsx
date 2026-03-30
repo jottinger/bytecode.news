@@ -1,7 +1,23 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { listFactoids } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { FactoidListResponse } from "@/lib/types";
+
+export const metadata: Metadata = {
+  title: "Knowledge Base",
+  description: "Browse public factoids and shared reference entries on bytecode.news",
+  openGraph: {
+    title: "Knowledge Base",
+    description: "Browse public factoids and shared reference entries on bytecode.news",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Knowledge Base",
+    description: "Browse public factoids and shared reference entries on bytecode.news",
+  },
+};
 
 function pageHref(page: number, query: string): string {
   const params = new URLSearchParams();
