@@ -213,6 +213,30 @@ class BlogFeedControllerTests {
     }
 
     @Test
+    fun `feed falls back to configured blog base url when forwarded host is absent`() {
+        mockMvc
+            .get("/feed.xml") { header("Host", "api.bytecode.news") }
+            .andExpect {
+                status { isOk() }
+                content { string(org.hamcrest.Matchers.containsString("http://localhost:3001")) }
+                content {
+                    string(
+                        org.hamcrest.Matchers.containsString(
+                            "http://localhost:3001/posts/$slugPath"
+                        )
+                    )
+                }
+                content {
+                    string(
+                        org.hamcrest.Matchers.not(
+                            org.hamcrest.Matchers.containsString("https://api.bytecode.news")
+                        )
+                    )
+                }
+            }
+    }
+
+    @Test
     fun `feed falls back to derived summary when excerpt is missing`() {
         val now = Instant.now()
         val author =
