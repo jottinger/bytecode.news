@@ -25,6 +25,29 @@ import { ApiError, getFactoid } from "@/lib/api";
 const getFactoidMock = vi.mocked(getFactoid);
 
 describe("factoid detail page", () => {
+  it("exports social metadata for factoid detail pages", async () => {
+    getFactoidMock.mockResolvedValueOnce({
+      selector: "mvnd",
+      locked: false,
+      updatedBy: "dreamreal",
+      updatedAt: "2026-03-12T10:00:00Z",
+      lastAccessedAt: null,
+      accessCount: 4,
+      attributes: [],
+    });
+
+    const module = await import("@/app/factoids/[selector]/page");
+    const metadata = await module.generateMetadata({
+      params: Promise.resolve({ selector: "mvnd" }),
+    });
+
+    expect(metadata.title).toBe("mvnd");
+    expect(metadata.openGraph?.title).toBe("mvnd");
+    expect(metadata.twitter?.title).toBe("mvnd");
+    expect(metadata.alternates?.canonical).toBe("https://bytecode.news/factoids/mvnd");
+    expect(metadata.openGraph?.url).toBe("https://bytecode.news/factoids/mvnd");
+  });
+
   it("renders missing factoid guidance for 404 selector", async () => {
     getFactoidMock.mockRejectedValueOnce(new ApiError(404, "/factoids/missing"));
 

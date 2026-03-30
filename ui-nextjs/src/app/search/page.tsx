@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { listSearchPosts } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { buildPublicMetadata } from "@/lib/metadata";
 import { ContentListResponse, ContentSummary } from "@/lib/types";
 import { TagLink } from "@/components/tag-link";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicMetadata({
   title: "Search",
   description: "Search published posts on bytecode.news",
-};
+  path: "/search",
+});
 
 function buildPostHref(post: ContentSummary): string {
   return `/posts/${post.slug}`;

@@ -166,6 +166,22 @@ describe("post page", () => {
     expect(metadata.description).toBe("Metadata excerpt");
     expect(metadata.openGraph?.title).toBe("Metadata Post");
     expect(metadata.twitter?.title).toBe("Metadata Post");
+    expect(metadata.alternates?.canonical).toBe(
+      "https://bytecode.news/posts/2026/03/metadata-post",
+    );
+    expect(metadata.openGraph?.url).toBe("https://bytecode.news/posts/2026/03/metadata-post");
+    expect(metadata.openGraph?.images).toEqual([
+      {
+        url: "https://bytecode.news/opengraph-image",
+        alt: "bytecode.news",
+      },
+    ]);
+    expect(metadata.twitter?.images).toEqual([
+      {
+        url: "https://bytecode.news/twitter-image",
+        alt: "bytecode.news",
+      },
+    ]);
   });
 
   it("uses fallback metadata when post API is unavailable", async () => {

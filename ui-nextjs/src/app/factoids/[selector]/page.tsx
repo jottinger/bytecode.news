@@ -1,6 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ApiError, getFactoid } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { buildPublicMetadata } from "@/lib/metadata";
 import { FactoidAttribute } from "@/lib/types";
 
 function uniqueAttributes(attributes: FactoidAttribute[]): FactoidAttribute[] {
@@ -63,6 +65,32 @@ function toSafeHttpUrl(value: string): string | null {
     return url.toString();
   } catch {
     return null;
+  }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ selector: string }>;
+}): Promise<Metadata> {
+  const { selector } = await params;
+  const decodedSelector = decodeURIComponent(selector);
+
+  try {
+    const detail = await getFactoid(decodedSelector);
+    const description = `Factoid lookup for ${detail.selector} on bytecode.news`;
+
+    return buildPublicMetadata({
+      title: detail.selector,
+      description,
+      path: `/factoids/${encodeURIComponent(detail.selector)}`,
+    });
+  } catch {
+    return buildPublicMetadata({
+      title: decodedSelector,
+      description: `Factoid lookup for ${decodedSelector} on bytecode.news`,
+      path: `/factoids/${encodeURIComponent(decodedSelector)}`,
+    });
   }
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { listPostsByCategory } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { buildPublicMetadata } from "@/lib/metadata";
 import { ContentListResponse, ContentSummary } from "@/lib/types";
 import { TagLink } from "@/components/tag-link";
 
@@ -12,10 +13,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { name } = await params;
   const display = decodeURIComponent(name);
-  return {
+  return buildPublicMetadata({
     title: display,
     description: `Articles in ${display} on bytecode.news`,
-  };
+    path: `/category/${encodeURIComponent(display)}`,
+  });
 }
 
 function buildPostHref(post: ContentSummary): string {

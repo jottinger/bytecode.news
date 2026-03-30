@@ -13,6 +13,22 @@ const listSearchPostsMock = vi.mocked(listSearchPosts);
 describe("search page", () => {
   it("exposes search metadata", () => {
     expect(metadata.title).toBe("Search");
+    expect(metadata.openGraph?.title).toBe("Search");
+    expect(metadata.twitter?.title).toBe("Search");
+    expect(metadata.alternates?.canonical).toBe("https://bytecode.news/search");
+    expect(metadata.openGraph?.url).toBe("https://bytecode.news/search");
+    expect(metadata.openGraph?.images).toEqual([
+      {
+        url: "https://bytecode.news/opengraph-image",
+        alt: "bytecode.news",
+      },
+    ]);
+    expect(metadata.twitter?.images).toEqual([
+      {
+        url: "https://bytecode.news/twitter-image",
+        alt: "bytecode.news",
+      },
+    ]);
   });
 
   it("renders prompt state for empty query", async () => {
