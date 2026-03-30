@@ -5,6 +5,7 @@ import com.enigmastation.streampack.blog.entity.Category
 import com.enigmastation.streampack.blog.entity.Comment
 import com.enigmastation.streampack.blog.entity.Post
 import com.enigmastation.streampack.blog.entity.PostCategory
+import com.enigmastation.streampack.blog.entity.Slug
 import com.enigmastation.streampack.blog.model.CommentDetail
 import com.enigmastation.streampack.blog.model.CreateCommentRequest
 import com.enigmastation.streampack.blog.model.PostStatus
@@ -12,17 +13,21 @@ import com.enigmastation.streampack.blog.repository.CategoryRepository
 import com.enigmastation.streampack.blog.repository.CommentRepository
 import com.enigmastation.streampack.blog.repository.PostCategoryRepository
 import com.enigmastation.streampack.blog.repository.PostRepository
+import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.core.entity.User
+import com.enigmastation.streampack.core.integration.EgressSubscriber
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
+import com.enigmastation.streampack.core.model.UserStatus
 import com.enigmastation.streampack.core.repository.UserRepository
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -31,6 +36,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.transaction.annotation.Transactional
 
@@ -38,19 +45,43 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class CreateCommentOperationTests {
 
+    @TestConfiguration
+    class NotificationTestConfig {
+        @Bean fun capturingMailSubscriber() = CapturingMailSubscriber()
+    }
+
+    class CapturingMailSubscriber : EgressSubscriber() {
+        val received = CopyOnWriteArrayList<Pair<OperationResult, Provenance>>()
+
+        override fun matches(provenance: Provenance): Boolean =
+            provenance.protocol == Protocol.MAILTO
+
+        override fun deliver(result: OperationResult, provenance: Provenance) {
+            received.add(result to provenance)
+        }
+
+        fun reset() {
+            received.clear()
+        }
+    }
+
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var postRepository: PostRepository
     @Autowired lateinit var commentRepository: CommentRepository
     @Autowired lateinit var categoryRepository: CategoryRepository
     @Autowired lateinit var postCategoryRepository: PostCategoryRepository
+    @Autowired lateinit var slugRepository: SlugRepository
+    @Autowired lateinit var capturingMailSubscriber: CapturingMailSubscriber
 
     private lateinit var verifiedUser: User
     private lateinit var unverifiedUser: User
+    private lateinit var replyUser: User
     private lateinit var publishedPost: Post
 
     @BeforeEach
     fun setUp() {
+        capturingMailSubscriber.reset()
         val now = Instant.now()
 
         verifiedUser =
@@ -73,6 +104,16 @@ class CreateCommentOperationTests {
                     role = Role.USER,
                 )
             )
+        replyUser =
+            userRepository.save(
+                User(
+                    username = "replier",
+                    email = "replier@test.com",
+                    displayName = "Reply User",
+                    emailVerified = true,
+                    role = Role.USER,
+                )
+            )
 
         publishedPost =
             postRepository.save(
@@ -88,6 +129,9 @@ class CreateCommentOperationTests {
                     updatedAt = now,
                 )
             )
+        slugRepository.save(
+            Slug(path = "2026/03/test-post", post = publishedPost, canonical = true)
+        )
     }
 
     private fun createMessage(request: CreateCommentRequest, user: User?) =
@@ -204,6 +248,26 @@ class CreateCommentOperationTests {
     }
 
     @Test
+    fun `deleted parent comment returns error`() {
+        val deletedParent =
+            commentRepository.save(
+                Comment(
+                    post = publishedPost,
+                    author = verifiedUser,
+                    markdownSource = "Deleted parent.",
+                    renderedHtml = "<p>Deleted parent.</p>",
+                    deleted = true,
+                )
+            )
+
+        val request = CreateCommentRequest(publishedPost.id, deletedParent.id, "A reply.")
+        val result = eventGateway.process(createMessage(request, replyUser))
+
+        assertInstanceOf(OperationResult.Error::class.java, result)
+        assertEquals("Cannot reply to a deleted comment", (result as OperationResult.Error).message)
+    }
+
+    @Test
     fun `parent comment on different post returns error`() {
         val otherPost =
             postRepository.save(
@@ -255,5 +319,95 @@ class CreateCommentOperationTests {
             "Comments are disabled for sidebar content",
             (result as OperationResult.Error).message,
         )
+    }
+
+    @Test
+    // @lat: [[operations#User-Facing Operations#Blog Notifications#Reply Emails]]
+    fun `top-level comment notifies the post author`() {
+        val request = CreateCommentRequest(publishedPost.id, null, "This is a comment.")
+
+        val result = eventGateway.process(createMessage(request, replyUser))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(1, capturingMailSubscriber.received.size)
+        assertEquals("commenter@test.com", capturingMailSubscriber.received.single().second.replyTo)
+        val body =
+            (capturingMailSubscriber.received.single().first as OperationResult.Success)
+                .payload
+                .toString()
+        assertTrue(body.contains("http://localhost:3001/posts/2026/03/test-post"))
+    }
+
+    @Test
+    fun `nested reply notifies the parent comment author`() {
+        val parentComment =
+            commentRepository.save(
+                Comment(
+                    post = publishedPost,
+                    author = verifiedUser,
+                    markdownSource = "Parent comment.",
+                    renderedHtml = "<p>Parent comment.</p>",
+                )
+            )
+
+        val request = CreateCommentRequest(publishedPost.id, parentComment.id, "This is a reply.")
+        val result = eventGateway.process(createMessage(request, replyUser))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(1, capturingMailSubscriber.received.size)
+        assertEquals("commenter@test.com", capturingMailSubscriber.received.single().second.replyTo)
+        val body =
+            (capturingMailSubscriber.received.single().first as OperationResult.Success)
+                .payload
+                .toString()
+        assertTrue(body.contains("http://localhost:3001/posts/2026/03/test-post"))
+    }
+
+    @Test
+    fun `self-comment does not notify the author`() {
+        val request = CreateCommentRequest(publishedPost.id, null, "Talking to myself.")
+
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(0, capturingMailSubscriber.received.size)
+    }
+
+    @Test
+    fun `comment does not notify suspended post author`() {
+        val suspendedAuthor =
+            userRepository.save(
+                User(
+                    username = "suspendedauthor",
+                    email = "suspended@author.test",
+                    displayName = "Suspended Author",
+                    emailVerified = true,
+                    role = Role.USER,
+                    status = UserStatus.SUSPENDED,
+                )
+            )
+        val suspendedPost =
+            postRepository.save(
+                Post(
+                    title = "Suspended Post",
+                    markdownSource = "Post content.",
+                    renderedHtml = "<p>Post content.</p>",
+                    excerpt = "Post content.",
+                    status = PostStatus.APPROVED,
+                    publishedAt = Instant.now().minus(1, ChronoUnit.HOURS),
+                    author = suspendedAuthor,
+                    createdAt = Instant.now(),
+                    updatedAt = Instant.now(),
+                )
+            )
+        slugRepository.save(
+            Slug(path = "2026/03/suspended-post", post = suspendedPost, canonical = true)
+        )
+
+        val request = CreateCommentRequest(suspendedPost.id, null, "A comment.")
+        val result = eventGateway.process(createMessage(request, replyUser))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(0, capturingMailSubscriber.received.size)
     }
 }

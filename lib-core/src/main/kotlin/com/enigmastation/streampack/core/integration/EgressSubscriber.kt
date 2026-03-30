@@ -5,6 +5,7 @@ import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Provenance
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
+import org.springframework.messaging.MessageHeaders
 
 /**
  * Base class for services that watch the egress channel for operation results.
@@ -28,6 +29,15 @@ abstract class EgressSubscriber : MessageHandler {
     /** Handle a matched operation result. Called only when [matches] returned true. */
     abstract fun deliver(result: OperationResult, provenance: Provenance)
 
+    /** Optional access to the raw egress headers for subscribers that need them. */
+    protected open fun deliver(
+        result: OperationResult,
+        provenance: Provenance,
+        headers: MessageHeaders,
+    ) {
+        deliver(result, provenance)
+    }
+
     /** Override to provide the signal character for this provenance's protocol/service */
     protected open fun resolveSignalCharacter(provenance: Provenance): String = ""
 
@@ -35,7 +45,7 @@ abstract class EgressSubscriber : MessageHandler {
         val provenance = message.headers[Provenance.HEADER] as? Provenance ?: return
         val result = message.payload as? OperationResult ?: return
         if (matches(provenance)) {
-            deliver(renderReferenceTokens(result, provenance), provenance)
+            deliver(renderReferenceTokens(result, provenance), provenance, message.headers)
         }
     }
 

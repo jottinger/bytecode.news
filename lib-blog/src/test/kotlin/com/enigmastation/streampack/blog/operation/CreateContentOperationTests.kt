@@ -11,6 +11,7 @@ import com.enigmastation.streampack.blog.repository.PostTagRepository
 import com.enigmastation.streampack.blog.repository.SlugRepository
 import com.enigmastation.streampack.blog.repository.TagRepository
 import com.enigmastation.streampack.core.entity.User
+import com.enigmastation.streampack.core.integration.EgressSubscriber
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
@@ -19,6 +20,7 @@ import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import com.enigmastation.streampack.core.repository.UserRepository
 import java.util.UUID
+import java.util.concurrent.CopyOnWriteArrayList
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -28,12 +30,34 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.TestConfiguration
+import org.springframework.context.annotation.Bean
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.transaction.annotation.Transactional
 
 @SpringBootTest
 @Transactional
 class CreateContentOperationTests {
+
+    @TestConfiguration
+    class NotificationTestConfig {
+        @Bean fun capturingMailSubscriber() = CapturingMailSubscriber()
+    }
+
+    class CapturingMailSubscriber : EgressSubscriber() {
+        val received = CopyOnWriteArrayList<Pair<OperationResult, Provenance>>()
+
+        override fun matches(provenance: Provenance): Boolean =
+            provenance.protocol == Protocol.MAILTO
+
+        override fun deliver(result: OperationResult, provenance: Provenance) {
+            received.add(result to provenance)
+        }
+
+        fun reset() {
+            received.clear()
+        }
+    }
 
     @Autowired lateinit var eventGateway: EventGateway
     @Autowired lateinit var userRepository: UserRepository
@@ -42,12 +66,16 @@ class CreateContentOperationTests {
     @Autowired lateinit var tagRepository: TagRepository
     @Autowired lateinit var postTagRepository: PostTagRepository
     @Autowired lateinit var categoryRepository: CategoryRepository
+    @Autowired lateinit var capturingMailSubscriber: CapturingMailSubscriber
 
     private lateinit var verifiedUser: User
     private lateinit var unverifiedUser: User
+    private lateinit var adminUser: User
+    private lateinit var superAdminUser: User
 
     @BeforeEach
     fun setUp() {
+        capturingMailSubscriber.reset()
         verifiedUser =
             userRepository.save(
                 User(
@@ -66,6 +94,26 @@ class CreateContentOperationTests {
                     displayName = "New User",
                     emailVerified = false,
                     role = Role.USER,
+                )
+            )
+        adminUser =
+            userRepository.save(
+                User(
+                    username = "editor",
+                    email = "editor@test.com",
+                    displayName = "Editor",
+                    emailVerified = true,
+                    role = Role.ADMIN,
+                )
+            )
+        superAdminUser =
+            userRepository.save(
+                User(
+                    username = "owner",
+                    email = "owner@test.com",
+                    displayName = "Owner",
+                    emailVerified = true,
+                    role = Role.SUPER_ADMIN,
                 )
             )
     }
@@ -279,5 +327,57 @@ class CreateContentOperationTests {
 
         val response = (result as OperationResult.Success).payload as CreateContentResponse
         assertTrue(response.slug.matches(Regex("\\d{4}/\\d{2}/big-news")))
+    }
+
+    @Test
+    // @lat: [[operations#User-Facing Operations#Blog Notifications#Submission Emails]]
+    fun `non-admin submission notifies active admins by email`() {
+        val request = CreateContentRequest("Needs Review", "Please review this draft.")
+
+        val result = eventGateway.process(createMessage(request, verifiedUser))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(2, capturingMailSubscriber.received.size)
+        assertEquals(
+            setOf("editor@test.com", "owner@test.com"),
+            capturingMailSubscriber.received.map { it.second.replyTo }.toSet(),
+        )
+        val bodies =
+            capturingMailSubscriber.received.map { (message, _) ->
+                (message as OperationResult.Success).payload.toString()
+            }
+        assertTrue(bodies.all { it.contains("Needs Review") })
+        assertTrue(bodies.all { it.contains("http://localhost:3001/posts/2026/03/needs-review") })
+    }
+
+    @Test
+    fun `anonymous submission notifies active admins by email`() {
+        val request = CreateContentRequest("Anonymous Draft", "Anonymous content.")
+
+        val result = eventGateway.process(createMessage(request, null))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(2, capturingMailSubscriber.received.size)
+        assertEquals(
+            setOf("editor@test.com", "owner@test.com"),
+            capturingMailSubscriber.received.map { it.second.replyTo }.toSet(),
+        )
+        val bodies =
+            capturingMailSubscriber.received.map { (message, _) ->
+                (message as OperationResult.Success).payload.toString()
+            }
+        assertTrue(
+            bodies.all { it.contains("http://localhost:3001/posts/2026/03/anonymous-draft") }
+        )
+    }
+
+    @Test
+    fun `admin-authored submission does not notify admins`() {
+        val request = CreateContentRequest("Admin Draft", "Admin content.")
+
+        val result = eventGateway.process(createMessage(request, adminUser))
+
+        assertInstanceOf(OperationResult.Success::class.java, result)
+        assertEquals(0, capturingMailSubscriber.received.size)
     }
 }

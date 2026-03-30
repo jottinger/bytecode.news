@@ -34,6 +34,18 @@ interface UserRepository : JpaRepository<User, UUID> {
     )
     fun findActiveByRole(role: Role): List<User>
 
+    @Query(
+        "SELECT DISTINCT u.email FROM User u " +
+            "WHERE u.status = com.enigmastation.streampack.core.model.UserStatus.ACTIVE " +
+            "AND u.role IN (" +
+            "com.enigmastation.streampack.core.model.Role.ADMIN, " +
+            "com.enigmastation.streampack.core.model.Role.SUPER_ADMIN" +
+            ") " +
+            "AND u.email <> '' " +
+            "ORDER BY u.email ASC"
+    )
+    fun findDistinctActiveAdminEmailAddresses(): List<String>
+
     /** Returns users that are active or suspended (for admin views) */
     @Query(
         "SELECT u FROM User u WHERE u.status IN (com.enigmastation.streampack.core.model.UserStatus.ACTIVE, com.enigmastation.streampack.core.model.UserStatus.SUSPENDED) ORDER BY u.createdAt ASC"
