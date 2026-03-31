@@ -5,6 +5,7 @@ import com.enigmastation.streampack.blog.model.LogDayResponse
 import com.enigmastation.streampack.blog.model.LogEntry
 import com.enigmastation.streampack.blog.model.LogProvenanceListResponse
 import com.enigmastation.streampack.blog.model.LogProvenanceSummary
+import com.enigmastation.streampack.blog.service.CookieService
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.Role
@@ -140,10 +141,18 @@ class LogController(
         }
     }
 
+    /** Extracts and validates the JWT from cookies first, then the Authorization header */
     private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
+        val cookieToken =
+            request.cookies?.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }?.value
+        if (cookieToken != null) {
+            val principal = jwtService.validateToken(cookieToken)
+            if (principal != null) return principal
+        }
         val header = request.getHeader("Authorization") ?: return null
         if (!header.startsWith("Bearer ")) return null
-        return jwtService.validateToken(header.substring(7))
+        val token = header.substring(7)
+        return jwtService.validateToken(token)
     }
 
     private fun notFound(message: String): ResponseEntity<*> {

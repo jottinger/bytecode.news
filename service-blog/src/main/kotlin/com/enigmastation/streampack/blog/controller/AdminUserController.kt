@@ -7,6 +7,7 @@ import com.enigmastation.streampack.blog.model.PurgeErasedContentRequest
 import com.enigmastation.streampack.blog.model.RoleUpdateRequest
 import com.enigmastation.streampack.blog.model.SuspendAccountRequest
 import com.enigmastation.streampack.blog.model.UnsuspendAccountRequest
+import com.enigmastation.streampack.blog.service.CookieService
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.AlterUserRequest
 import com.enigmastation.streampack.core.model.OperationResult
@@ -184,8 +185,14 @@ class AdminUserController(
         }
     }
 
-    /** Extracts and validates the Bearer token from the Authorization header */
+    /** Extracts and validates the JWT from cookies first, then the Authorization header */
     private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
+        val cookieToken =
+            request.cookies?.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }?.value
+        if (cookieToken != null) {
+            val principal = jwtService.validateToken(cookieToken)
+            if (principal != null) return principal
+        }
         val header = request.getHeader("Authorization") ?: return null
         if (!header.startsWith("Bearer ")) return null
         val token = header.substring(7)

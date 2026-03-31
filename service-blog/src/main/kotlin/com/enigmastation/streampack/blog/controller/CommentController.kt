@@ -10,6 +10,7 @@ import com.enigmastation.streampack.blog.model.EditCommentHttpRequest
 import com.enigmastation.streampack.blog.model.EditCommentRequest
 import com.enigmastation.streampack.blog.model.FindCommentsRequest
 import com.enigmastation.streampack.blog.repository.SlugRepository
+import com.enigmastation.streampack.blog.service.CookieService
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
@@ -155,8 +156,14 @@ class CommentController(
         return resolved.post.id
     }
 
-    /** Extracts and validates the Bearer token from the Authorization header */
+    /** Extracts and validates the JWT from cookies first, then the Authorization header */
     private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
+        val cookieToken =
+            request.cookies?.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }?.value
+        if (cookieToken != null) {
+            val principal = jwtService.validateToken(cookieToken)
+            if (principal != null) return principal
+        }
         val header = request.getHeader("Authorization") ?: return null
         if (!header.startsWith("Bearer ")) return null
         val token = header.substring(7)
