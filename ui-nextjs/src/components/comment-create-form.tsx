@@ -24,7 +24,7 @@ export function CommentCreateForm({ year, month, slug, parentCommentId, onCancel
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!auth.token) {
+    if (!auth.principal) {
       setError("Sign in to comment.");
       return;
     }
@@ -38,8 +38,8 @@ export function CommentCreateForm({ year, month, slug, parentCommentId, onCancel
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ markdownSource, parentCommentId: parentCommentId || undefined }),
       });
 
@@ -58,7 +58,7 @@ export function CommentCreateForm({ year, month, slug, parentCommentId, onCancel
     }
   }
 
-  if (!auth.token) {
+  if (!auth.principal) {
     return (
       <p>
         <Link className="pagelink" href={`/login?return=/posts/${year}/${month}/${slug}`}>

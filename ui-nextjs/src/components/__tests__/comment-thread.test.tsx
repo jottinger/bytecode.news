@@ -7,7 +7,6 @@ import { CommentThread } from "@/components/comment-thread";
 
 const mocks = vi.hoisted(() => ({
   authState: {
-    token: null as string | null,
     principal: null as
       | {
           id: string;
@@ -76,7 +75,6 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 afterEach(() => {
   cleanup();
   mocks.refresh.mockReset();
-  mocks.authState.token = null;
   mocks.authState.principal = null;
 });
 
@@ -122,7 +120,7 @@ describe("CommentThread", () => {
   });
 
   it("shows a nested reply form when reply is clicked", () => {
-    mocks.authState.token = "token-1";
+
     mocks.authState.principal = {
       id: "user-9",
       username: "user9",
@@ -152,7 +150,7 @@ describe("CommentThread", () => {
       editable: true,
     });
 
-    mocks.authState.token = "author-token";
+
     mocks.authState.principal = {
       id: "user-7",
       username: "author",

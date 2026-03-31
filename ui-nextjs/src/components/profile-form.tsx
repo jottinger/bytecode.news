@@ -22,7 +22,7 @@ export function ProfileForm() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  if (!auth.token || !auth.principal) {
+  if (!auth.principal) {
     return (
       <section className="py-8 md:py-12">
         <div className="max-w-2xl mx-auto px-6 md:px-8">
@@ -51,8 +51,8 @@ export function ProfileForm() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ displayName: displayName.trim() }),
       });
       const payload = (await response.json()) as unknown;
@@ -76,9 +76,7 @@ export function ProfileForm() {
     try {
       const response = await fetch("/api/auth/export", {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-        },
+        credentials: "include",
       });
       const payload = (await response.json()) as unknown;
       if (!response.ok) {
@@ -112,8 +110,8 @@ export function ProfileForm() {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
         },
+        credentials: "include",
         body: JSON.stringify({}),
       });
       const payload = (await response.json()) as unknown;

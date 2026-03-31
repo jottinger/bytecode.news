@@ -66,37 +66,32 @@ export function AdminDashboard() {
     auth.principal?.role === "ADMIN" || auth.principal?.role === "SUPER_ADMIN";
 
   useEffect(() => {
-    if (!auth.token || !isAdmin) {
+    if (!auth.principal || !isAdmin) {
       setLoading(false);
       return;
     }
 
     async function load() {
-      const headers = {
-        Accept: "application/json",
-        Authorization: `Bearer ${auth.token}`,
+      const authedOpts = {
+        headers: { Accept: "application/json" },
+        credentials: "include" as RequestCredentials,
+        cache: "no-store" as RequestCache,
       };
 
       const results = await Promise.allSettled([
-        fetch("/api/admin/posts/pending?page=0&size=1&deleted=false", {
-          headers,
-          cache: "no-store",
-        }).then((r) => r.json() as Promise<ContentListResponse>),
+        fetch("/api/admin/posts/pending?page=0&size=1&deleted=false", authedOpts)
+          .then((r) => r.json() as Promise<ContentListResponse>),
 
         fetch("/api/posts?page=0&size=1", {
           headers: { Accept: "application/json" },
           cache: "no-store",
         }).then((r) => r.json() as Promise<ContentListResponse>),
 
-        fetch("/api/admin/users?status=ACTIVE", {
-          headers,
-          cache: "no-store",
-        }).then((r) => r.json() as Promise<UserPrincipal[]>),
+        fetch("/api/admin/users?status=ACTIVE", authedOpts)
+          .then((r) => r.json() as Promise<UserPrincipal[]>),
 
-        fetch("/api/admin/users?status=SUSPENDED", {
-          headers,
-          cache: "no-store",
-        }).then((r) => r.json() as Promise<UserPrincipal[]>),
+        fetch("/api/admin/users?status=SUSPENDED", authedOpts)
+          .then((r) => r.json() as Promise<UserPrincipal[]>),
 
         fetch("/api/categories", {
           headers: { Accept: "application/json" },
@@ -136,7 +131,7 @@ export function AdminDashboard() {
     void load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!auth.token || !isAdmin) {
+  if (!auth.principal || !isAdmin) {
     return (
       <div className="py-12 text-center">
         <p className="section-label text-muted-foreground">

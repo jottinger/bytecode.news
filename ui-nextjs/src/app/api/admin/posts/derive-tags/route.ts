@@ -1,4 +1,4 @@
-import { getBackendBaseUrl } from "@/lib/backend-url";
+import { getBackendBaseUrl, forwardCookieHeader, proxyResponse } from "@/lib/proxy-helpers";
 
 const PLACEHOLDER_POST_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -14,16 +14,12 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
         Accept: "application/json",
         ...(auth ? { Authorization: auth } : {}),
+        ...forwardCookieHeader(request),
       },
       body: payload,
       cache: "no-store",
     },
   );
 
-  return new Response(await response.text(), {
-    status: response.status,
-    headers: {
-      "Content-Type": response.headers.get("content-type") || "application/json",
-    },
-  });
+  return proxyResponse(response, await response.text());
 }
