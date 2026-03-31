@@ -106,12 +106,13 @@ export function AdminPendingPosts() {
   const [previewLoading, setPreviewLoading] = useState<string | null>(null);
 
   const auth = getAuthState();
+  const principalId = auth.principal?.id ?? null;
   const isAdmin =
     auth.principal?.role === "ADMIN" ||
     auth.principal?.role === "SUPER_ADMIN";
 
   const loadPending = useCallback(async () => {
-    if (!auth.principal || !isAdmin) {
+    if (!principalId || !isAdmin) {
       setLoading(false);
       return;
     }
@@ -145,7 +146,7 @@ export function AdminPendingPosts() {
     } finally {
       setLoading(false);
     }
-  }, [auth.principal, isAdmin, showDeleted]);
+  }, [principalId, isAdmin, showDeleted]);
 
   useEffect(() => {
     void loadPending();
