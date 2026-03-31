@@ -56,7 +56,7 @@ export function AdminCategories() {
 
   async function onCreate(event: FormEvent) {
     event.preventDefault();
-    if (!auth.token) return;
+    if (!auth.principal) return;
 
     setBusy(true);
     setStatus(null);
@@ -66,8 +66,8 @@ export function AdminCategories() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           name: name.trim(),
           parentId: parentId || null,
@@ -90,7 +90,7 @@ export function AdminCategories() {
   }
 
   async function onDelete(id: string, categoryName: string) {
-    if (!auth.token) return;
+    if (!auth.principal) return;
     if (!window.confirm(`Delete the "${categoryName}" category?`)) return;
 
     setBusy(true);
@@ -99,9 +99,7 @@ export function AdminCategories() {
     try {
       const response = await fetch(`/api/admin/categories/${encodeURIComponent(id)}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-        },
+        credentials: "include",
       });
       const payload = (await response.json()) as unknown;
       if (!response.ok) {
@@ -116,7 +114,7 @@ export function AdminCategories() {
     }
   }
 
-  if (!auth.token || !isAdmin) {
+  if (!auth.principal || !isAdmin) {
     return (
       <div className="py-12 text-center">
         <p className="section-label text-muted-foreground">

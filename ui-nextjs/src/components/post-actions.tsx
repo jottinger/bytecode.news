@@ -10,7 +10,7 @@ interface PostActionsProps {
 export function PostActions({ postId }: PostActionsProps) {
   const auth = getAuthState();
   const isAdmin = auth.principal?.role === "ADMIN" || auth.principal?.role === "SUPER_ADMIN";
-  if (!auth.token || !isAdmin) return null;
+  if (!auth.principal || !isAdmin) return null;
 
   return (
     <p>

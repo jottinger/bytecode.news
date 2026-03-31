@@ -94,7 +94,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
 
   useEffect(() => {
     async function load() {
-      if (!auth.token) {
+      if (!auth.principal) {
         setError("Sign in to edit posts.");
         setLoading(false);
         return;
@@ -104,8 +104,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         const response = await fetch(`/api/post-by-id/${postId}`, {
           headers: {
             Accept: "application/json",
-            Authorization: `Bearer ${auth.token}`,
           },
+          credentials: "include",
           cache: "no-store",
         });
 
@@ -135,7 +135,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
     }
 
     void load();
-  }, [postId, auth.token]);
+  }, [postId, auth.principal]);
 
   useEffect(() => {
     void (async () => {
@@ -154,7 +154,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   }, []);
 
   async function save() {
-    if (!auth.token) {
+    if (!auth.principal) {
       setError("Sign in to edit posts.");
       return false;
     }
@@ -185,8 +185,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           title,
           markdownSource,
@@ -221,7 +221,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   }
 
   async function applyTags(path: string, mode: "heuristic" | "ai") {
-    if (!auth.token) {
+    if (!auth.principal) {
       setError("Sign in to derive tags.");
       return;
     }
@@ -233,8 +233,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           title: title.trim(),
           markdownSource: markdownSource.trim(),
@@ -269,7 +269,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   }
 
   async function applySummary() {
-    if (!auth.token) {
+    if (!auth.principal) {
       setError("Sign in to derive a summary.");
       return;
     }
@@ -281,8 +281,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           title: title.trim(),
           markdownSource: markdownSource.trim(),
@@ -307,7 +307,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   }
 
   async function approveNow() {
-    if (!auth.token) return;
+    if (!auth.principal) return;
     const ok = await save();
     if (!ok) return;
     setBusy(true);
@@ -318,8 +318,8 @@ export function EditPostForm({ postId }: EditPostFormProps) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           publishedAt: publishedAtInput ? new Date(publishedAtInput).toISOString() : new Date().toISOString(),
         }),
@@ -342,16 +342,14 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   }
 
   async function deletePost(hard: boolean) {
-    if (!auth.token) return;
+    if (!auth.principal) return;
     setBusy(true);
     setError(null);
     setStatus(null);
     try {
       const response = await fetch(`/api/admin/posts/${postId}?hard=${hard ? "true" : "false"}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${auth.token}`,
-        },
+        credentials: "include",
       });
       const payload = (await response.json()) as unknown;
       if (!response.ok) {
@@ -370,7 +368,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
     await save();
   }
 
-  if (!auth.token) {
+  if (!auth.principal) {
     return (
       <section className="notice">
         <h2>Edit Post</h2>

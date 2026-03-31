@@ -25,7 +25,7 @@ interface CommentThreadProps {
 interface CommentItemProps {
   node: CommentNode;
   isAdmin: boolean;
-  token: string | null;
+  loggedIn: boolean;
   userId: string | null;
   year: string;
   month: string;
@@ -41,7 +41,7 @@ function htmlToText(html: string): string {
   return node.textContent?.trim() || "";
 }
 
-function CommentItem({ node, isAdmin, token, userId, year, month, slug }: CommentItemProps) {
+function CommentItem({ node, isAdmin, loggedIn, userId, year, month, slug }: CommentItemProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [replying, setReplying] = useState(false);
@@ -53,7 +53,7 @@ function CommentItem({ node, isAdmin, token, userId, year, month, slug }: Commen
 
   async function onSaveEdit(event: FormEvent) {
     event.preventDefault();
-    if (!token) {
+    if (!loggedIn) {
       setError("Sign in to edit comments.");
       return;
     }
@@ -66,8 +66,8 @@ function CommentItem({ node, isAdmin, token, userId, year, month, slug }: Commen
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ markdownSource }),
       });
       const payload = (await response.json()) as { detail?: string; title?: string };
@@ -85,7 +85,7 @@ function CommentItem({ node, isAdmin, token, userId, year, month, slug }: Commen
   }
 
   async function onDelete() {
-    if (!token) {
+    if (!loggedIn) {
       setError("Sign in to moderate comments.");
       return;
     }
@@ -100,9 +100,7 @@ function CommentItem({ node, isAdmin, token, userId, year, month, slug }: Commen
     try {
       const response = await fetch(`/api/admin/comments/${node.id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
       });
       const payload = (await response.json()) as { detail?: string; title?: string };
       if (!response.ok) {
@@ -156,7 +154,7 @@ function CommentItem({ node, isAdmin, token, userId, year, month, slug }: Commen
         <HighlightedHtml className="post-body comment-body" html={node.renderedHtml} />
       )}
 
-      {token && !node.deleted && !replying && !editing ? (
+      {loggedIn && !node.deleted && !replying && !editing ? (
         <div className="comment-actions-row">
           <button
             type="button"
@@ -219,7 +217,7 @@ function CommentItem({ node, isAdmin, token, userId, year, month, slug }: Commen
       {node.children.length > 0 ? (
         <div className="comment-children">
           {node.children.map((child) => (
-            <CommentItem key={child.id} node={child} isAdmin={isAdmin} token={token} userId={userId} year={year} month={month} slug={slug} />
+            <CommentItem key={child.id} node={child} isAdmin={isAdmin} loggedIn={loggedIn} userId={userId} year={year} month={month} slug={slug} />
           ))}
         </div>
       ) : null}
@@ -233,7 +231,7 @@ export function CommentThread({ comments, year, month, slug }: CommentThreadProp
   return (
     <>
       {comments.map((comment) => (
-        <CommentItem key={comment.id} node={comment} isAdmin={isAdmin} token={auth.token} userId={auth.principal?.id ?? null} year={year} month={month} slug={slug} />
+        <CommentItem key={comment.id} node={comment} isAdmin={isAdmin} loggedIn={auth.principal != null} userId={auth.principal?.id ?? null} year={year} month={month} slug={slug} />
       ))}
     </>
   );

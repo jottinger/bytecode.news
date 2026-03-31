@@ -1,6 +1,7 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.controller
 
+import com.enigmastation.streampack.blog.service.CookieService
 import com.enigmastation.streampack.blog.service.UserConvergenceService
 import com.enigmastation.streampack.core.config.StreampackProperties
 import jakarta.servlet.http.HttpServletRequest
@@ -14,11 +15,12 @@ import org.springframework.stereotype.Component
 
 /**
  * Handles successful OIDC/OAuth2 authentication by converging the external identity to a local user
- * and redirecting to the frontend with a JWT in the URL fragment.
+ * and redirecting to the frontend with authentication cookies.
  */
 @Component
 class OidcAuthenticationSuccessHandler(
     private val userConvergenceService: UserConvergenceService,
+    private val cookieService: CookieService,
     properties: StreampackProperties,
 ) : AuthenticationSuccessHandler {
     private val logger = LoggerFactory.getLogger(OidcAuthenticationSuccessHandler::class.java)
@@ -34,8 +36,11 @@ class OidcAuthenticationSuccessHandler(
         logger.info("OIDC authentication succeeded for {}", email)
         val loginResponse = userConvergenceService.converge(email, displayName)
 
-        /* Deliver JWT via URL fragment so it is not sent to the server in subsequent requests */
-        response.sendRedirect("$frontendUrl/auth/callback#token=${loginResponse.token}")
+        response.addCookie(cookieService.createAccessTokenCookie(loginResponse.token))
+        loginResponse.refreshToken?.let {
+            response.addCookie(cookieService.createRefreshTokenCookie(it))
+        }
+        response.sendRedirect("$frontendUrl/auth/callback")
     }
 
     /** Extracts email and display name from either an OIDC or plain OAuth2 principal */

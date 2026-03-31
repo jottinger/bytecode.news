@@ -12,6 +12,8 @@ data class StreampackProperties(
     val token: TokenProperties = TokenProperties(),
     val mail: MailProperties = MailProperties(),
     val otp: OtpProperties = OtpProperties(),
+    val refreshToken: RefreshTokenProperties = RefreshTokenProperties(),
+    val cookie: CookieProperties = CookieProperties(),
     val maxHops: Int = 3,
 ) {
     data class JwtProperties(val secret: String = "", val expirationHours: Long = 24)
@@ -21,4 +23,8 @@ data class StreampackProperties(
     data class MailProperties(val from: String = "noreply@bytecode.news")
 
     data class OtpProperties(val maxActiveCodes: Int = 3, val expirationMinutes: Long = 10)
+
+    data class RefreshTokenProperties(val days: Long = 30)
+
+    data class CookieProperties(val secure: Boolean = true)
 }
