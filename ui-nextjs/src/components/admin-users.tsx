@@ -37,14 +37,16 @@ export function AdminUsers() {
   const [notice, setNotice] = useState<string | null>(null);
 
   async function loadUsers(nextStatus: UserStatus) {
-    if (!auth.principal) return;
+    if (!auth.token) return;
     setLoading(true);
     setError(null);
     setNotice(null);
     setStatus(nextStatus);
     try {
       const response = await fetch(`/api/admin/users?status=${nextStatus}`, {
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+        },
         cache: "no-store",
       });
       const payload = (await response.json()) as unknown;
@@ -71,13 +73,15 @@ export function AdminUsers() {
     confirmMessage?: string,
   ) {
     if (confirmMessage && !window.confirm(confirmMessage)) return;
-    if (!auth.principal) return;
+    if (!auth.token) return;
     setError(null);
     setNotice(null);
     try {
       const response = await fetch(path, {
         method,
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+        },
       });
       const payload = (await response.json()) as unknown;
       if (!response.ok) {
@@ -91,7 +95,7 @@ export function AdminUsers() {
   }
 
   async function changeRole(username: string, newRole: Role) {
-    if (!auth.principal) return;
+    if (!auth.token) return;
     setError(null);
     setNotice(null);
     try {
@@ -99,8 +103,8 @@ export function AdminUsers() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
         },
-        credentials: "include",
         body: JSON.stringify({ newRole }),
       });
       const payload = (await response.json()) as unknown;
@@ -114,7 +118,7 @@ export function AdminUsers() {
     }
   }
 
-  if (!auth.principal || !isAdmin) {
+  if (!auth.token || !isAdmin) {
     return (
       <div className="py-12 text-center">
         <p className="section-label text-muted-foreground">

@@ -1,4 +1,4 @@
-import { getBackendBaseUrl, forwardCookieHeader, proxyResponse } from "@/lib/proxy-helpers";
+import { getBackendBaseUrl } from "@/lib/backend-url";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -14,11 +14,15 @@ export async function GET(request: Request) {
       headers: {
         Accept: "application/json",
         ...(auth ? { Authorization: auth } : {}),
-        ...forwardCookieHeader(request),
       },
       cache: "no-store",
     },
   );
 
-  return proxyResponse(response, await response.text());
+  return new Response(await response.text(), {
+    status: response.status,
+    headers: {
+      "Content-Type": response.headers.get("content-type") || "application/json",
+    },
+  });
 }

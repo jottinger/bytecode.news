@@ -1,21 +1,17 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.controller
 
-import com.enigmastation.streampack.blog.service.CookieService
 import com.enigmastation.streampack.core.entity.OneTimeCode
 import com.enigmastation.streampack.core.entity.User
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.repository.OneTimeCodeRepository
-import com.enigmastation.streampack.core.repository.RefreshTokenRepository
 import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.JwtService
-import com.enigmastation.streampack.core.service.RefreshTokenService
 import com.enigmastation.streampack.core.service.UserRegistrationService
 import com.enigmastation.streampack.test.TestChannelConfiguration
 import com.icegreen.greenmail.configuration.GreenMailConfiguration
 import com.icegreen.greenmail.junit5.GreenMailExtension
 import com.icegreen.greenmail.util.ServerSetupTest
-import jakarta.servlet.http.Cookie
 import java.time.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -56,8 +52,6 @@ class AuthControllerTests {
     @Autowired lateinit var userRepository: UserRepository
     @Autowired lateinit var oneTimeCodeRepository: OneTimeCodeRepository
     @Autowired lateinit var jwtService: JwtService
-    @Autowired lateinit var refreshTokenService: RefreshTokenService
-    @Autowired lateinit var refreshTokenRepository: RefreshTokenRepository
 
     private lateinit var testUser: User
     private lateinit var testUserToken: String
@@ -149,24 +143,6 @@ class AuthControllerTests {
     }
 
     @Test
-    fun `valid otp verify sets httpOnly cookies`() {
-        seedCode("test@example.com", "111111")
-
-        mockMvc
-            .post("/auth/otp/verify") {
-                contentType = MediaType.APPLICATION_JSON
-                content = """{"email":"test@example.com","code":"111111"}"""
-            }
-            .andExpect {
-                status { isOk() }
-                cookie { exists(CookieService.ACCESS_TOKEN_COOKIE) }
-                cookie { exists(CookieService.REFRESH_TOKEN_COOKIE) }
-                cookie { httpOnly(CookieService.ACCESS_TOKEN_COOKIE, true) }
-                cookie { httpOnly(CookieService.REFRESH_TOKEN_COOKIE, true) }
-            }
-    }
-
-    @Test
     fun `invalid otp code returns 401`() {
         seedCode("test@example.com", "123456")
 
@@ -196,92 +172,37 @@ class AuthControllerTests {
     /* ── Logout ─────────────────────────────────────────── */
 
     @Test
-    fun `logout returns 204 and clears cookies`() {
-        mockMvc
-            .post("/auth/logout") {
-                cookie(Cookie(CookieService.ACCESS_TOKEN_COOKIE, testUserToken))
-            }
-            .andExpect {
-                status { isNoContent() }
-                cookie { maxAge(CookieService.ACCESS_TOKEN_COOKIE, 0) }
-                cookie { maxAge(CookieService.REFRESH_TOKEN_COOKIE, 0) }
-            }
+    fun `logout returns 204`() {
+        mockMvc.post("/auth/logout").andExpect { status { isNoContent() } }
     }
 
-    @Test
-    fun `logout revokes refresh tokens`() {
-        val rawRefreshToken = refreshTokenService.issueToken(testUser.id)
-        assertNotNull(
-            refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(rawRefreshToken))
-        )
-
-        mockMvc
-            .post("/auth/logout") {
-                cookie(Cookie(CookieService.ACCESS_TOKEN_COOKIE, testUserToken))
-            }
-            .andExpect { status { isNoContent() } }
-
-        assertNull(
-            refreshTokenRepository.findByTokenHash(RefreshTokenService.sha256(rawRefreshToken))
-        )
-    }
-
-    /* ── Token Refresh (cookie-based) ──────────────────── */
+    /* ── Token Refresh ──────────────────────────────────── */
 
     @Test
-    fun `valid refresh token cookie returns new token and sets cookies`() {
-        val rawRefreshToken = refreshTokenService.issueToken(testUser.id)
-
+    fun `valid token refresh returns new token`() {
         mockMvc
             .post("/auth/refresh") {
-                cookie(Cookie(CookieService.REFRESH_TOKEN_COOKIE, rawRefreshToken))
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"token":"$testUserToken"}"""
             }
             .andExpect {
                 status { isOk() }
                 jsonPath("$.token") { isNotEmpty() }
                 jsonPath("$.principal.username") { value("testuser") }
-                cookie { exists(CookieService.ACCESS_TOKEN_COOKIE) }
-                cookie { exists(CookieService.REFRESH_TOKEN_COOKIE) }
-                cookie { httpOnly(CookieService.ACCESS_TOKEN_COOKIE, true) }
-                cookie { httpOnly(CookieService.REFRESH_TOKEN_COOKIE, true) }
             }
     }
 
     @Test
-    fun `refresh with invalid cookie returns 401`() {
+    fun `invalid token refresh returns 401`() {
         mockMvc
             .post("/auth/refresh") {
-                cookie(Cookie(CookieService.REFRESH_TOKEN_COOKIE, "not-a-valid-token"))
+                contentType = MediaType.APPLICATION_JSON
+                content = """{"token":"not.a.valid.jwt"}"""
             }
             .andExpect {
                 status { isUnauthorized() }
-                jsonPath("$.detail") { value("Invalid or expired refresh token") }
+                jsonPath("$.detail") { value("Invalid or expired token") }
             }
-    }
-
-    @Test
-    fun `refresh without cookie returns 401`() {
-        mockMvc.post("/auth/refresh").andExpect {
-            status { isUnauthorized() }
-            jsonPath("$.detail") { value("Missing refresh token") }
-        }
-    }
-
-    @Test
-    fun `refresh token is rotated after use`() {
-        val rawRefreshToken = refreshTokenService.issueToken(testUser.id)
-
-        mockMvc
-            .post("/auth/refresh") {
-                cookie(Cookie(CookieService.REFRESH_TOKEN_COOKIE, rawRefreshToken))
-            }
-            .andExpect { status { isOk() } }
-
-        mockMvc
-            .post("/auth/refresh") {
-                cookie(Cookie(CookieService.REFRESH_TOKEN_COOKIE, rawRefreshToken))
-            }
-            .andExpect { status { isUnauthorized() } }
     }
 
     /* ── Delete Account ─────────────────────────────────── */
@@ -352,22 +273,9 @@ class AuthControllerTests {
     }
 
     @Test
-    fun `session endpoint returns principal for authenticated user via header`() {
+    fun `session endpoint returns principal for authenticated user`() {
         mockMvc
             .get("/auth/session") { header("Authorization", "Bearer $testUserToken") }
-            .andExpect {
-                status { isOk() }
-                jsonPath("$.username") { value("testuser") }
-                jsonPath("$.displayName") { value("Test User") }
-            }
-    }
-
-    @Test
-    fun `session endpoint returns principal for authenticated user via cookie`() {
-        mockMvc
-            .get("/auth/session") {
-                cookie(Cookie(CookieService.ACCESS_TOKEN_COOKIE, testUserToken))
-            }
             .andExpect {
                 status { isOk() }
                 jsonPath("$.username") { value("testuser") }

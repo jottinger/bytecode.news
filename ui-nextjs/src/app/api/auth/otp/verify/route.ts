@@ -1,4 +1,4 @@
-import { getBackendBaseUrl, forwardCookieHeader, proxyResponse } from "@/lib/proxy-helpers";
+import { getBackendBaseUrl } from "@/lib/backend-url";
 
 export async function POST(request: Request) {
   const payload = await request.text();
@@ -7,11 +7,15 @@ export async function POST(request: Request) {
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
-      ...forwardCookieHeader(request),
     },
     body: payload,
     cache: "no-store",
   });
 
-  return proxyResponse(response, await response.text());
+  return new Response(await response.text(), {
+    status: response.status,
+    headers: {
+      "Content-Type": response.headers.get("content-type") || "application/json",
+    },
+  });
 }

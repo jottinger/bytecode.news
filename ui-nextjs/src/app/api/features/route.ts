@@ -1,14 +1,18 @@
-import { getBackendBaseUrl, forwardCookieHeader, proxyResponse } from "@/lib/proxy-helpers";
+import { getBackendBaseUrl } from "@/lib/backend-url";
 
-export async function GET(request: Request) {
+export async function GET() {
   const response = await fetch(`${getBackendBaseUrl()}/features`, {
     method: "GET",
     headers: {
       Accept: "application/json",
-      ...forwardCookieHeader(request),
     },
     cache: "no-store",
   });
 
-  return proxyResponse(response, await response.text());
+  return new Response(await response.text(), {
+    status: response.status,
+    headers: {
+      "Content-Type": response.headers.get("content-type") || "application/json",
+    },
+  });
 }

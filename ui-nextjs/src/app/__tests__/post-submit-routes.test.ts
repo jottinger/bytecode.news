@@ -51,8 +51,7 @@ describe("post submit api routes", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const { GET } = await import("@/app/api/categories/route");
-    const request = new Request("http://localhost:3000/api/categories", { method: "GET" });
-    const response = await GET(request);
+    const response = await GET();
 
     expect(response.status).toBe(200);
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/categories");

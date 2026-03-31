@@ -15,11 +15,13 @@ export interface LoginResponse {
 }
 
 interface AuthState {
+  token: string | null;
   principal: UserPrincipal | null;
 }
 
-type SessionValidationResult = "no-token" | "valid" | "refreshed" | "expired" | "network-error";
+type SessionValidationResult = "no-token" | "valid" | "expired" | "network-error";
 
+const TOKEN_KEY = "ui_nextjs_token";
 const PRINCIPAL_KEY = "ui_nextjs_principal";
 const AUTH_EVENT = "ui-nextjs-auth-change";
 
@@ -35,16 +37,14 @@ function parsePrincipal(raw: string | null): UserPrincipal | null {
   }
 }
 
-/** Returns the current auth state (principal only; tokens are in httpOnly cookies) */
 export function getAuthState(): AuthState {
   if (typeof window === "undefined") {
-    return { principal: null };
+    return { token: null, principal: null };
   }
 
-  const principal = parsePrincipal(
-    window.localStorage.getItem(PRINCIPAL_KEY),
-  );
-  return { principal };
+  const token = window.localStorage.getItem(TOKEN_KEY);
+  const principal = parsePrincipal(window.localStorage.getItem(PRINCIPAL_KEY));
+  return { token, principal };
 }
 
 function notifyAuthChange(): void {
@@ -53,19 +53,15 @@ function notifyAuthChange(): void {
   }
 }
 
-/** Stores the principal from a successful login (tokens are set as httpOnly cookies by the backend) */
 export function setAuth(login: LoginResponse): void {
   if (typeof window === "undefined") {
     return;
   }
-  window.localStorage.setItem(
-    PRINCIPAL_KEY,
-    JSON.stringify(login.principal),
-  );
+  window.localStorage.setItem(TOKEN_KEY, login.token);
+  window.localStorage.setItem(PRINCIPAL_KEY, JSON.stringify(login.principal));
   notifyAuthChange();
 }
 
-/** Updates just the principal (for profile changes) */
 export function setPrincipal(principal: UserPrincipal): void {
   if (typeof window === "undefined") {
     return;
@@ -74,11 +70,11 @@ export function setPrincipal(principal: UserPrincipal): void {
   notifyAuthChange();
 }
 
-/** Clears the local principal (cookies are cleared by the logout endpoint) */
 export function clearAuth(): void {
   if (typeof window === "undefined") {
     return;
   }
+  window.localStorage.removeItem(TOKEN_KEY);
   window.localStorage.removeItem(PRINCIPAL_KEY);
   notifyAuthChange();
 }
@@ -96,53 +92,20 @@ export function onAuthChange(handler: () => void): () => void {
   };
 }
 
-/** Attempts a silent token refresh via the refresh token cookie */
-async function attemptSilentRefresh(
-  fetcher: typeof fetch = fetch,
-): Promise<boolean> {
-  try {
-    const response = await fetcher("/api/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
-    if (response.ok) {
-      const data = await response.json();
-      if (data.principal) {
-        setPrincipal(data.principal);
-      }
-      return true;
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Validates the current session. If the access token has expired, attempts a silent refresh
- * using the refresh token cookie before clearing auth.
- */
 export async function validateAuthSession(
   fetcher: typeof fetch = fetch,
 ): Promise<SessionValidationResult> {
-  const { principal } = getAuthState();
-  if (!principal) {
+  const { token } = getAuthState();
+  if (!token) {
     return "no-token";
   }
 
   try {
     const response = await fetcher("/api/auth/session", {
       method: "GET",
-      credentials: "include",
+      headers: { Authorization: `Bearer ${token}` },
     });
-    if (response.ok) {
-      return "valid";
-    }
     if (response.status === 401 || response.status === 403) {
-      const refreshed = await attemptSilentRefresh(fetcher);
-      if (refreshed) {
-        return "refreshed";
-      }
       clearAuth();
       return "expired";
     }

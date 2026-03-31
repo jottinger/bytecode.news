@@ -1,15 +1,14 @@
-import { getBackendBaseUrl, forwardCookieHeader, proxyResponse } from "@/lib/proxy-helpers";
+import { getBackendBaseUrl } from "@/lib/backend-url";
 
 export async function POST(request: Request) {
   const auth = request.headers.get("authorization");
   const response = await fetch(`${getBackendBaseUrl()}/auth/logout`, {
     method: "POST",
-    headers: {
-      ...(auth ? { Authorization: auth } : {}),
-      ...forwardCookieHeader(request),
-    },
+    headers: auth ? { Authorization: auth } : undefined,
     cache: "no-store",
   });
 
-  return proxyResponse(response, null);
+  return new Response(null, {
+    status: response.status,
+  });
 }

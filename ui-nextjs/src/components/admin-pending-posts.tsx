@@ -111,7 +111,7 @@ export function AdminPendingPosts() {
     auth.principal?.role === "SUPER_ADMIN";
 
   const loadPending = useCallback(async () => {
-    if (!auth.principal || !isAdmin) {
+    if (!auth.token || !isAdmin) {
       setLoading(false);
       return;
     }
@@ -123,8 +123,8 @@ export function AdminPendingPosts() {
         {
           headers: {
             Accept: "application/json",
+            Authorization: `Bearer ${auth.token}`,
           },
-          credentials: "include",
           cache: "no-store",
         },
       );
@@ -145,14 +145,14 @@ export function AdminPendingPosts() {
     } finally {
       setLoading(false);
     }
-  }, [auth.principal, isAdmin, showDeleted]);
+  }, [auth.token, isAdmin, showDeleted]);
 
   useEffect(() => {
     void loadPending();
   }, [loadPending]);
 
   async function approve(postId: string) {
-    if (!auth.principal) return;
+    if (!auth.token) return;
     setBusyId(postId);
     setStatus(null);
     setError(null);
@@ -161,8 +161,8 @@ export function AdminPendingPosts() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
         },
-        credentials: "include",
         body: JSON.stringify({ publishedAt: new Date().toISOString() }),
       });
       const payload = (await response.json()) as unknown;
@@ -188,7 +188,7 @@ export function AdminPendingPosts() {
       : "Delete this draft? It can be restored later.";
     if (!window.confirm(message)) return;
 
-    if (!auth.principal) return;
+    if (!auth.token) return;
     setBusyId(postId);
     setStatus(null);
     setError(null);
@@ -197,7 +197,9 @@ export function AdminPendingPosts() {
         `/api/admin/posts/${postId}?hard=${hard ? "true" : "false"}`,
         {
           method: "DELETE",
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+          },
         },
       );
       const payload = (await response.json()) as unknown;
@@ -218,14 +220,14 @@ export function AdminPendingPosts() {
   }
 
   async function openPreview(postId: string) {
-    if (!auth.principal) return;
+    if (!auth.token) return;
     setPreviewLoading(postId);
     try {
       const response = await fetch(`/api/post-by-id/${postId}`, {
         headers: {
           Accept: "application/json",
+          Authorization: `Bearer ${auth.token}`,
         },
-        credentials: "include",
         cache: "no-store",
       });
       const payload = (await response.json()) as unknown;
@@ -244,7 +246,7 @@ export function AdminPendingPosts() {
     }
   }
 
-  if (!auth.principal || !isAdmin) {
+  if (!auth.token || !isAdmin) {
     return (
       <div className="py-12 text-center">
         <p className="section-label text-muted-foreground">

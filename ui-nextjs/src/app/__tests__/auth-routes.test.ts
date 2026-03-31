@@ -38,16 +38,11 @@ describe("auth api routes", () => {
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/otp/request");
   });
 
-  it("proxies otp verify payload to backend and forwards Set-Cookie", async () => {
-    const backendHeaders = new Headers({
-      "content-type": "application/json",
-    });
-    backendHeaders.append("set-cookie", "access_token=jwt123; HttpOnly; Path=/");
-    backendHeaders.append("set-cookie", "refresh_token=rt456; HttpOnly; Path=/auth");
+  it("proxies otp verify payload to backend", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response('{"token":"t","principal":{"id":"1","username":"u","displayName":"U","role":"USER"}}', {
         status: 200,
-        headers: backendHeaders,
+        headers: { "content-type": "application/json" },
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
@@ -62,8 +57,6 @@ describe("auth api routes", () => {
     const response = await POST(request);
     expect(response.status).toBe(200);
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/otp/verify");
-    const setCookies = response.headers.getSetCookie();
-    expect(setCookies.length).toBe(2);
   });
 
   it("passes authorization through logout", async () => {
@@ -126,58 +119,6 @@ describe("auth api routes", () => {
     const response = await GET(request);
     expect(response.status).toBe(200);
     expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/export");
-  });
-
-  it("forwards cookies on session validation to backend", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response('{"username":"u"}', {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { GET } = await import("@/app/api/auth/session/route");
-    const request = new Request("http://localhost:3000/api/auth/session", {
-      method: "GET",
-      headers: { Cookie: "access_token=jwt123" },
-    });
-
-    const response = await GET(request);
-    expect(response.status).toBe(200);
-    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    const headers = new Headers(init.headers);
-    expect(headers.get("Cookie")).toBe("access_token=jwt123");
-  });
-
-  it("proxies refresh token request with cookies", async () => {
-    const backendHeaders = new Headers({
-      "content-type": "application/json",
-    });
-    backendHeaders.append("set-cookie", "access_token=newjwt; HttpOnly; Path=/");
-    backendHeaders.append("set-cookie", "refresh_token=newrt; HttpOnly; Path=/auth");
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response('{"token":"newjwt","principal":{"id":"1","username":"u","displayName":"U","role":"USER"}}', {
-        status: 200,
-        headers: backendHeaders,
-      }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { POST } = await import("@/app/api/auth/refresh/route");
-    const request = new Request("http://localhost:3000/api/auth/refresh", {
-      method: "POST",
-      headers: { Cookie: "refresh_token=oldrt" },
-    });
-
-    const response = await POST(request);
-    expect(response.status).toBe(200);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://api.bytecode.news/auth/refresh");
-    const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    const headers = new Headers(init.headers);
-    expect(headers.get("Cookie")).toBe("refresh_token=oldrt");
-    const setCookies = response.headers.getSetCookie();
-    expect(setCookies.length).toBe(2);
   });
 
   it("proxies session validation to backend", async () => {

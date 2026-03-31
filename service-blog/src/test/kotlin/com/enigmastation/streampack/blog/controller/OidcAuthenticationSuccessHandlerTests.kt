@@ -2,14 +2,11 @@
 package com.enigmastation.streampack.blog.controller
 
 import com.enigmastation.streampack.blog.model.LoginResponse
-import com.enigmastation.streampack.blog.service.CookieService
 import com.enigmastation.streampack.blog.service.UserConvergenceService
 import com.enigmastation.streampack.core.config.StreampackProperties
 import com.enigmastation.streampack.core.model.Role
 import com.enigmastation.streampack.core.model.UserPrincipal
 import java.util.UUID
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -34,17 +31,12 @@ class OidcAuthenticationSuccessHandlerTests {
                     displayName = "Test User",
                     role = Role.USER,
                 ),
-            refreshToken = "test-refresh-token",
         )
 
     private fun mockConvergenceService(): UserConvergenceService {
         val service = mock(UserConvergenceService::class.java)
         `when`(service.converge("test@example.com", "Test User")).thenReturn(stubResponse)
         return service
-    }
-
-    private fun defaultCookieService(): CookieService {
-        return CookieService(StreampackProperties())
     }
 
     private fun oidcAuthentication(email: String): Authentication {
@@ -73,18 +65,13 @@ class OidcAuthenticationSuccessHandlerTests {
     }
 
     @Test
-    fun `redirects to frontendUrl without token in URL`() {
+    fun `redirects to frontendUrl when set`() {
         val properties =
             StreampackProperties(
                 baseUrl = "https://rest.bytecode.news",
                 frontendUrl = "https://bytecode.news",
             )
-        val handler =
-            OidcAuthenticationSuccessHandler(
-                mockConvergenceService(),
-                defaultCookieService(),
-                properties,
-            )
+        val handler = OidcAuthenticationSuccessHandler(mockConvergenceService(), properties)
 
         val response = MockHttpServletResponse()
         handler.onAuthenticationSuccess(
@@ -93,50 +80,15 @@ class OidcAuthenticationSuccessHandlerTests {
             oidcAuthentication("test@example.com"),
         )
 
-        assertEquals("https://bytecode.news/auth/callback", response.redirectedUrl)
-    }
-
-    @Test
-    fun `sets authentication cookies on response`() {
-        val properties =
-            StreampackProperties(
-                baseUrl = "https://rest.bytecode.news",
-                frontendUrl = "https://bytecode.news",
-            )
-        val handler =
-            OidcAuthenticationSuccessHandler(
-                mockConvergenceService(),
-                defaultCookieService(),
-                properties,
-            )
-
-        val response = MockHttpServletResponse()
-        handler.onAuthenticationSuccess(
-            MockHttpServletRequest(),
-            response,
-            oidcAuthentication("test@example.com"),
+        assertTrue(
+            response.redirectedUrl!!.startsWith("https://bytecode.news/auth/callback#token=")
         )
-
-        val accessCookie = response.cookies.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }
-        assertNotNull(accessCookie)
-        assertEquals("test-jwt-token", accessCookie!!.value)
-        assertTrue(accessCookie.isHttpOnly)
-
-        val refreshCookie = response.cookies.find { it.name == CookieService.REFRESH_TOKEN_COOKIE }
-        assertNotNull(refreshCookie)
-        assertEquals("test-refresh-token", refreshCookie!!.value)
-        assertTrue(refreshCookie.isHttpOnly)
     }
 
     @Test
     fun `falls back to baseUrl when frontendUrl is empty`() {
         val properties = StreampackProperties(baseUrl = "https://rest.bytecode.news")
-        val handler =
-            OidcAuthenticationSuccessHandler(
-                mockConvergenceService(),
-                defaultCookieService(),
-                properties,
-            )
+        val handler = OidcAuthenticationSuccessHandler(mockConvergenceService(), properties)
 
         val response = MockHttpServletResponse()
         handler.onAuthenticationSuccess(
@@ -145,6 +97,8 @@ class OidcAuthenticationSuccessHandlerTests {
             oidcAuthentication("test@example.com"),
         )
 
-        assertEquals("https://rest.bytecode.news/auth/callback", response.redirectedUrl)
+        assertTrue(
+            response.redirectedUrl!!.startsWith("https://rest.bytecode.news/auth/callback#token=")
+        )
     }
 }

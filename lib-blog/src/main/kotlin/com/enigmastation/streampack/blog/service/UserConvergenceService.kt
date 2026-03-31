@@ -7,7 +7,6 @@ import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.repository.ServiceBindingRepository
 import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.JwtService
-import com.enigmastation.streampack.core.service.RefreshTokenService
 import com.enigmastation.streampack.core.service.UserRegistrationService
 import java.time.Instant
 import org.slf4j.LoggerFactory
@@ -26,7 +25,6 @@ class UserConvergenceService(
     private val serviceBindingRepository: ServiceBindingRepository,
     private val userRegistrationService: UserRegistrationService,
     private val jwtService: JwtService,
-    private val refreshTokenService: RefreshTokenService,
     blogProperties: BlogProperties,
 ) {
     private val logger = LoggerFactory.getLogger(UserConvergenceService::class.java)
@@ -80,8 +78,7 @@ class UserConvergenceService(
 
         val principal = user.toUserPrincipal()
         val token = jwtService.generateToken(principal)
-        val refreshToken = refreshTokenService.issueToken(user.id)
-        return LoginResponse(token, principal, refreshToken)
+        return LoginResponse(token, principal)
     }
 
     /** Derives a unique username from the email prefix, appending a numeric suffix on collision */

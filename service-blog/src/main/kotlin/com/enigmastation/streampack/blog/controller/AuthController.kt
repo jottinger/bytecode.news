@@ -7,16 +7,14 @@ import com.enigmastation.streampack.blog.model.ExportUserDataRequest
 import com.enigmastation.streampack.blog.model.LoginResponse
 import com.enigmastation.streampack.blog.model.OtpRequest
 import com.enigmastation.streampack.blog.model.OtpVerifyRequest
-import com.enigmastation.streampack.blog.service.CookieService
+import com.enigmastation.streampack.blog.model.TokenRefreshRequest
 import com.enigmastation.streampack.core.integration.EventGateway
 import com.enigmastation.streampack.core.model.EditProfileRequest
 import com.enigmastation.streampack.core.model.OperationResult
 import com.enigmastation.streampack.core.model.Protocol
 import com.enigmastation.streampack.core.model.Provenance
 import com.enigmastation.streampack.core.model.UserPrincipal
-import com.enigmastation.streampack.core.repository.UserRepository
 import com.enigmastation.streampack.core.service.JwtService
-import com.enigmastation.streampack.core.service.RefreshTokenService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -24,7 +22,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -45,9 +42,6 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val eventGateway: EventGateway,
     private val jwtService: JwtService,
-    private val refreshTokenService: RefreshTokenService,
-    private val cookieService: CookieService,
-    private val userRepository: UserRepository,
     blogProperties: BlogProperties,
 ) {
     private val serviceId = blogProperties.serviceId
@@ -75,41 +69,20 @@ class AuthController(
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
     @PostMapping("/otp/verify", produces = ["application/json"], consumes = ["application/json"])
-    fun verifyOtp(
-        @RequestBody request: OtpVerifyRequest,
-        httpResponse: HttpServletResponse,
-    ): ResponseEntity<*> {
-        val entity =
-            dispatch(request, "auth/otp/verify") { result ->
-                mapError(result, HttpStatus.UNAUTHORIZED)
-            }
-        if (entity.statusCode == HttpStatus.OK && entity.body is LoginResponse) {
-            val loginResponse = entity.body as LoginResponse
-            httpResponse.addCookie(cookieService.createAccessTokenCookie(loginResponse.token))
-            loginResponse.refreshToken?.let {
-                httpResponse.addCookie(cookieService.createRefreshTokenCookie(it))
-            }
+    fun verifyOtp(@RequestBody request: OtpVerifyRequest): ResponseEntity<*> {
+        return dispatch(request, "auth/otp/verify") { result ->
+            mapError(result, HttpStatus.UNAUTHORIZED)
         }
-        return entity
     }
 
     @Operation(summary = "Log out the current session")
     @ApiResponse(responseCode = "204", description = "Logged out")
     @PostMapping("/logout")
-    fun logout(
-        httpRequest: HttpServletRequest,
-        httpResponse: HttpServletResponse,
-    ): ResponseEntity<Void> {
-        val user = resolveUser(httpRequest)
-        if (user != null) {
-            refreshTokenService.revokeAllForUser(user.id)
-        }
-        httpResponse.addCookie(cookieService.clearAccessTokenCookie())
-        httpResponse.addCookie(cookieService.clearRefreshTokenCookie())
+    fun logout(): ResponseEntity<Void> {
         return ResponseEntity.noContent().build()
     }
 
-    @Operation(summary = "Refresh an expired JWT token using a refresh token cookie")
+    @Operation(summary = "Refresh an expired JWT token")
     @ApiResponse(
         responseCode = "200",
         description = "Token refreshed",
@@ -120,24 +93,11 @@ class AuthController(
         description = "Invalid or expired refresh token",
         content = [Content(schema = Schema(implementation = ProblemDetail::class))],
     )
-    @PostMapping("/refresh", produces = ["application/json"])
-    fun refresh(
-        httpRequest: HttpServletRequest,
-        httpResponse: HttpServletResponse,
-    ): ResponseEntity<*> {
-        val rawRefreshToken =
-            extractRefreshToken(httpRequest) ?: return unauthorized("Missing refresh token")
-        val (userId, newRawToken) =
-            refreshTokenService.rotateToken(rawRefreshToken)
-                ?: return unauthorized("Invalid or expired refresh token")
-        val user =
-            userRepository.findActiveById(userId)
-                ?: return unauthorized("Invalid or expired refresh token")
-        val principal = user.toUserPrincipal()
-        val newJwt = jwtService.generateToken(principal)
-        httpResponse.addCookie(cookieService.createAccessTokenCookie(newJwt))
-        httpResponse.addCookie(cookieService.createRefreshTokenCookie(newRawToken))
-        return ResponseEntity.ok(LoginResponse(newJwt, principal))
+    @PostMapping("/refresh", produces = ["application/json"], consumes = ["application/json"])
+    fun refresh(@RequestBody request: TokenRefreshRequest): ResponseEntity<*> {
+        return dispatch(request, "auth/refresh") { result ->
+            mapError(result, HttpStatus.UNAUTHORIZED)
+        }
     }
 
     @Operation(summary = "Erase the authenticated user's account")
@@ -209,23 +169,12 @@ class AuthController(
         }
     }
 
-    /** Extracts and validates the JWT from cookies first, then the Authorization header */
+    /** Extracts and validates the Bearer token from the Authorization header */
     private fun resolveUser(request: HttpServletRequest): UserPrincipal? {
-        val cookieToken =
-            request.cookies?.find { it.name == CookieService.ACCESS_TOKEN_COOKIE }?.value
-        if (cookieToken != null) {
-            val principal = jwtService.validateToken(cookieToken)
-            if (principal != null) return principal
-        }
         val header = request.getHeader("Authorization") ?: return null
         if (!header.startsWith("Bearer ")) return null
         val token = header.substring(7)
         return jwtService.validateToken(token)
-    }
-
-    /** Extracts the refresh token from the cookie */
-    private fun extractRefreshToken(request: HttpServletRequest): String? {
-        return request.cookies?.find { it.name == CookieService.REFRESH_TOKEN_COOKIE }?.value
     }
 
     /** Sends a payload through the event system and maps the result to an HTTP response */

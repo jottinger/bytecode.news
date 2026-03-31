@@ -10,7 +10,7 @@ import com.enigmastation.streampack.core.service.Operation
 import org.springframework.messaging.Message
 import org.springframework.stereotype.Component
 
-/** Issues a fresh JWT from a valid existing token or a validated user ID */
+/** Issues a fresh JWT from a valid existing token */
 @Component
 class TokenRefreshOperation(
     private val jwtService: JwtService,
@@ -23,19 +23,11 @@ class TokenRefreshOperation(
     override fun execute(message: Message<*>): OperationResult {
         val request = message.payload as TokenRefreshRequest
 
-        if (request.userId != null) {
-            val user =
-                userRepository.findActiveById(request.userId)
-                    ?: return OperationResult.Error("Invalid or expired token")
-            val principal = user.toUserPrincipal()
-            val newToken = jwtService.generateToken(principal)
-            return OperationResult.Success(LoginResponse(newToken, principal))
-        }
-
         val principal =
             jwtService.validateToken(request.token)
                 ?: return OperationResult.Error("Invalid or expired token")
 
+        // Verify the user still exists and is active
         userRepository.findActiveById(principal.id)
             ?: return OperationResult.Error("Invalid or expired token")
 

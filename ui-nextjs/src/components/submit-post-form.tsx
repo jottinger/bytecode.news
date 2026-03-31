@@ -60,13 +60,13 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
   const loadedAt = useMemo(() => Date.now(), []);
 
   const auth = getAuthState();
-  const canSubmit = anonymousSubmission || Boolean(auth.principal);
+  const canSubmit = anonymousSubmission || Boolean(auth.token);
   const canDeriveAiTags =
     auth.principal?.role === "ADMIN" || auth.principal?.role === "SUPER_ADMIN";
   const isAdmin = canDeriveAiTags;
   const canSuggestTags = title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
   const canDeriveSummary =
-    Boolean(auth.principal) && title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
+    Boolean(auth.token) && title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
 
   function splitCategories(value: string): string[] {
     return value
@@ -114,8 +114,8 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(auth.token ? { Authorization: `Bearer ${auth.token}` } : {}),
         },
-        credentials: "include",
         body: JSON.stringify({
           title: titleValue,
           markdownSource: markdownValue,
@@ -165,7 +165,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
   async function applyDerivedSummary(): Promise<void> {
     const titleValue = title.trim();
     const markdownValue = markdownSource.trim();
-    if (!auth.principal) {
+    if (!auth.token) {
       setError("Sign in to derive a summary.");
       setStatus(null);
       return;
@@ -189,8 +189,8 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.token}`,
         },
-        credentials: "include",
         body: JSON.stringify({ title: titleValue, markdownSource: markdownValue }),
       });
       const payload = (await response.json()) as SummaryResponse & ProblemLike;
@@ -243,14 +243,14 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(auth.token ? { Authorization: `Bearer ${auth.token}` } : {}),
         },
-        credentials: "include",
         body: JSON.stringify({
           title,
           markdownSource,
           tags: splitTags(tagsInput),
           categoryIds,
-          ...(auth.principal ? { summary } : {}),
+          ...(auth.token ? { summary } : {}),
           formLoadedAt: loadedAt,
         }),
       });
@@ -405,7 +405,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
           </div>
 
           {/* Summary (authenticated users only) */}
-          {auth.principal && (
+          {auth.token && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="byline text-muted-foreground/50" htmlFor="post-summary">

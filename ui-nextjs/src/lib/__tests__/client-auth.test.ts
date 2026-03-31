@@ -70,14 +70,14 @@ describe("client auth", () => {
     }
   });
 
-  it("returns no-token when there is no stored principal", async () => {
+  it("returns no-token when there is no stored auth token", async () => {
     const fetcher = vi.fn();
     const result = await validateAuthSession(fetcher as unknown as typeof fetch);
     expect(result).toBe("no-token");
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("returns valid when backend accepts session cookie", async () => {
+  it("returns valid when backend accepts auth token", async () => {
     setAuth({
       token: "abc",
       principal: { id: "1", username: "dreamreal", displayName: "dreamreal", role: "USER" },
@@ -86,44 +86,20 @@ describe("client auth", () => {
     const fetcher = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
     const result = await validateAuthSession(fetcher as unknown as typeof fetch);
     expect(result).toBe("valid");
-    expect(getAuthState().principal).not.toBeNull();
+    expect(getAuthState().token).toBe("abc");
   });
 
-  it("attempts silent refresh on 401 before clearing auth", async () => {
+  it("clears auth and reports expired when backend returns 401", async () => {
     setAuth({
       token: "abc",
       principal: { id: "1", username: "dreamreal", displayName: "dreamreal", role: "USER" },
     });
 
-    const fetcher = vi.fn()
-      .mockResolvedValueOnce(new Response("{}", { status: 401 }))
-      .mockResolvedValueOnce(new Response("{}", { status: 401 }));
+    const fetcher = vi.fn().mockResolvedValue(new Response("{}", { status: 401 }));
     const result = await validateAuthSession(fetcher as unknown as typeof fetch);
     expect(result).toBe("expired");
+    expect(getAuthState().token).toBeNull();
     expect(getAuthState().principal).toBeNull();
-    expect(fetcher).toHaveBeenCalledTimes(2);
-  });
-
-  it("returns refreshed when silent refresh succeeds after 401", async () => {
-    setAuth({
-      token: "abc",
-      principal: { id: "1", username: "dreamreal", displayName: "dreamreal", role: "USER" },
-    });
-
-    const fetcher = vi.fn()
-      .mockResolvedValueOnce(new Response("{}", { status: 401 }))
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            token: "new-token",
-            principal: { id: "1", username: "dreamreal", displayName: "dreamreal", role: "USER" },
-          }),
-          { status: 200 },
-        ),
-      );
-    const result = await validateAuthSession(fetcher as unknown as typeof fetch);
-    expect(result).toBe("refreshed");
-    expect(getAuthState().principal).not.toBeNull();
   });
 
   it("reports network-error on fetch failure without clearing auth", async () => {
@@ -135,7 +111,7 @@ describe("client auth", () => {
     const fetcher = vi.fn().mockRejectedValue(new Error("offline"));
     const result = await validateAuthSession(fetcher as unknown as typeof fetch);
     expect(result).toBe("network-error");
-    expect(getAuthState().principal).not.toBeNull();
+    expect(getAuthState().token).toBe("abc");
     clearAuth();
   });
 });

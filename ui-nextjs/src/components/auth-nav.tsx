@@ -62,10 +62,11 @@ export function AuthNav({ allowAnonymousSubmission = false }: AuthNavProps) {
 
   async function onLogout(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
+    const token = getAuthState().token;
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
-        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
     } catch {
       // Clear local auth even if backend is temporarily unavailable.
@@ -75,7 +76,7 @@ export function AuthNav({ allowAnonymousSubmission = false }: AuthNavProps) {
     }
   }
 
-  if (!auth.principal) {
+  if (!auth.token || !auth.principal) {
     return (
       <div className="inline-flex items-center gap-1">
         {allowAnonymousSubmission && (

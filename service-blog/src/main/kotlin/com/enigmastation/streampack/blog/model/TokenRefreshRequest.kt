@@ -1,5 +1,5 @@
 /* Joseph B. Ottinger (C)2026 */
 package com.enigmastation.streampack.blog.model
 
-/** Request to issue a fresh JWT from an existing valid token or a validated user ID */
-data class TokenRefreshRequest(val token: String = "", val userId: java.util.UUID? = null)
+/** Request to issue a fresh JWT from an existing valid token */
+data class TokenRefreshRequest(val token: String)

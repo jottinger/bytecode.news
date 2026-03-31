@@ -6,7 +6,8 @@ import { CommentCreateForm } from "@/components/comment-create-form";
 
 const mocks = vi.hoisted(() => ({
   authState: {
-    principal: null as { id: string; username: string; displayName: string; role: string } | null,
+    token: null as string | null,
+    principal: null,
   },
   refresh: vi.fn(),
 }));
@@ -25,18 +26,14 @@ vi.mock("@/lib/client-auth", () => ({
 afterEach(() => {
   cleanup();
   mocks.refresh.mockReset();
+  mocks.authState.token = null;
   mocks.authState.principal = null;
   vi.unstubAllGlobals();
 });
 
 describe("CommentCreateForm", () => {
   it("posts replies with parentCommentId and refreshes the page", async () => {
-    mocks.authState.principal = {
-      id: "1",
-      username: "testuser",
-      displayName: "Test User",
-      role: "USER",
-    };
+    mocks.authState.token = "token-123";
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -65,8 +62,8 @@ describe("CommentCreateForm", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: "Bearer token-123",
       },
-      credentials: "include",
       body: JSON.stringify({
         markdownSource: "Nested reply body",
         parentCommentId: "parent-99",
