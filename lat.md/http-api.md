@@ -28,6 +28,8 @@ The API includes post listing, slug-based post lookup, search, creation and edit
 
 These endpoints form the primary contract for the web frontends and public content surfaces.
 
+Author-facing edit forms hydrate draft content from the API once per target post and then preserve local unsaved edits during normal client rerenders. This prevents transient auth or preview updates from reloading server state over in-progress draft changes.
+
 ## Taxonomy and Category Endpoints
 
 Taxonomy routes provide structured discovery metadata for tags, categories, and category administration.

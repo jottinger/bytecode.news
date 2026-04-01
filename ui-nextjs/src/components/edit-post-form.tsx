@@ -84,6 +84,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   const canSuggestTags = title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
   const canDeriveSummary = title.trim().length > 0 && markdownSource.trim().length > 0 && !busy;
   const previewText = useMemo(() => markdownSource, [markdownSource]);
+  const principalId = auth.principal?.id ?? null;
 
   function splitCategories(value: string): string[] {
     return value
@@ -93,6 +94,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
   }
 
   useEffect(() => {
+    // @lat: [[http-api#Content and Comment Endpoints]]
     async function load() {
       if (!auth.principal) {
         setError("Sign in to edit posts.");
@@ -135,7 +137,7 @@ export function EditPostForm({ postId }: EditPostFormProps) {
     }
 
     void load();
-  }, [postId, auth.principal]);
+  }, [postId, principalId]);
 
   useEffect(() => {
     void (async () => {
