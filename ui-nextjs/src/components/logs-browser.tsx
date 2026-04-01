@@ -108,7 +108,7 @@ export function LogsBrowser() {
       setProvenanceError(null);
       try {
         const response = await fetch("/api/logs/provenances", {
-          headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : undefined,
+          credentials: "include",
           cache: "no-store",
         });
         const payload = (await response.json()) as unknown;
@@ -124,7 +124,7 @@ export function LogsBrowser() {
       }
     }
     void loadProvenances();
-  }, [auth.token]);
+  }, [auth.principal]);
 
   useEffect(() => {
     if (!selectedProvenance) return;
@@ -149,7 +149,7 @@ export function LogsBrowser() {
         const response = await fetch(
           `/api/logs?provenance=${encodeURIComponent(selectedProvenance)}&day=${encodeURIComponent(day)}`,
           {
-            headers: auth.token ? { Authorization: `Bearer ${auth.token}` } : undefined,
+            credentials: "include",
             cache: "no-store",
           },
         );
@@ -167,7 +167,7 @@ export function LogsBrowser() {
     }
 
     void loadLogs();
-  }, [selectedProvenance, day, auth.token]);
+  }, [selectedProvenance, day, auth.principal]);
 
   const today = utcToday();
   const previousDay = shiftDay(day, -1);
