@@ -948,15 +948,6 @@
         "required" : [ "aggregate", "categories", "tags" ],
         "type" : "object"
       },
-      "TokenRefreshRequest" : {
-        "properties" : {
-          "token" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "token" ],
-        "type" : "object"
-      },
       "UserPrincipal" : {
         "properties" : {
           "displayName" : {
@@ -2446,16 +2437,6 @@
     "/auth/refresh" : {
       "post" : {
         "operationId" : "refresh",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/TokenRefreshRequest"
-              }
-            }
-          },
-          "required" : true
-        },
         "responses" : {
           "200" : {
             "content" : {
@@ -2504,7 +2485,7 @@
             "description" : "Invalid or expired refresh token"
           }
         },
-        "summary" : "Refresh an expired JWT token",
+        "summary" : "Refresh an expired JWT token using a refresh token cookie",
         "tags" : [ "Authentication" ]
       }
     },
