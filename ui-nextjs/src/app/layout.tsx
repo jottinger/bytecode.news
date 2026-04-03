@@ -4,6 +4,7 @@ import Link from "next/link";
 import "./globals.css";
 import { getFeatures, listPostsByCategory } from "@/lib/api";
 import { AuthNav } from "@/components/auth-nav";
+import { GoogleAnalytics } from "@/components/google-analytics";
 import { RefreshHomeLink } from "@/components/refresh-home-link";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
@@ -94,6 +95,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <GoogleAnalytics />
+      </head>
       <body
         className={`${instrumentSerif.variable} ${sourceSerif.variable} ${ibmPlexMono.variable} antialiased`}
       >
