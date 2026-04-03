@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoginResponse, setAuth } from "@/lib/client-auth";
+import { trackEvent } from "@/lib/analytics";
 
 interface OtpLoginFormProps {
   returnPath: string;
@@ -87,6 +88,7 @@ export function OtpLoginForm({
 
       const login = (await response.json()) as LoginResponse;
       setAuth(login);
+      trackEvent("login", { method: "otp" });
       setStatus("Signed in.");
       router.push(normalizedReturnPath);
       router.refresh();
