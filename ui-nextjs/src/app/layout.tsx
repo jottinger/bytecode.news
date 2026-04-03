@@ -95,12 +95,10 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <GoogleAnalytics />
-      </head>
       <body
         className={`${instrumentSerif.variable} ${sourceSerif.variable} ${ibmPlexMono.variable} antialiased`}
       >
+        <GoogleAnalytics />
         <ThemeProvider>
           <div className="noise-overlay">
             <div className="relative flex min-h-screen flex-col">

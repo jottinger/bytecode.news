@@ -4,6 +4,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { GoogleAnalytics } from "@/components/google-analytics";
 
+vi.mock("next/script", () => ({
+  default: ({
+    id,
+    src,
+    children,
+  }: {
+    id?: string;
+    src?: string;
+    children?: string;
+  }) => <script id={id} src={src}>{children}</script>,
+}));
+
 describe("GoogleAnalytics", () => {
   afterEach(() => {
     vi.unstubAllEnvs();

@@ -1,3 +1,5 @@
+import Script from "next/script";
+
 // @lat: [[deployment#Frontend Analytics]]
 export function GoogleAnalytics() {
   const measurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -7,20 +9,21 @@ export function GoogleAnalytics() {
 
   return (
     <>
-      <script
+      <Script
         id="google-analytics-loader"
         async
         src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}
+        strategy="afterInteractive"
       />
-      <script
+      <Script
         id="google-analytics-config"
-        dangerouslySetInnerHTML={{
-          __html: `window.dataLayer = window.dataLayer || [];
+        strategy="afterInteractive"
+      >
+        {`window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '${measurementId}');`,
-        }}
-      />
+gtag('config', '${measurementId}');`}
+      </Script>
     </>
   );
 }
