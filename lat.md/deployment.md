@@ -20,7 +20,7 @@ The most sensitive production values are the JWT secret, webhook encryption secr
 
 The Next.js frontend injects the Google Analytics tag once from the root layout so every page shares the same tracking setup.
 
-The tag is emitted inside the document head and resolves its measurement id from `NEXT_PUBLIC_GA_MEASUREMENT_ID`. If that variable is absent, the frontend emits no analytics tag at all. Docker-based frontend deployments, including the `just redeploy-ui-nextjs` path, must pass the variable into the image build and rebuild the frontend after changing it.
+The tag is emitted inside the document head and resolves its measurement id from `NEXT_PUBLIC_GA_MEASUREMENT_ID`. If that variable is absent, the frontend emits no analytics tag at all. Docker-based frontend deployments, including the `just redeploy-ui-nextjs` path, must pass the variable into the image build and rebuild the frontend after changing it. The repository `justfile` auto-loads `.env` so operator-facing redeploy commands inherit that value directly.
 
 ## Production Topology
 
