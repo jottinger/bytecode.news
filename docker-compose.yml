@@ -17,6 +17,7 @@ services:
       args:
         NEXT_PUBLIC_UI_COMMIT: ${NEXT_PUBLIC_UI_COMMIT:-unknown}
         NEXT_PUBLIC_UI_BRANCH: ${NEXT_PUBLIC_UI_BRANCH:-unknown}
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
     profiles: ["ui-nextjs"]
     ports:
       - "3000:3000"
@@ -24,6 +25,7 @@ services:
       - HOSTNAME=0.0.0.0
       - BACKEND_SCHEME=http
       - BACKEND_HOST=backend:8080
+      - NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID:-}
     depends_on:
       backend:
         condition: service_healthy
