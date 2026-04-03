@@ -44,6 +44,7 @@ redeploy-ui-nextjs:
     docker build \
       --build-arg NEXT_PUBLIC_UI_COMMIT=$(git rev-parse --short HEAD) \
       --build-arg NEXT_PUBLIC_UI_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
+      --build-arg NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID} \
       -t ui-nextjs:next ui-nextjs/
     docker rm -f ui-nextjs-old || true
     docker rename ui-nextjs ui-nextjs-old || true
@@ -51,6 +52,7 @@ redeploy-ui-nextjs:
     docker run -d --name ui-nextjs \
       -e BACKEND_SCHEME=https \
       -e BACKEND_HOST=api.bytecode.news \
+      -e NEXT_PUBLIC_GA_MEASUREMENT_ID=${NEXT_PUBLIC_GA_MEASUREMENT_ID} \
       --add-host host.docker.internal:host-gateway \
       -p 3000:3000 \
       ui-nextjs:next
