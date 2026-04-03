@@ -31,7 +31,7 @@ The `.env` file is in `.gitignore` and will not be committed.
 `CONSOLE_ENABLED=true` activates the interactive console adapter for issuing admin commands from stdin.
 
 For `ui-nextjs`, Google Analytics is injected from the root layout only when `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set. Keep the measurement id in deployment environment configuration rather than committing it into the repository.
-Add `NEXT_PUBLIC_GA_MEASUREMENT_ID=...` to `.env` when analytics should be enabled for a deployment. When running the frontend through Docker Compose, rebuild `ui-nextjs` after changing this value so the updated environment reaches the frontend image. The same is true for the repository `just redeploy-ui-nextjs` path: that redeploy must pass the measurement id into both the image build and the replacement container.
+Add `NEXT_PUBLIC_GA_MEASUREMENT_ID=...` to `.env` when analytics should be enabled for a deployment. When running the frontend through Docker Compose, rebuild `ui-nextjs` after changing this value so the updated environment reaches the frontend image. The same is true for the repository `just redeploy-ui-nextjs` path: that redeploy must pass the measurement id into both the image build and the replacement container. The repository `justfile` now auto-loads `.env`, so `just redeploy-ui-nextjs` picks up that value without requiring a manual `source .env`.
 
 ### 2. Start the Database
 
