@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getAuthState } from "@/lib/client-auth";
+import { trackEvent } from "@/lib/analytics";
 
 interface CommentCreateFormProps {
   year: string;
@@ -49,6 +50,7 @@ export function CommentCreateForm({ year, month, slug, parentCommentId, onCancel
 
       setMarkdownSource("");
       setStatus("Comment posted.");
+      trackEvent("comment_submit", { slug, is_reply: parentCommentId ? 1 : 0 });
       if (onCancel) onCancel();
       router.refresh();
     } catch (submitError) {
