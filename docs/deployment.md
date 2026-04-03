@@ -30,6 +30,9 @@ GITHUB_WEBHOOK_SECRET_KEY=replace-with-random-key
 The `.env` file is in `.gitignore` and will not be committed.
 `CONSOLE_ENABLED=true` activates the interactive console adapter for issuing admin commands from stdin.
 
+For `ui-nextjs`, Google Analytics is injected from the root layout only when `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set. Keep the measurement id in deployment environment configuration rather than committing it into the repository.
+Add `NEXT_PUBLIC_GA_MEASUREMENT_ID=...` to `.env` when analytics should be enabled for a deployment.
+
 ### 2. Start the Database
 
 ```bash
@@ -211,6 +214,7 @@ These must be changed:
 | `BASE_URL` | Public URL, e.g., `https://bytecode.news` |
 | `DB_PASSWORD` | A real password |
 | `CORS_ORIGINS` | All frontend origins, e.g., `https://bytecode.news,https://nextjs.bytecode.news` |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Optional Google Analytics measurement id for `ui-nextjs` |
 
 `STREAMPACK_JWT_EXPIRATION_HOURS` controls JWT/session lifetime only. OTP code lifetime remains
 controlled by `streampack.otp.expiration-minutes` (default 10 minutes).

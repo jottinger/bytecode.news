@@ -16,6 +16,12 @@ Runtime behavior is controlled through environment variables that cover database
 
 The most sensitive production values are the JWT secret, webhook encryption secret, database credentials, public base URL, and allowed frontend origins. Misconfiguring these breaks security or cross-surface integration quickly, so they form the minimum production checklist.
 
+## Frontend Analytics
+
+The Next.js frontend injects the Google Analytics tag once from the root layout so every page shares the same tracking setup.
+
+The tag is emitted inside the document head and resolves its measurement id from `NEXT_PUBLIC_GA_MEASUREMENT_ID`. If that variable is absent, the frontend emits no analytics tag at all.
+
 ## Production Topology
 
 Production deployment assumes a Linux host with DNS, TLS termination, PostgreSQL, and one or more application processes.
