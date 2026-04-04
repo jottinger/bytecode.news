@@ -57,4 +57,32 @@ describe("MarkdownPreview", () => {
     expect(html).toContain('href="/factoids/comprehension%20debt"');
     expect(html).toContain(">comprehension debt<");
   });
+
+  it("renders flexmark admonition syntax as static admonition markup", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownPreview
+        source={`!!! note "Remember"
+    This needs UI styling.
+
+    - and markdown inside`}
+      />,
+    );
+    expect(html).toContain("adm-block adm-note");
+    expect(html).toContain("adm-heading");
+    expect(html).toContain("adm-body");
+    expect(html).toContain(">Remember<");
+    expect(html).toContain("This needs UI styling.");
+    expect(html).toContain("<li>and markdown inside</li>");
+  });
+
+  it("keeps collapsible admonition previews readable without interaction", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownPreview
+        source={`??? warning "Heads up"
+    Preview should still show this content.`}
+      />,
+    );
+    expect(html).toContain("adm-block adm-warning adm-collapsed");
+    expect(html).toContain("Preview should still show this content.");
+  });
 });

@@ -150,6 +150,7 @@ Type `exit` or `quit` to stop.
 |----------|----------|-------------|
 | [User Guide](docs/user-guide.md) | End users | Complete command reference for all bot operations |
 | [API Reference](docs/api-reference.md) | Frontend developers | REST endpoint documentation, request/response shapes |
+| [Content Authoring](docs/content-authoring.md) | Authors / editors | Markdown guidance for posts and comments, including admonition syntax |
 | [Architecture](docs/architecture.md) | Backend contributors | Messaging pipeline, operation system, module design |
 | [Deployment](docs/deployment.md) | Ops / self-hosters | Local setup, production deployment, adapter configuration |
 | [Authentication](docs/authentication.md) | All | OTP, OIDC, JWT, account lifecycle |

@@ -30,6 +30,16 @@ These endpoints form the primary contract for the web frontends and public conte
 
 Author-facing edit forms hydrate draft content from the API once per target post and then preserve local unsaved edits during normal client rerenders. This prevents transient auth or preview updates from reloading server state over in-progress draft changes.
 
+## Rendered Markdown Admonitions
+
+Rendered blog HTML may include Flexmark admonition structure, and the UIs are expected to style that emitted structure directly.
+
+`MarkdownRenderingService` enables Flexmark admonitions and emits the `.adm-*` class structure plus inline SVG symbol definitions needed for note, warning, tip, and related callouts. The read surfaces in `ui-nextjs`, `ui-reference`, and `ui-basic` provide static CSS for that structure and intentionally do not ship the Flexmark collapse JS, so admonitions always render as readable expanded blocks.
+
+The `ui-nextjs` author preview also adapts Flexmark admonition syntax locally so draft previews can show admonition blocks before the backend render path runs. This preview support is scoped to the Next.js authoring UI; `ui-reference` remains lower-priority and is not treated as the canonical authoring surface.
+
+Authors write admonitions with Flexmark syntax such as `!!! note "Remember"` followed by an indented body. Collapsible markers like `???` and `???+` are accepted, but current web UIs render them as normal expanded callouts instead of interactive disclosure widgets.
+
 ## Taxonomy and Category Endpoints
 
 Taxonomy routes provide structured discovery metadata for tags, categories, and category administration.

@@ -140,6 +140,92 @@
           box-shadow: 0 12px 30px rgba(3, 8, 14, 0.35);
         }
       }
+      #app .adm-hidden {
+        display: none !important;
+      }
+      #app .adm-block {
+        margin: 1.5rem 0;
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--accent);
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--bg-card) 92%, var(--accent-soft) 8%);
+        overflow: hidden;
+      }
+      #app .adm-heading {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.8rem 1rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink);
+        background: color-mix(in srgb, var(--accent-soft) 78%, white 22%);
+        border-bottom: 1px solid var(--line);
+      }
+      #app .adm-icon {
+        width: 1.1rem;
+        height: 1.1rem;
+        flex: 0 0 auto;
+        fill: currentColor;
+      }
+      #app .adm-body {
+        padding: 1rem;
+      }
+      #app .adm-body > :last-child {
+        margin-bottom: 0;
+      }
+      #app .adm-block.adm-collapsed .adm-body,
+      #app .adm-block.adm-open .adm-body {
+        display: block !important;
+      }
+      #app .adm-block.adm-note,
+      #app .adm-block.adm-info,
+      #app .adm-block.adm-abstract {
+        border-left-color: #2563eb;
+      }
+      #app .adm-block.adm-note .adm-heading,
+      #app .adm-block.adm-info .adm-heading,
+      #app .adm-block.adm-abstract .adm-heading {
+        background: color-mix(in srgb, #dbeafe 70%, var(--bg-card) 30%);
+      }
+      #app .adm-block.adm-tip,
+      #app .adm-block.adm-success,
+      #app .adm-block.adm-faq {
+        border-left-color: #2f855a;
+      }
+      #app .adm-block.adm-tip .adm-heading,
+      #app .adm-block.adm-success .adm-heading,
+      #app .adm-block.adm-faq .adm-heading {
+        background: color-mix(in srgb, #dcfce7 72%, var(--bg-card) 28%);
+      }
+      #app .adm-block.adm-warning,
+      #app .adm-block.adm-caution {
+        border-left-color: #b7791f;
+      }
+      #app .adm-block.adm-warning .adm-heading,
+      #app .adm-block.adm-caution .adm-heading {
+        background: color-mix(in srgb, #fef3c7 74%, var(--bg-card) 26%);
+      }
+      #app .adm-block.adm-danger,
+      #app .adm-block.adm-fail,
+      #app .adm-block.adm-bug {
+        border-left-color: #c53030;
+      }
+      #app .adm-block.adm-danger .adm-heading,
+      #app .adm-block.adm-fail .adm-heading,
+      #app .adm-block.adm-bug .adm-heading {
+        background: color-mix(in srgb, #fee2e2 72%, var(--bg-card) 28%);
+      }
+      #app .adm-block.adm-example,
+      #app .adm-block.adm-quote {
+        border-left-color: #6b7280;
+      }
+      #app .adm-block.adm-example .adm-heading,
+      #app .adm-block.adm-quote .adm-heading {
+        background: color-mix(in srgb, #ece7f6 72%, var(--bg-card) 28%);
+      }
       #build-status {
         color: var(--muted);
         display: block;
