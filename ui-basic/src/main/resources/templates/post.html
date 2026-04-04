@@ -9,6 +9,23 @@
     body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 2rem auto; max-width: 58rem; padding: 0 1rem; line-height: 1.5; }
     .meta { color: #555; font-size: 0.95rem; }
     .content :is(h1, h2, h3) { margin-top: 1.5rem; }
+    .content .adm-hidden { display: none !important; }
+    .content .adm-block { margin: 1.5rem 0; border: 1px solid #d7dde6; border-left: 4px solid #2563eb; border-radius: 10px; background: #fbfdff; overflow: hidden; }
+    .content .adm-heading { display: flex; align-items: center; gap: 0.65rem; padding: 0.8rem 1rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #1f2937; background: #e8f1ff; border-bottom: 1px solid #d7dde6; }
+    .content .adm-icon { width: 1.1rem; height: 1.1rem; flex: 0 0 auto; fill: currentColor; }
+    .content .adm-body { padding: 1rem; }
+    .content .adm-body > :last-child { margin-bottom: 0; }
+    .content .adm-block.adm-collapsed .adm-body, .content .adm-block.adm-open .adm-body { display: block !important; }
+    .content .adm-block.adm-note, .content .adm-block.adm-info, .content .adm-block.adm-abstract { border-left-color: #2563eb; }
+    .content .adm-block.adm-note .adm-heading, .content .adm-block.adm-info .adm-heading, .content .adm-block.adm-abstract .adm-heading { background: #e8f1ff; }
+    .content .adm-block.adm-tip, .content .adm-block.adm-success, .content .adm-block.adm-faq { border-left-color: #2f855a; }
+    .content .adm-block.adm-tip .adm-heading, .content .adm-block.adm-success .adm-heading, .content .adm-block.adm-faq .adm-heading { background: #e7f7ed; }
+    .content .adm-block.adm-warning, .content .adm-block.adm-caution { border-left-color: #b7791f; }
+    .content .adm-block.adm-warning .adm-heading, .content .adm-block.adm-caution .adm-heading { background: #fff6de; }
+    .content .adm-block.adm-danger, .content .adm-block.adm-fail, .content .adm-block.adm-bug { border-left-color: #c53030; }
+    .content .adm-block.adm-danger .adm-heading, .content .adm-block.adm-fail .adm-heading, .content .adm-block.adm-bug .adm-heading { background: #fdeaea; }
+    .content .adm-block.adm-example, .content .adm-block.adm-quote { border-left-color: #6b7280; }
+    .content .adm-block.adm-example .adm-heading, .content .adm-block.adm-quote .adm-heading { background: #f2f4f7; }
     .comment { border-left: 2px solid #ddd; margin-top: 0.75rem; padding-left: 0.75rem; }
     .comment .meta { margin: 0; }
     .comment p { margin-top: 0.35rem; }

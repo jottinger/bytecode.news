@@ -152,6 +152,23 @@ class MarkdownRenderingServiceTests {
     }
 
     @Test
+    fun `admonitions render flexmark structural classes`() {
+        val markdown =
+            """
+            !!! note "Remember"
+                This needs UI styling.
+            """
+                .trimIndent()
+        val result = markdownRenderingService.render(markdown)
+        assertTrue(result.contains("class=\"adm-hidden\""))
+        assertTrue(result.contains("class=\"adm-block adm-note\""))
+        assertTrue(result.contains("class=\"adm-heading\""))
+        assertTrue(result.contains("class=\"adm-body\""))
+        assertTrue(result.contains(">Remember<"))
+        assertTrue(result.contains("This needs UI styling."))
+    }
+
+    @Test
     fun `factoid wikilink selector form renders to factoid href`() {
         val result = markdownRenderingService.render("See [[kotauth]] for details.")
         assertTrue(result.contains("<a href=\"/factoids/kotauth\">kotauth</a>"))

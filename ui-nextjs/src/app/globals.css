@@ -394,6 +394,110 @@
   @apply mb-0;
 }
 
+.post-body .adm-hidden {
+  display: none !important;
+}
+
+.post-body .adm-block {
+  @apply my-6;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--amber);
+  background: color-mix(in oklab, var(--card), var(--background) 20%);
+  box-shadow: 0 12px 24px color-mix(in oklab, var(--foreground), transparent 92%);
+}
+
+.post-body .adm-heading {
+  @apply flex items-center gap-2 px-4 py-3;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-bottom: 1px solid color-mix(in oklab, var(--border), transparent 20%);
+  background: color-mix(in oklab, var(--amber), var(--background) 88%);
+  color: var(--foreground);
+}
+
+.post-body .adm-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  fill: currentColor;
+}
+
+.post-body .adm-heading > span {
+  display: inline-block;
+}
+
+.post-body .adm-body {
+  @apply px-4 py-3;
+}
+
+.post-body .adm-body > :last-child {
+  margin-bottom: 0;
+}
+
+.post-body .adm-block.adm-collapsed .adm-body,
+.post-body .adm-block.adm-open .adm-body {
+  display: block !important;
+}
+
+.post-body .adm-block.adm-note,
+.post-body .adm-block.adm-info,
+.post-body .adm-block.adm-abstract {
+  border-left-color: #3b82f6;
+}
+
+.post-body .adm-block.adm-note .adm-heading,
+.post-body .adm-block.adm-info .adm-heading,
+.post-body .adm-block.adm-abstract .adm-heading {
+  background: color-mix(in oklab, #3b82f6, var(--background) 90%);
+}
+
+.post-body .adm-block.adm-tip,
+.post-body .adm-block.adm-success,
+.post-body .adm-block.adm-faq {
+  border-left-color: #2f855a;
+}
+
+.post-body .adm-block.adm-tip .adm-heading,
+.post-body .adm-block.adm-success .adm-heading,
+.post-body .adm-block.adm-faq .adm-heading {
+  background: color-mix(in oklab, #2f855a, var(--background) 90%);
+}
+
+.post-body .adm-block.adm-warning,
+.post-body .adm-block.adm-caution {
+  border-left-color: #b7791f;
+}
+
+.post-body .adm-block.adm-warning .adm-heading,
+.post-body .adm-block.adm-caution .adm-heading {
+  background: color-mix(in oklab, #b7791f, var(--background) 90%);
+}
+
+.post-body .adm-block.adm-danger,
+.post-body .adm-block.adm-fail,
+.post-body .adm-block.adm-bug {
+  border-left-color: #c53030;
+}
+
+.post-body .adm-block.adm-danger .adm-heading,
+.post-body .adm-block.adm-fail .adm-heading,
+.post-body .adm-block.adm-bug .adm-heading {
+  background: color-mix(in oklab, #c53030, var(--background) 90%);
+}
+
+.post-body .adm-block.adm-example,
+.post-body .adm-block.adm-quote {
+  border-left-color: color-mix(in oklab, var(--foreground), transparent 50%);
+}
+
+.post-body .adm-block.adm-example .adm-heading,
+.post-body .adm-block.adm-quote .adm-heading {
+  background: color-mix(in oklab, var(--foreground), var(--background) 93%);
+}
+
 .post-body hr {
   @apply my-8 border-0;
   height: 1px;

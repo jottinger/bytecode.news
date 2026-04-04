@@ -115,6 +115,54 @@ class BlogControllerTests {
   }
 
   @Test
+  void postPageShipsAdmonitionStylesForRenderedContent() throws Exception {
+    server
+        .expect(requestTo("http://backend.test/posts/2026/3/admonitions"))
+        .andExpect(method(HttpMethod.GET))
+        .andRespond(
+            withSuccess(
+                """
+                {
+                  "id":"00000000-0000-0000-0000-000000000010",
+                  "title":"Admonitions",
+                  "slug":"2026/03/admonitions",
+                  "renderedHtml":"<div class=\\"adm-block adm-note\\"><div class=\\"adm-heading\\"><svg class=\\"adm-icon\\"></svg><span>Note</span></div><div class=\\"adm-body\\"><p>Body</p></div></div>",
+                  "authorDisplayName":"dreamreal",
+                  "status":"APPROVED",
+                  "createdAt":"2026-03-10T12:00:00Z",
+                  "updatedAt":"2026-03-10T12:00:00Z",
+                  "commentCount":0,
+                  "tags":[],
+                  "categories":[]
+                }
+                """,
+                APPLICATION_JSON));
+    server
+        .expect(requestTo("http://backend.test/posts/2026/3/admonitions/comments"))
+        .andExpect(method(HttpMethod.GET))
+        .andRespond(
+            withSuccess(
+                """
+                {
+                  "postId":"00000000-0000-0000-0000-000000000010",
+                  "comments":[],
+                  "totalActiveCount":0
+                }
+                """,
+                APPLICATION_JSON));
+
+    mockMvc
+        .perform(get("/posts/2026/03/admonitions"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(org.hamcrest.Matchers.containsString(".content .adm-block")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString(".content .adm-heading")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString(".content .adm-body")))
+        .andExpect(content().string(org.hamcrest.Matchers.containsString(".content .adm-icon")));
+
+    server.verify();
+  }
+
+  @Test
   void feedIsProxied() throws Exception {
     server
         .expect(requestTo("http://backend.test/feed.xml"))
