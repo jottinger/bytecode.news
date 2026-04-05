@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/joeo/work/streampack/frontend/src/app/error.tsx"],"sourcesContent":["\"use client\";\n\nimport { Button } from \"@/components/ui/button\";\n\nexport default function Error({\n  reset,\n}: {\n  error: Error & { digest?: string };\n  reset: () => void;\n}) {\n  return (\n    <div className=\"container flex flex-col items-center justify-center gap-4 py-24\">\n      <h1 className=\"text-4xl font-bold\">Something went wrong</h1>\n      <p className=\"text-muted-foreground\">An unexpected error occurred.</p>\n      <Button onClick={reset}>Try again</Button>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;AAEA;AAFA;;;AAIe,SAAS,MAAM,EAC5B,KAAK,EAIN;IACC,qBACE,6LAAC;QAAI,WAAU;;0BACb,6LAAC;gBAAG,WAAU;0BAAqB;;;;;;0BACnC,6LAAC;gBAAE,WAAU;0BAAwB;;;;;;0BACrC,6LAAC,+IAAM;gBAAC,SAAS;0BAAO;;;;;;;;;;;;AAG9B;KAbwB"}}]
-}
