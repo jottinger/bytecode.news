@@ -10,6 +10,8 @@ Developers set environment variables in a local file, start PostgreSQL with Dock
 
 This workflow supports backend development, adapter testing, and frontend integration against a local stack.
 
+The repository `just clean` task also clears frontend build artifacts for the Node-based UIs before running Maven cleanup. In practice that means `ui-nextjs` removes `.next` and related local coverage output, while `ui-reference` removes its Vite `dist` output and coverage artifacts.
+
 ## Core Configuration
 
 Runtime behavior is controlled through environment variables that cover database access, JWT signing, base URLs, mail, CORS, and feature-specific secrets.
