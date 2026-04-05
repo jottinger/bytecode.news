@@ -14,6 +14,8 @@ clean-docker:
 
 clean:
     find . -name "output.log*" -exec rm {} \;
+    npm --prefix ui-nextjs run clean
+    npm --prefix ui-reference run clean
     mvnd clean
 
 clean-all: clean-docker clean
