@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getAuthState } from "@/lib/client-auth";
+import { trackEvent } from "@/lib/analytics";
 import { MarkdownPreview } from "@/components/markdown-preview";
 
 interface SubmitPostFormProps {
@@ -262,6 +263,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
       const created = (await response.json()) as { id?: string; title: string; status: string };
       setStatus(`Draft saved: "${created.title}" (${created.status}).`);
       setCreatedPostId(created.id || null);
+      trackEvent("draft_submit", { status: created.status });
       setTitle("");
       setMarkdownSource("");
       setSummary("");
