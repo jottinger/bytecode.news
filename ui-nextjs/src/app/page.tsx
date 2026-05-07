@@ -71,7 +71,7 @@ export default async function Home({
 
           <div className="py-10 md:py-14 text-center">
             <p
-              className="dateline text-amber-dim/70 mb-4 animate-fade-in"
+              className="dateline text-amber-text mb-4 animate-fade-in"
               style={{ animationDelay: "100ms" }}
             >
               {formatMastheadDate()}
@@ -91,7 +91,7 @@ export default async function Home({
               style={{ animationDelay: "400ms" }}
             >
               <div className="h-px w-12 bg-amber/20" />
-              <p className="section-label text-muted-foreground/70">
+              <p className="section-label text-muted-foreground">
                 Programming News &amp; Technical Writing
               </p>
               <div className="h-px w-12 bg-amber/20" />
@@ -146,7 +146,7 @@ export default async function Home({
                   <>
                     <div className="my-10 relative">
                       <div className="border-t-2 border-amber/20" />
-                      <span className="section-label text-amber/40 absolute left-0 -top-2.5 bg-background px-2 pl-0">
+                      <span className="section-label text-amber-text absolute left-0 -top-2.5 bg-background px-2 pl-0">
                         More Stories
                       </span>
                     </div>
@@ -243,7 +243,7 @@ function LeadCard({ post }: { post: ContentSummary }) {
         <div className="h-px w-6 bg-amber/40 transition-all duration-300 group-hover:w-10 group-hover:bg-amber" />
         <Link
           href={href}
-          className="section-label text-amber-dim group-hover:text-amber transition-colors"
+          className="section-label text-amber-text group-hover:text-amber transition-colors"
         >
           Read article
         </Link>
@@ -256,7 +256,7 @@ function SecondaryCard({ post }: { post: ContentSummary }) {
   const href = buildPostHref(post);
   return (
     <article className="group">
-      <div className="byline text-muted-foreground/70 mb-2.5 flex items-center gap-2">
+      <div className="byline text-muted-foreground mb-2.5 flex items-center gap-2">
         <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
         {post.commentCount > 0 && (
           <>
@@ -276,7 +276,7 @@ function SecondaryCard({ post }: { post: ContentSummary }) {
         </p>
       )}
 
-      <p className="byline text-muted-foreground/70 mt-3">
+      <p className="byline text-muted-foreground mt-3">
         By {post.authorDisplayName}
       </p>
     </article>
@@ -292,12 +292,12 @@ function BriefCard({ post }: { post: ContentSummary }) {
       </h4>
 
       {post.excerpt && (
-        <p className="text-muted-foreground/70 text-sm leading-relaxed mt-2 line-clamp-2">
+        <p className="text-muted-foreground text-sm leading-relaxed mt-2 line-clamp-2">
           {post.excerpt}
         </p>
       )}
 
-      <div className="byline text-muted-foreground/70 mt-2.5 flex items-center gap-2">
+      <div className="byline text-muted-foreground mt-2.5 flex items-center gap-2">
         <span>{post.authorDisplayName}</span>
         <span className="text-border/40">|</span>
         <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
@@ -316,11 +316,11 @@ function EmptyEdition() {
   return (
     <div className="animate-fade-in py-16 max-w-md mx-auto text-center">
       <div className="border-t-2 border-amber/30 mb-8" />
-      <p className="section-label text-amber/60 mb-4">Notice</p>
+      <p className="section-label text-amber-text mb-4">Notice</p>
       <p className="font-display text-2xl text-foreground/80 tracking-tight leading-snug">
         The editorial team is preparing the first edition.
       </p>
-      <p className="text-muted-foreground/70 text-sm mt-4 leading-relaxed">
+      <p className="text-muted-foreground text-sm mt-4 leading-relaxed">
         Articles will appear here once published. Check back soon for
         technical writing, engineering insights, and dispatches from the
         world of software.

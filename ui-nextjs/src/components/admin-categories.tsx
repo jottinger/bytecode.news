@@ -137,7 +137,7 @@ export function AdminCategories() {
         <h3 className="section-label text-amber mb-4">New Category</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
           <div>
-            <label className="byline text-muted-foreground/70 block mb-1.5" htmlFor="category-name">
+            <label className="byline text-muted-foreground block mb-1.5" htmlFor="category-name">
               Name
             </label>
             <input
@@ -150,7 +150,7 @@ export function AdminCategories() {
             />
           </div>
           <div>
-            <label className="byline text-muted-foreground/70 block mb-1.5" htmlFor="category-parent">
+            <label className="byline text-muted-foreground block mb-1.5" htmlFor="category-parent">
               Parent
             </label>
             <select
@@ -190,12 +190,12 @@ export function AdminCategories() {
 
       {loading ? (
         <div className="py-12 text-center">
-          <p className="section-label text-muted-foreground/70">Loading categories...</p>
+          <p className="section-label text-muted-foreground">Loading categories...</p>
         </div>
       ) : categories.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="section-label text-muted-foreground/70 mb-3">No categories yet</p>
-          <p className="text-muted-foreground/60 text-sm">
+          <p className="section-label text-muted-foreground mb-3">No categories yet</p>
+          <p className="text-muted-foreground text-sm">
             Create your first category above.
           </p>
         </div>
@@ -248,7 +248,7 @@ export function AdminCategories() {
                     <h3 className="headline-brief text-foreground">
                       {category.name}
                     </h3>
-                    <p className="byline text-muted-foreground/70 mt-1">
+                    <p className="byline text-muted-foreground mt-1">
                       Child of {category.parentName}
                     </p>
                   </div>

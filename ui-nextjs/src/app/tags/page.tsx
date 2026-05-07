@@ -44,7 +44,7 @@ export default async function TagsPage() {
             >
               Tags
             </h1>
-            <p className="text-muted-foreground/60 text-sm mt-2">
+            <p className="text-muted-foreground text-sm mt-2">
               {sorted.length} tag{sorted.length === 1 ? "" : "s"} across all articles
             </p>
           </div>
@@ -52,8 +52,8 @@ export default async function TagsPage() {
 
         {sorted.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="section-label text-muted-foreground/70 mb-3">No tags yet</p>
-            <p className="text-muted-foreground/60 text-sm">
+            <p className="section-label text-muted-foreground mb-3">No tags yet</p>
+            <p className="text-muted-foreground text-sm">
               Tags will appear here as articles are published.
             </p>
           </div>
@@ -68,7 +68,7 @@ export default async function TagsPage() {
                 <span className="font-mono text-sm text-foreground group-hover:text-amber transition-colors">
                   {tag}
                 </span>
-                <span className="font-mono text-xs text-muted-foreground/60">
+                <span className="font-mono text-xs text-muted-foreground">
                   {count}
                 </span>
               </Link>

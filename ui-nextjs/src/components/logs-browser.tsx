@@ -197,7 +197,7 @@ export function LogsBrowser() {
               Chat Logs
             </h1>
           </div>
-          <p className="dateline text-muted-foreground/70">
+          <p className="dateline text-muted-foreground">
             {formatDay(day)}
           </p>
         </div>
@@ -206,7 +206,7 @@ export function LogsBrowser() {
       <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-8">
         {/* Sidebar: channels */}
         <aside className="animate-fade-up" style={{ animationDelay: "0.1s" }}>
-          <p className="section-label text-muted-foreground/60 mb-3">Channels</p>
+          <p className="section-label text-muted-foreground mb-3">Channels</p>
 
           {isAdmin ? (
             <label className="flex items-center gap-2 mb-4 font-mono text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
@@ -249,7 +249,7 @@ export function LogsBrowser() {
                       {channelName(item.provenanceUri)}
                     </span>
                     {item.latestContentPreview ? (
-                      <span className="block text-[0.65rem] text-muted-foreground/70 truncate mt-0.5">
+                      <span className="block text-[0.65rem] text-muted-foreground truncate mt-0.5">
                         {item.latestSender}: {item.latestContentPreview}
                       </span>
                     ) : null}
@@ -271,11 +271,11 @@ export function LogsBrowser() {
               >
                 &larr; Previous
               </Link>
-              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground/60">
+              <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                 {day}
               </span>
               {nextDisabled ? (
-                <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground/60">
+                <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
                   Next &rarr;
                 </span>
               ) : (
@@ -292,7 +292,7 @@ export function LogsBrowser() {
           {/* Log content */}
           {!selectedProvenance ? (
             <div className="py-12 text-center">
-              <p className="text-muted-foreground/70 font-mono text-sm">
+              <p className="text-muted-foreground font-mono text-sm">
                 Select a channel to view logs.
               </p>
             </div>
@@ -312,7 +312,7 @@ export function LogsBrowser() {
             </div>
           ) : !logData || logData.entries.length === 0 ? (
             <div className="py-12 text-center border-t border-border/20">
-              <p className="text-muted-foreground/70 font-mono text-sm">
+              <p className="text-muted-foreground font-mono text-sm">
                 No entries for this day.
               </p>
             </div>
@@ -330,11 +330,11 @@ export function LogsBrowser() {
                   >
                     <Link
                       href={permalinkHref(selectedProvenance, day, anchor)}
-                      className="font-mono text-[0.7rem] text-muted-foreground/60 hover:text-amber shrink-0 tabular-nums leading-relaxed transition-colors"
+                      className="font-mono text-[0.7rem] text-muted-foreground hover:text-amber shrink-0 tabular-nums leading-relaxed transition-colors"
                     >
                       {formatTime(entry.timestamp)}
                     </Link>
-                    <span className="font-mono text-[0.7rem] font-medium text-amber/70 shrink-0 min-w-[6rem] truncate leading-relaxed">
+                    <span className="font-mono text-[0.7rem] font-medium text-amber-text shrink-0 min-w-[6rem] truncate leading-relaxed">
                       {entry.sender}
                     </span>
                     <span className="text-sm text-foreground/90 leading-relaxed break-words min-w-0">

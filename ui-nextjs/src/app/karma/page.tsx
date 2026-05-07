@@ -57,7 +57,7 @@ export default async function KarmaPage({
             >
               Karma
             </h1>
-            <p className="text-muted-foreground/60 text-sm mt-3 leading-relaxed max-w-lg">
+            <p className="text-muted-foreground text-sm mt-3 leading-relaxed max-w-lg">
               The collective reputation of subjects across every surface where
               Nevet operates — IRC, Discord, Slack, and beyond. Earned one vote
               at a time.
@@ -71,7 +71,7 @@ export default async function KarmaPage({
           className="flex gap-3 items-center mb-10"
         >
           <label
-            className="section-label text-muted-foreground/60"
+            className="section-label text-muted-foreground"
             htmlFor="karma-limit"
           >
             Show
@@ -90,7 +90,7 @@ export default async function KarmaPage({
             max={100}
             defaultValue={boundedLimit}
           />
-          <label className="section-label text-muted-foreground/60">
+          <label className="section-label text-muted-foreground">
             per board
           </label>
           <button

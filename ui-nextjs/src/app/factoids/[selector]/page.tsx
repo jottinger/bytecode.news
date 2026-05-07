@@ -137,7 +137,7 @@ export default async function FactoidDetailPage({
               >
                 {detail.selector}
               </h1>
-              <div className="byline text-muted-foreground/60 flex items-center gap-1.5 flex-wrap">
+              <div className="byline text-muted-foreground flex items-center gap-1.5 flex-wrap">
                 {detail.updatedBy && (
                   <>
                     <span>By {detail.updatedBy}</span>
@@ -150,7 +150,7 @@ export default async function FactoidDetailPage({
                 {detail.locked && (
                   <>
                     <span className="text-border/40 mx-0.5">|</span>
-                    <span className="text-amber-dim">Locked</span>
+                    <span className="text-amber-text">Locked</span>
                   </>
                 )}
               </div>

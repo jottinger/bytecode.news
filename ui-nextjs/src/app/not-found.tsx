@@ -5,12 +5,12 @@ export default function NotFound() {
     <section className="container max-w-screen-xl py-16">
       <div className="max-w-md mx-auto text-center animate-fade-in">
         <div className="border-t-2 border-amber/30 mb-8" />
-        <p className="section-label text-amber/60 mb-4">Not Found</p>
+        <p className="section-label text-amber-text mb-4">Not Found</p>
         <p className="font-display text-2xl text-foreground/80 tracking-tight leading-snug">
           That resource does not exist.
         </p>
-        <p className="text-muted-foreground/70 text-sm mt-4">
-          <Link href="/" className="text-amber hover:text-amber-dim transition-colors underline">
+        <p className="text-muted-foreground text-sm mt-4">
+          <Link href="/" className="text-amber-text hover:text-amber transition-colors underline">
             Return to the front page
           </Link>
         </p>

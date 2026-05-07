@@ -166,7 +166,7 @@ export default async function RootLayout({
                           name="q"
                           type="search"
                           placeholder="Search posts..."
-                          className="h-8 w-40 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-amber"
+                          className="h-8 w-40 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber"
                         />
                         <button
                           type="submit"
@@ -213,7 +213,7 @@ export default async function RootLayout({
                         name="q"
                         type="search"
                         placeholder="Search..."
-                        className="h-8 w-28 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-amber"
+                        className="h-8 w-28 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber"
                       />
                       <button
                         type="submit"
@@ -242,7 +242,7 @@ export default async function RootLayout({
                         <span className="text-amber">.</span>
                         <span className="text-foreground/60">news</span>
                       </span>
-                      <p className="text-muted-foreground/60 text-sm mt-3 leading-relaxed max-w-xs">
+                      <p className="text-muted-foreground text-sm mt-3 leading-relaxed max-w-xs">
                         Technical writing, software engineering insights, and the craft of
                         building things that work.
                       </p>
@@ -276,10 +276,10 @@ export default async function RootLayout({
                     <div>
                       <h4 className="section-label text-amber mb-4">System</h4>
                       <div className="flex flex-col gap-2">
-                        <span className="dateline text-muted-foreground/60">
+                        <span className="dateline text-muted-foreground">
                           Backend {backendVersionText}
                         </span>
-                        <span className="dateline text-muted-foreground/60">
+                        <span className="dateline text-muted-foreground">
                           Frontend {frontendVersionText}
                         </span>
                       </div>
@@ -287,10 +287,10 @@ export default async function RootLayout({
                   </div>
 
                   <div className="border-t border-border/40 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="dateline text-muted-foreground/60">
+                    <p className="dateline text-muted-foreground">
                       &copy; {new Date().getFullYear()} bytecode.news
                     </p>
-                    <p className="dateline text-muted-foreground/60">
+                    <p className="dateline text-muted-foreground">
                       All rights reserved
                     </p>
                   </div>
