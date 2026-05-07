@@ -100,8 +100,8 @@ describe("home page", () => {
     const element = await Home({ searchParams: Promise.resolve({ page: "0" }) });
     const html = renderToStaticMarkup(element);
 
-    expect(html).toContain('aria-label="Go to front page"');
     expect(html).toContain('href="/"');
+    expect(html).toContain("bytecode");
     expect(html).toContain("1 comment");
     expect(html).toContain("2 comments");
     expect(html).toContain("3 comments");

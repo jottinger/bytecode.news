@@ -1,3 +1,4 @@
+import "@/styles/article.css";
 import { EditPostForm } from "@/components/edit-post-form";
 
 export default async function EditPostPage({

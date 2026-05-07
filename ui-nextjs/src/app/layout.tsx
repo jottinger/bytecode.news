@@ -13,18 +13,21 @@ const instrumentSerif = Instrument_Serif({
   variable: "--font-display",
   subsets: ["latin"],
   weight: "400",
+  display: "swap",
 });
 
 const sourceSerif = Source_Serif_4({
   variable: "--font-body",
   subsets: ["latin"],
-  weight: ["300", "400", "600", "700"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["400", "500"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -115,7 +118,7 @@ export default async function RootLayout({
                             {siteName.split(".")[0]}
                           </span>
                           <span className="text-amber">.</span>
-                          <span className="text-foreground/50">
+                          <span className="text-foreground/70">
                             {siteName.split(".").slice(1).join(".") || "news"}
                           </span>
                         </span>
@@ -145,7 +148,7 @@ export default async function RootLayout({
                             {siteName.split(".")[0]}
                           </span>
                           <span className="text-amber">.</span>
-                          <span className="text-foreground/50">
+                          <span className="text-foreground/70">
                             {siteName.split(".").slice(1).join(".") || "news"}
                           </span>
                         </span>
@@ -163,7 +166,7 @@ export default async function RootLayout({
                           name="q"
                           type="search"
                           placeholder="Search posts..."
-                          className="h-8 w-40 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-amber"
+                          className="h-8 w-40 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-amber"
                         />
                         <button
                           type="submit"
@@ -210,7 +213,7 @@ export default async function RootLayout({
                         name="q"
                         type="search"
                         placeholder="Search..."
-                        className="h-8 w-28 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-amber"
+                        className="h-8 w-28 rounded border border-border/60 bg-background px-2 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-amber"
                       />
                       <button
                         type="submit"
@@ -237,7 +240,7 @@ export default async function RootLayout({
                       <span className="font-display text-xl tracking-normal">
                         <span className="text-foreground">bytecode</span>
                         <span className="text-amber">.</span>
-                        <span className="text-foreground/40">news</span>
+                        <span className="text-foreground/60">news</span>
                       </span>
                       <p className="text-muted-foreground/60 text-sm mt-3 leading-relaxed max-w-xs">
                         Technical writing, software engineering insights, and the craft of
@@ -273,10 +276,10 @@ export default async function RootLayout({
                     <div>
                       <h4 className="section-label text-amber mb-4">System</h4>
                       <div className="flex flex-col gap-2">
-                        <span className="dateline text-muted-foreground/40">
+                        <span className="dateline text-muted-foreground/60">
                           Backend {backendVersionText}
                         </span>
-                        <span className="dateline text-muted-foreground/40">
+                        <span className="dateline text-muted-foreground/60">
                           Frontend {frontendVersionText}
                         </span>
                       </div>
@@ -284,10 +287,10 @@ export default async function RootLayout({
                   </div>
 
                   <div className="border-t border-border/40 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="dateline text-muted-foreground/40">
+                    <p className="dateline text-muted-foreground/60">
                       &copy; {new Date().getFullYear()} bytecode.news
                     </p>
-                    <p className="dateline text-muted-foreground/30">
+                    <p className="dateline text-muted-foreground/60">
                       All rights reserved
                     </p>
                   </div>

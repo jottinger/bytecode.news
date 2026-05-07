@@ -144,7 +144,7 @@ export function AdminDashboard() {
   if (loading) {
     return (
       <div className="py-12 text-center">
-        <p className="section-label text-muted-foreground/50">
+        <p className="section-label text-muted-foreground/70">
           Loading dashboard...
         </p>
       </div>
@@ -194,7 +194,7 @@ export function AdminDashboard() {
             </Link>
           </div>
           {!data.categories || data.categories.length === 0 ? (
-            <p className="text-muted-foreground/50 text-sm">No categories yet.</p>
+            <p className="text-muted-foreground/70 text-sm">No categories yet.</p>
           ) : (
             <div className="space-y-2">
               {data.categories.map((cat) => (
@@ -210,12 +210,12 @@ export function AdminDashboard() {
                       {cat.name}
                     </Link>
                     {cat.parentName && (
-                      <span className="dateline text-muted-foreground/40 ml-2">
+                      <span className="dateline text-muted-foreground/60 ml-2">
                         in {cat.parentName}
                       </span>
                     )}
                   </div>
-                  <span className="dateline text-muted-foreground/50 shrink-0">
+                  <span className="dateline text-muted-foreground/70 shrink-0">
                     {categoryCounts[cat.name.toLowerCase()] ?? 0} posts
                   </span>
                 </div>
@@ -236,7 +236,7 @@ export function AdminDashboard() {
             </Link>
           </div>
           {tagEntries.length === 0 ? (
-            <p className="text-muted-foreground/50 text-sm">No tags yet.</p>
+            <p className="text-muted-foreground/70 text-sm">No tags yet.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {tagEntries.slice(0, 20).map(([name, count]) => (
@@ -259,11 +259,11 @@ export function AdminDashboard() {
           <h2 className="section-label text-amber mb-4">System</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
             <div className="flex items-baseline gap-2">
-              <span className="dateline text-muted-foreground/50">Site</span>
+              <span className="dateline text-muted-foreground/70">Site</span>
               <span className="text-sm text-foreground">{data.features.siteName}</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="dateline text-muted-foreground/50">Build</span>
+              <span className="dateline text-muted-foreground/70">Build</span>
               <span className="text-sm text-foreground">
                 {data.features.version.commit?.substring(0, 7) ?? "unknown"}
                 {data.features.version.branch
@@ -272,7 +272,7 @@ export function AdminDashboard() {
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="dateline text-muted-foreground/50">Auth</span>
+              <span className="dateline text-muted-foreground/70">Auth</span>
               <span className="text-sm text-foreground">
                 {[
                   data.features.authentication.otp ? "OTP" : null,
@@ -284,14 +284,14 @@ export function AdminDashboard() {
               </span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="dateline text-muted-foreground/50">AI</span>
+              <span className="dateline text-muted-foreground/70">AI</span>
               <span className="text-sm text-foreground">
                 {data.features.ai ? "Enabled" : "Disabled"}
               </span>
             </div>
             {data.features.adapters.length > 0 && (
               <div className="flex items-baseline gap-2 sm:col-span-2">
-                <span className="dateline text-muted-foreground/50">Adapters</span>
+                <span className="dateline text-muted-foreground/70">Adapters</span>
                 <span className="text-sm text-foreground">
                   {data.features.adapters.join(", ")}
                 </span>

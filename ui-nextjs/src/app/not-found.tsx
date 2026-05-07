@@ -9,7 +9,7 @@ export default function NotFound() {
         <p className="font-display text-2xl text-foreground/80 tracking-tight leading-snug">
           That resource does not exist.
         </p>
-        <p className="text-muted-foreground/50 text-sm mt-4">
+        <p className="text-muted-foreground/70 text-sm mt-4">
           <Link href="/" className="text-amber hover:text-amber-dim transition-colors underline">
             Return to the front page
           </Link>

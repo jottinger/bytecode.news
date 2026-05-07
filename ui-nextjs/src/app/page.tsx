@@ -81,7 +81,7 @@ export default async function Home({
               className="masthead-name text-foreground animate-press-in"
               style={{ animationDelay: "200ms" }}
             >
-              <Link href="/" aria-label="Go to front page">
+              <Link href="/">
                 bytecode<span className="text-amber">.</span>news
               </Link>
             </h1>
@@ -91,7 +91,7 @@ export default async function Home({
               style={{ animationDelay: "400ms" }}
             >
               <div className="h-px w-12 bg-amber/20" />
-              <p className="section-label text-muted-foreground/50">
+              <p className="section-label text-muted-foreground/70">
                 Programming News &amp; Technical Writing
               </p>
               <div className="h-px w-12 bg-amber/20" />
@@ -276,7 +276,7 @@ function SecondaryCard({ post }: { post: ContentSummary }) {
         </p>
       )}
 
-      <p className="byline text-muted-foreground/50 mt-3">
+      <p className="byline text-muted-foreground/70 mt-3">
         By {post.authorDisplayName}
       </p>
     </article>
@@ -297,7 +297,7 @@ function BriefCard({ post }: { post: ContentSummary }) {
         </p>
       )}
 
-      <div className="byline text-muted-foreground/50 mt-2.5 flex items-center gap-2">
+      <div className="byline text-muted-foreground/70 mt-2.5 flex items-center gap-2">
         <span>{post.authorDisplayName}</span>
         <span className="text-border/40">|</span>
         <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>
@@ -320,7 +320,7 @@ function EmptyEdition() {
       <p className="font-display text-2xl text-foreground/80 tracking-tight leading-snug">
         The editorial team is preparing the first edition.
       </p>
-      <p className="text-muted-foreground/50 text-sm mt-4 leading-relaxed">
+      <p className="text-muted-foreground/70 text-sm mt-4 leading-relaxed">
         Articles will appear here once published. Check back soon for
         technical writing, engineering insights, and dispatches from the
         world of software.

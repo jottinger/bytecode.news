@@ -197,7 +197,7 @@ export function LogsBrowser() {
               Chat Logs
             </h1>
           </div>
-          <p className="dateline text-muted-foreground/50">
+          <p className="dateline text-muted-foreground/70">
             {formatDay(day)}
           </p>
         </div>
@@ -249,7 +249,7 @@ export function LogsBrowser() {
                       {channelName(item.provenanceUri)}
                     </span>
                     {item.latestContentPreview ? (
-                      <span className="block text-[0.65rem] text-muted-foreground/50 truncate mt-0.5">
+                      <span className="block text-[0.65rem] text-muted-foreground/70 truncate mt-0.5">
                         {item.latestSender}: {item.latestContentPreview}
                       </span>
                     ) : null}
@@ -275,7 +275,7 @@ export function LogsBrowser() {
                 {day}
               </span>
               {nextDisabled ? (
-                <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground/30">
+                <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground/60">
                   Next &rarr;
                 </span>
               ) : (
@@ -292,7 +292,7 @@ export function LogsBrowser() {
           {/* Log content */}
           {!selectedProvenance ? (
             <div className="py-12 text-center">
-              <p className="text-muted-foreground/50 font-mono text-sm">
+              <p className="text-muted-foreground/70 font-mono text-sm">
                 Select a channel to view logs.
               </p>
             </div>
@@ -312,7 +312,7 @@ export function LogsBrowser() {
             </div>
           ) : !logData || logData.entries.length === 0 ? (
             <div className="py-12 text-center border-t border-border/20">
-              <p className="text-muted-foreground/50 font-mono text-sm">
+              <p className="text-muted-foreground/70 font-mono text-sm">
                 No entries for this day.
               </p>
             </div>
@@ -330,7 +330,7 @@ export function LogsBrowser() {
                   >
                     <Link
                       href={permalinkHref(selectedProvenance, day, anchor)}
-                      className="font-mono text-[0.7rem] text-muted-foreground/40 hover:text-amber shrink-0 tabular-nums leading-relaxed transition-colors"
+                      className="font-mono text-[0.7rem] text-muted-foreground/60 hover:text-amber shrink-0 tabular-nums leading-relaxed transition-colors"
                     >
                       {formatTime(entry.timestamp)}
                     </Link>

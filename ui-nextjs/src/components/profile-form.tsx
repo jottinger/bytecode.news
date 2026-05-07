@@ -151,11 +151,11 @@ export function ProfileForm() {
         {/* Account details */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mb-10">
           <div>
-            <p className="byline text-muted-foreground/50 mb-1">Username</p>
+            <p className="byline text-muted-foreground/70 mb-1">Username</p>
             <p className="text-foreground">{auth.principal.username}</p>
           </div>
           <div>
-            <p className="byline text-muted-foreground/50 mb-1">Role</p>
+            <p className="byline text-muted-foreground/70 mb-1">Role</p>
             <p className="text-foreground">{auth.principal.role}</p>
           </div>
         </div>
@@ -177,7 +177,7 @@ export function ProfileForm() {
           <h2 className="section-label text-amber mb-5">Display Name</h2>
           <form className="flex gap-3 items-end" onSubmit={onSave}>
             <div className="flex-1">
-              <label className="byline text-muted-foreground/50 block mb-1.5" htmlFor="display-name">
+              <label className="byline text-muted-foreground/70 block mb-1.5" htmlFor="display-name">
                 Shown on your posts and comments
               </label>
               <input
@@ -203,7 +203,7 @@ export function ProfileForm() {
             <div className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm text-foreground">Export your data</p>
-                <p className="text-muted-foreground/50 text-xs mt-0.5">
+                <p className="text-muted-foreground/70 text-xs mt-0.5">
                   Download all your account data as JSON
                 </p>
               </div>
@@ -222,7 +222,7 @@ export function ProfileForm() {
             <div className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm text-foreground">Delete account</p>
-                <p className="text-muted-foreground/50 text-xs mt-0.5">
+                <p className="text-muted-foreground/70 text-xs mt-0.5">
                   Permanently remove your account and all associated data
                 </p>
               </div>

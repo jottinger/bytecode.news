@@ -75,8 +75,8 @@ export default async function CategoryPage({
         {/* Article list */}
         {posts.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="section-label text-muted-foreground/50 mb-3">No articles yet</p>
-            <p className="text-muted-foreground/40 text-sm">
+            <p className="section-label text-muted-foreground/70 mb-3">No articles yet</p>
+            <p className="text-muted-foreground/60 text-sm">
               Check back soon for content in this section.
             </p>
           </div>
@@ -101,7 +101,7 @@ export default async function CategoryPage({
                 </Link>
               )}
             </div>
-            <span className="dateline text-muted-foreground/40">
+            <span className="dateline text-muted-foreground/60">
               Page {safePage + 1} of {list.totalPages}
             </span>
             <div>
@@ -135,7 +135,7 @@ function ArticleRow({ post, first }: { post: ContentSummary; first: boolean }) {
               {post.excerpt}
             </p>
           )}
-          <div className="byline text-muted-foreground/50 flex items-center gap-1.5 flex-wrap">
+          <div className="byline text-muted-foreground/70 flex items-center gap-1.5 flex-wrap">
             <span>By {post.authorDisplayName}</span>
             <span className="text-border/40 mx-0.5">|</span>
             <time dateTime={post.publishedAt}>{formatDate(post.publishedAt)}</time>

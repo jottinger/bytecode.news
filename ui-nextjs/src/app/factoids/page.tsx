@@ -112,8 +112,8 @@ export default async function FactoidsPage({
         {/* Results */}
         {list.factoids.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="section-label text-muted-foreground/50 mb-3">No entries found</p>
-            <p className="text-muted-foreground/40 text-sm">
+            <p className="section-label text-muted-foreground/70 mb-3">No entries found</p>
+            <p className="text-muted-foreground/60 text-sm">
               {query ? "Try a different search term." : "The knowledge base is empty."}
             </p>
           </div>
@@ -130,7 +130,7 @@ export default async function FactoidsPage({
                       {factoid.selector}
                     </Link>
                   </h2>
-                  <span className="byline text-muted-foreground/40 shrink-0">
+                  <span className="byline text-muted-foreground/60 shrink-0">
                     {factoid.accessCount || 0} hits
                   </span>
                 </div>
@@ -154,7 +154,7 @@ export default async function FactoidsPage({
                   </div>
                 )}
 
-                <div className="byline text-muted-foreground/50 mt-1.5 flex items-center gap-1.5 flex-wrap">
+                <div className="byline text-muted-foreground/70 mt-1.5 flex items-center gap-1.5 flex-wrap">
                   {factoid.updatedBy && (
                     <>
                       <span>{factoid.updatedBy}</span>
@@ -184,7 +184,7 @@ export default async function FactoidsPage({
                 </Link>
               )}
             </div>
-            <span className="dateline text-muted-foreground/40">
+            <span className="dateline text-muted-foreground/60">
               Page {safePage + 1} of {list.totalPages}
             </span>
             <div>
