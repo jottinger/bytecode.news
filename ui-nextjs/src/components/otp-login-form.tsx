@@ -122,7 +122,7 @@ export function OtpLoginForm({
         <h1 className="font-display text-3xl md:text-4xl tracking-tight mb-2">
           Sign In
         </h1>
-        <p className="text-muted-foreground/60 text-sm border-b border-border/40 pb-6 mb-8">
+        <p className="text-muted-foreground text-sm border-b border-border/40 pb-6 mb-8">
           Access your account to submit articles and manage your profile.
         </p>
 
@@ -224,7 +224,7 @@ export function OtpLoginForm({
             className="mt-8 pt-6 border-t border-border/40 animate-fade-up"
             style={{ animationDelay: "0.2s" }}
           >
-            <p className="section-label text-muted-foreground/60 mb-4">
+            <p className="section-label text-muted-foreground mb-4">
               Or continue with
             </p>
             <div className="flex gap-3">

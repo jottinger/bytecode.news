@@ -108,10 +108,10 @@ export function KarmaBoard({
 
       {entries.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="section-label text-muted-foreground/50 mb-3">
+          <p className="section-label text-muted-foreground mb-3">
             No karma recorded yet
           </p>
-          <p className="text-muted-foreground/40 text-sm">
+          <p className="text-muted-foreground text-sm">
             Karma accumulates as the community votes across all connected
             channels.
           </p>
@@ -130,7 +130,7 @@ export function KarmaBoard({
                 <div className="flex items-baseline justify-between gap-4 mb-1.5">
                   <div className="flex items-baseline gap-3 min-w-0">
                     <span
-                      className="text-muted-foreground/30 font-mono text-xs tabular-nums shrink-0"
+                      className="text-muted-foreground font-mono text-xs tabular-nums shrink-0"
                       style={{ minWidth: "1.5rem", textAlign: "right" }}
                     >
                       {i + 1}
@@ -139,7 +139,7 @@ export function KarmaBoard({
                       {entry.subject}
                     </h3>
                   </div>
-                  <time className="byline text-muted-foreground/40 shrink-0">
+                  <time className="byline text-muted-foreground shrink-0">
                     {formatDate(entry.lastUpdated)}
                   </time>
                 </div>

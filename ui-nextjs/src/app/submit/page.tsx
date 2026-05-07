@@ -1,3 +1,4 @@
+import "@/styles/article.css";
 import { getFeatures } from "@/lib/api";
 import { SubmitPostForm } from "@/components/submit-post-form";
 

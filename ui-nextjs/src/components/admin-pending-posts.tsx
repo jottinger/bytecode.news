@@ -300,16 +300,16 @@ export function AdminPendingPosts() {
         {/* Loading state */}
         {loading ? (
           <div className="py-12 text-center">
-            <p className="section-label text-muted-foreground/50">
+            <p className="section-label text-muted-foreground">
               Loading drafts...
             </p>
           </div>
         ) : posts.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="section-label text-muted-foreground/50 mb-3">
+            <p className="section-label text-muted-foreground mb-3">
               No {showDeleted ? "deleted" : "pending"} drafts
             </p>
-            <p className="text-muted-foreground/40 text-sm">
+            <p className="text-muted-foreground text-sm">
               {showDeleted
                 ? "No drafts have been deleted."
                 : "All submissions have been reviewed."}
@@ -332,7 +332,7 @@ export function AdminPendingPosts() {
                         {post.excerpt}
                       </p>
                     )}
-                    <div className="byline text-muted-foreground/50 flex items-center gap-1.5 flex-wrap">
+                    <div className="byline text-muted-foreground flex items-center gap-1.5 flex-wrap">
                       <span>By {displayAuthor(post.authorDisplayName)}</span>
                       {post.publishedAt && (
                         <>

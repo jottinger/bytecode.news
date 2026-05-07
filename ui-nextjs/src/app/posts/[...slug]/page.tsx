@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import "@/styles/article.css";
 import { ApiError, getCommentsBySlug, getPageBySlug, getPostBySlug } from "@/lib/api";
 import { formatDate, formatUpdatedTime } from "@/lib/format";
 import { buildPublicMetadata } from "@/lib/metadata";

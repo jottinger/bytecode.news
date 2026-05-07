@@ -69,7 +69,7 @@ export default async function FactoidsPage({
             >
               Knowledge Base
             </h1>
-            <p className="text-muted-foreground/60 text-sm mt-2">
+            <p className="text-muted-foreground text-sm mt-2">
               {list.totalCount} entr{list.totalCount === 1 ? "y" : "ies"}
               {query && <> matching &ldquo;{query}&rdquo;</>}
             </p>
@@ -112,8 +112,8 @@ export default async function FactoidsPage({
         {/* Results */}
         {list.factoids.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="section-label text-muted-foreground/50 mb-3">No entries found</p>
-            <p className="text-muted-foreground/40 text-sm">
+            <p className="section-label text-muted-foreground mb-3">No entries found</p>
+            <p className="text-muted-foreground text-sm">
               {query ? "Try a different search term." : "The knowledge base is empty."}
             </p>
           </div>
@@ -130,7 +130,7 @@ export default async function FactoidsPage({
                       {factoid.selector}
                     </Link>
                   </h2>
-                  <span className="byline text-muted-foreground/40 shrink-0">
+                  <span className="byline text-muted-foreground shrink-0">
                     {factoid.accessCount || 0} hits
                   </span>
                 </div>
@@ -154,7 +154,7 @@ export default async function FactoidsPage({
                   </div>
                 )}
 
-                <div className="byline text-muted-foreground/50 mt-1.5 flex items-center gap-1.5 flex-wrap">
+                <div className="byline text-muted-foreground mt-1.5 flex items-center gap-1.5 flex-wrap">
                   {factoid.updatedBy && (
                     <>
                       <span>{factoid.updatedBy}</span>
@@ -165,7 +165,7 @@ export default async function FactoidsPage({
                   {factoid.locked && (
                     <>
                       <span className="text-border/40 mx-0.5">|</span>
-                      <span className="text-amber-dim">Locked</span>
+                      <span className="text-amber-text">Locked</span>
                     </>
                   )}
                 </div>
@@ -184,7 +184,7 @@ export default async function FactoidsPage({
                 </Link>
               )}
             </div>
-            <span className="dateline text-muted-foreground/40">
+            <span className="dateline text-muted-foreground">
               Page {safePage + 1} of {list.totalPages}
             </span>
             <div>

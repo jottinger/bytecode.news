@@ -141,7 +141,7 @@ export function AdminUsers() {
           >
             {tab.label}
             {!loading && status === tab.value && (
-              <span className="ml-2 text-muted-foreground/50">({users.length})</span>
+              <span className="ml-2 text-muted-foreground">({users.length})</span>
             )}
           </button>
         ))}
@@ -161,11 +161,11 @@ export function AdminUsers() {
 
       {loading ? (
         <div className="py-12 text-center">
-          <p className="section-label text-muted-foreground/50">Loading users...</p>
+          <p className="section-label text-muted-foreground">Loading users...</p>
         </div>
       ) : users.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="section-label text-muted-foreground/50 mb-3">
+          <p className="section-label text-muted-foreground mb-3">
             No {status.toLowerCase()} users
           </p>
         </div>
@@ -181,7 +181,7 @@ export function AdminUsers() {
                   <h3 className="headline-brief text-foreground mb-1">
                     {user.displayName}
                   </h3>
-                  <div className="byline text-muted-foreground/50 flex items-center gap-1.5 flex-wrap">
+                  <div className="byline text-muted-foreground flex items-center gap-1.5 flex-wrap">
                     <span>{user.username}</span>
                     <span className="text-border/40 mx-0.5">|</span>
                     <span className={user.role === "SUPER_ADMIN" ? "text-amber" : ""}>

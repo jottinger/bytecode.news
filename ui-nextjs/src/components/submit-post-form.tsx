@@ -292,7 +292,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
             </div>
           </header>
           <div className="py-12 text-center">
-            <p className="section-label text-muted-foreground/50 mb-4">
+            <p className="section-label text-muted-foreground mb-4">
               Sign in to submit a post draft.
             </p>
             <Link
@@ -321,7 +321,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
             >
               Submit a Draft
             </h1>
-            <p className="text-muted-foreground/60 text-sm mt-2">
+            <p className="text-muted-foreground text-sm mt-2">
               Submissions create drafts for admin review before publishing.
             </p>
           </div>
@@ -349,7 +349,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
         <form onSubmit={onSubmit}>
           {/* Title */}
           <div className="mb-6">
-            <label className="byline text-muted-foreground/50 block mb-1.5" htmlFor="post-title">
+            <label className="byline text-muted-foreground block mb-1.5" htmlFor="post-title">
               Title
             </label>
             <input
@@ -370,7 +370,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
           {/* Content */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-1.5">
-              <label className="byline text-muted-foreground/50" htmlFor="post-markdown">
+              <label className="byline text-muted-foreground" htmlFor="post-markdown">
                 Content (Markdown)
               </label>
               {markdownSource.trim().length > 0 && (
@@ -408,7 +408,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
           {auth.principal && (
             <div className="mb-6">
               <div className="flex items-center justify-between mb-1.5">
-                <label className="byline text-muted-foreground/50" htmlFor="post-summary">
+                <label className="byline text-muted-foreground" htmlFor="post-summary">
                   Summary (optional)
                 </label>
                 {canDeriveSummary && (
@@ -438,7 +438,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="byline text-muted-foreground/50" htmlFor="post-tags">
+                <label className="byline text-muted-foreground" htmlFor="post-tags">
                   Tags
                 </label>
                 <div className="flex gap-2">
@@ -475,7 +475,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
             </div>
 
             <div>
-              <label className="byline text-muted-foreground/50 block mb-1.5" htmlFor="post-categories">
+              <label className="byline text-muted-foreground block mb-1.5" htmlFor="post-categories">
                 Categories
               </label>
               <input
@@ -493,7 +493,7 @@ export function SubmitPostForm({ anonymousSubmission }: SubmitPostFormProps) {
                 ))}
               </datalist>
               {!isAdmin && (
-                <p className="text-muted-foreground/40 text-xs mt-1">
+                <p className="text-muted-foreground text-xs mt-1">
                   Categories starting with "_" are restricted to admins.
                 </p>
               )}
